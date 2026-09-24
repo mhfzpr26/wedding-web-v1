@@ -1,0 +1,573 @@
+@import url("https://fonts.googleapis.com/css2?family=Josefin+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Shippori+Mincho+B1:wght@400;500;600;700;800&family=Great+Vibes&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root,
+[data-theme="navy"] {
+  /* Authentic Tema AC Blue Palette */
+  --color-primary: #28365f;
+  --color-primary-dark: #13255a;
+  --color-primary-light: #37497e;
+  --color-secondary: #4a608a;
+  --color-secondary-light: #cad6e4;
+  --color-accent: #607ea3;
+  --color-accent-light: #f0f4f9;
+  --color-bg-base: #e8f1f9;
+  --color-bg-card: #ffffff;
+  --color-bg-surface: #dfecf7;
+  --color-paper-gradient-start: #f3f8fd;
+  --color-paper-gradient-mid: #e8f2fa;
+  --color-paper-gradient-end: #dcebf7;
+  --color-paper-ambient: rgba(74, 96, 138, 0.12);
+  --color-text-main: #28365f;
+  --color-text-muted: #526071;
+  --color-gold: #a87f01;
+  --color-gold-light: #dcb658;
+  --color-gold-dark: #826200;
+
+  /* Minor Third (1.200) Typography Scale (Typescale.com - Base: 16px) */
+  --type-h1: 47.78px;
+  --type-h2: 39.81px;
+  --type-h3: 33.18px;
+  --type-h4: 27.65px;
+  --type-h5: 23.04px;
+  --type-h6: 19.2px;
+  --type-p: 16px;
+  --type-small: 13.33px;
+  --type-xs: 11.11px;
+}
+
+[data-theme="sage"] {
+  --color-primary: #1e352f;
+  --color-primary-dark: #12211d;
+  --color-primary-light: #2c4d44;
+  --color-secondary: #5b7e6f;
+  --color-secondary-light: #9bb8ac;
+  --color-accent: #3b6655;
+  --color-accent-light: #e7efea;
+  --color-bg-base: #f8faf6;
+  --color-bg-card: #ffffff;
+  --color-bg-surface: #ecf2e9;
+  --color-paper-gradient-start: #fafcf8;
+  --color-paper-gradient-mid: #f4f8f2;
+  --color-paper-gradient-end: #eaf1e7;
+  --color-paper-ambient: rgba(91, 126, 111, 0.05);
+  --color-text-main: #1e352f;
+  --color-text-muted: #4f6b60;
+  --color-gold: #b89c6c;
+  --color-gold-light: #ddc8a2;
+  --color-gold-dark: #8f7443;
+}
+
+[data-theme="rose"] {
+  --color-primary: #3e2328;
+  --color-primary-dark: #271418;
+  --color-primary-light: #5c353d;
+  --color-secondary: #965c67;
+  --color-secondary-light: #cea1aa;
+  --color-accent: #b26573;
+  --color-accent-light: #fbeef2;
+  --color-bg-base: #fdf8f9;
+  --color-bg-card: #ffffff;
+  --color-bg-surface: #f7ecf0;
+  --color-paper-gradient-start: #fefafa;
+  --color-paper-gradient-mid: #faf2f5;
+  --color-paper-gradient-end: #f6eaf0;
+  --color-paper-ambient: rgba(150, 92, 103, 0.05);
+  --color-text-main: #3e2328;
+  --color-text-muted: #7e545d;
+  --color-gold: #c58e84;
+  --color-gold-light: #e8c1ba;
+  --color-gold-dark: #986359;
+}
+
+.ref-floral-ornament {
+  transition: filter 0.4s ease;
+}
+
+/* Otomatis harmonisasikan warna ornamen bunga watercolor saat berganti preset */
+[data-theme="sage"] .ref-floral-ornament {
+  filter: hue-rotate(240deg) saturate(0.85);
+  transition: filter 0.4s ease;
+}
+
+[data-theme="rose"] .ref-floral-ornament {
+  filter: hue-rotate(155deg) saturate(0.9);
+  transition: filter 0.4s ease;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+  max-width: 100vw;
+}
+
+body {
+  background-color: var(--color-bg-base);
+  color: var(--color-text-main);
+  font-family: "Josefin Sans", "Plus Jakarta Sans", sans-serif;
+  overflow-x: clip;
+  max-width: 100vw;
+  min-height: 100vh;
+  min-height: 100dvh;
+  transition:
+    background-color 0.4s ease,
+    color 0.4s ease;
+}
+
+/* Base Typographic Hierarchy (Minor Third 1.200) */
+@layer base {
+  h1 {
+    font-size: var(--type-h1);
+    line-height: 1.15;
+  }
+  h2 {
+    font-size: var(--type-h2);
+    line-height: 1.2;
+  }
+  h3 {
+    font-size: var(--type-h3);
+    line-height: 1.25;
+  }
+  h4 {
+    font-size: var(--type-h4);
+    line-height: 1.3;
+  }
+  h5 {
+    font-size: var(--type-h5);
+    line-height: 1.35;
+  }
+  h6 {
+    font-size: var(--type-h6);
+    line-height: 1.4;
+  }
+  p {
+    font-size: var(--type-p);
+    line-height: 1.6;
+  }
+  small {
+    font-size: var(--type-small);
+    line-height: 1.5;
+  }
+}
+
+@layer utilities {
+  .text-scale-h1 {
+    font-size: var(--type-h1);
+  }
+  .text-scale-h2 {
+    font-size: var(--type-h2);
+  }
+  .text-scale-h3 {
+    font-size: var(--type-h3);
+  }
+  .text-scale-h4 {
+    font-size: var(--type-h4);
+  }
+  .text-scale-h5 {
+    font-size: var(--type-h5);
+  }
+  .text-scale-h6 {
+    font-size: var(--type-h6);
+  }
+  .text-scale-p {
+    font-size: var(--type-p);
+  }
+  .text-scale-small {
+    font-size: var(--type-small);
+  }
+  .text-scale-xs {
+    font-size: var(--type-xs);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg-base);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-secondary-light);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary);
+}
+
+/* Dynamic Ethereal Soft Sky Mist Nature Watercolor Backdrop */
+.fine-art-paper-bg {
+  background-color: var(--color-bg-base);
+  background-image:
+    /* 1. Sapuan cat air langit biru muda lembut & awan sutra */
+    radial-gradient(
+      circle at 15% 15%,
+      rgba(176, 210, 238, 0.52) 0%,
+      transparent 48%
+    ),
+    radial-gradient(
+      circle at 85% 25%,
+      rgba(156, 196, 228, 0.45) 0%,
+      transparent 52%
+    ),
+    radial-gradient(
+      circle at 20% 60%,
+      rgba(170, 206, 236, 0.48) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      rgba(188, 218, 242, 0.55) 0%,
+      transparent 46%
+    ),
+    /* 2. Aksen pendar cahaya keemasan lembut (Sunlit Golden Ambient) */
+    radial-gradient(
+      circle at 50% 40%,
+      rgba(220, 182, 88, 0.08) 0%,
+      transparent 60%
+    ),
+    /* 3. Gradasi dasar aliran cat air alam (Soft Azure Watercolor Stream) */
+    linear-gradient(
+      180deg,
+      var(--color-paper-gradient-start) 0%,
+      var(--color-paper-gradient-mid) 40%,
+      var(--color-paper-gradient-end) 100%
+    );
+  background-attachment: fixed;
+  transition: background-color 0.6s ease;
+}
+
+/* Sapuan Cat Air Alam Abstrak (Abstract Nature Watercolor Strokes) */
+.nature-watercolor-overlay {
+  background-image:
+    /* Sapuan dedaunan & nuansa alam abstrak cat air transparan */
+    radial-gradient(
+      ellipse 45% 35% at 8% 28%,
+      rgba(142, 184, 218, 0.22) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 50% 40% at 92% 52%,
+      rgba(132, 178, 214, 0.2) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 40% 32% at 15% 82%,
+      rgba(152, 194, 226, 0.22) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse 46% 36% at 88% 94%,
+      rgba(138, 182, 220, 0.2) 0%,
+      transparent 70%
+    );
+  background-attachment: fixed;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* Authentic Cotton Fiber / Paper Grain (Pure CSS SVG FeTurbulence, 100% lightweight & non-floral) */
+.fine-art-paper-texture {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='paperNoise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.025 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23paperNoise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  mix-blend-mode: multiply;
+  opacity: 0.65;
+}
+
+/* Luxury Wedding Cover Backdrop - Responsive Gradient & Depth (Matches Button Primary Color) */
+.cover-backdrop-primary {
+  background-color: var(--color-primary-dark);
+  background-image:
+    radial-gradient(
+      ellipse 95% 75% at 50% 35%,
+      var(--color-primary-light) 0%,
+      var(--color-primary) 50%,
+      var(--color-primary-dark) 100%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(168, 127, 1, 0.08) 0%,
+      transparent 40%,
+      rgba(0, 0, 0, 0.25) 100%
+    );
+}
+
+/* Subtle luxury royal gold lace texture for primary dark backdrop */
+.cover-pattern-overlay-dark {
+  background-image:
+    radial-gradient(rgba(220, 182, 88, 0.35) 0.8px, transparent 0.8px),
+    radial-gradient(rgba(255, 255, 255, 0.12) 0.5px, transparent 0.5px);
+  background-size: 32px 32px;
+  background-position:
+    0 0,
+    16px 16px;
+  opacity: 0.25;
+}
+
+/* Fallback light backdrop */
+.cover-backdrop-luxury {
+  background-color: var(--color-bg-base);
+  background-image: radial-gradient(
+    ellipse 90% 70% at 50% 35%,
+    #ffffff 0%,
+    #f4f7fc 45%,
+    var(--color-bg-surface) 80%,
+    var(--color-bg-base) 100%
+  );
+}
+
+/* Keyframe Animations for Living Botanical Sway & Golden Stardust */
+@keyframes floralSwayTR {
+  0%,
+  100% {
+    transform: rotate(4deg) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: rotate(1.5deg) translate3d(-4px, 4px, 0);
+  }
+}
+
+@keyframes floralSwayBL {
+  0%,
+  100% {
+    transform: rotate(4deg) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: rotate(1.5deg) translate3d(4px, -4px, 0);
+  }
+}
+
+/* ==========================================================================
+   Floral Blue Edition - Symmetrical Corner Bouquets
+   ========================================================================== */
+.cover-floral-corner-tr {
+  position: absolute;
+  top: -30px;
+  right: -30px;
+  width: 230px;
+  height: auto;
+  transform-origin: top right;
+  animation: floralSwayTR 10s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.cover-floral-corner-bl {
+  position: absolute;
+  bottom: -30px;
+  left: -30px;
+  width: 230px;
+  height: auto;
+  transform-origin: bottom left;
+  animation: floralSwayBL 10s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 15;
+}
+
+.cover-floral-corner-tr img {
+  width: 100%;
+  height: auto;
+  transform: none;
+}
+
+.cover-floral-corner-bl img {
+  width: 100%;
+  height: auto;
+  transform: rotate(180deg);
+  transform-origin: 50% 50%;
+}
+
+@media (min-width: 640px) {
+  .cover-floral-corner-tr {
+    top: -38px;
+    right: -38px;
+    width: 280px;
+  }
+  .cover-floral-corner-bl {
+    bottom: -38px;
+    left: -38px;
+    width: 280px;
+  }
+}
+
+@media (min-width: 768px) {
+  .cover-floral-corner-tr {
+    top: -48px;
+    right: -48px;
+    width: 340px;
+  }
+  .cover-floral-corner-bl {
+    bottom: -48px;
+    left: -48px;
+    width: 340px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .cover-floral-corner-tr {
+    top: -60px;
+    right: -60px;
+    width: 390px;
+  }
+  .cover-floral-corner-bl {
+    bottom: -60px;
+    left: -60px;
+    width: 390px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .cover-floral-corner-tr {
+    top: -72px;
+    right: -72px;
+    width: 440px;
+  }
+  .cover-floral-corner-bl {
+    bottom: -72px;
+    left: -72px;
+    width: 440px;
+  }
+}
+
+.anim-floral-sway-tr {
+  animation: floralSwayTR 10s ease-in-out infinite;
+  transform-origin: top right;
+  will-change: transform;
+}
+
+.anim-floral-sway-bl {
+  animation: floralSwayBL 10s ease-in-out infinite;
+  transform-origin: bottom left;
+  will-change: transform;
+}
+
+@keyframes fireflyGlow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(0.75);
+    opacity: 0.2;
+    box-shadow: 0 0 6px rgba(229, 199, 122, 0.4);
+  }
+  50% {
+    transform: translate3d(-12px, -28px, 0) scale(1.3);
+    opacity: 0.95;
+    box-shadow:
+      0 0 16px rgba(229, 199, 122, 0.95),
+      0 0 26px rgba(168, 127, 1, 0.6);
+  }
+}
+
+@keyframes stardustDrift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.6);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.85;
+  }
+  80% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate3d(20px, -70px, 0) scale(1.2);
+    opacity: 0;
+  }
+}
+
+.anim-firefly {
+  animation: fireflyGlow 6.5s ease-in-out infinite;
+  will-change: transform, opacity, box-shadow;
+}
+
+.anim-stardust {
+  animation: stardustDrift 8.5s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Kartu Undangan Glassmorphism Mewah */
+.luxury-invitation-card {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 25px 60px -15px rgba(40, 54, 95, 0.18),
+    0 0 0 1px rgba(168, 127, 1, 0.25),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+}
+
+/* Kartu Gradasi Mutiara ke Soft Azure dengan Border Ganda Emas */
+.luxury-pearl-card {
+  position: relative;
+  background: linear-gradient(
+    165deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(250, 253, 255, 0.95) 45%,
+    rgba(230, 241, 251, 0.92) 100%
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(168, 127, 1, 0.45);
+  box-shadow:
+    0 18px 40px -10px rgba(40, 54, 95, 0.12),
+    0 4px 16px -2px rgba(168, 127, 1, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.luxury-pearl-card:hover {
+  box-shadow:
+    0 22px 50px -10px rgba(40, 54, 95, 0.18),
+    0 0 25px rgba(220, 182, 88, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+/* Gerbang Kubah Lengkung Penuh (Continuous Cathedral Arch Portal) */
+.cathedral-arch-portal {
+  border-top-left-radius: 50% 160px;
+  border-top-right-radius: 50% 160px;
+  border-bottom-left-radius: 50% 160px;
+  border-bottom-right-radius: 50% 160px;
+}
+
+@media (min-width: 640px) {
+  .cathedral-arch-portal {
+    border-top-left-radius: 50% 210px;
+    border-top-right-radius: 50% 210px;
+    border-bottom-left-radius: 50% 210px;
+    border-bottom-right-radius: 50% 210px;
+  }
+}
+
+.cathedral-arch-inner-solid {
+  border-top-left-radius: 50% 150px;
+  border-top-right-radius: 50% 150px;
+  border-bottom-left-radius: 50% 150px;
+  border-bottom-right-radius: 50% 150px;
+}
+
+@media (min-width: 640px) {
+  .cathedral-arch-inner-solid {
+    border-top-left-radius: 50% 200px;
+    border-top-right-radius: 50% 200px;
+    border-bottom-left-radius: 50% 200px;
+    border-bottom-right-radius: 50% 200px;
+  }
+}
+
+.cathedral-arch-inner-dashed {
+  border-top-left-radius: 50% 142px;
+  border-top-right-radius: 50% 142px;
+  border-bottom-left-radius: 50% 142px;
+  border-bottom-right-radius: 50% 142px;
+}
+
+@media (min-width: 640px) {
+  .cathedral-arch-inner-dashed {
+    border-top-left-radius: 50% 190px;
+    border-top-right-radius: 50% 190px;
+    border-bottom-left-radius: 50% 190px;
+    border-bottom-right-radius: 50% 190px;
+  }
+}
