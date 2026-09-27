@@ -7,6 +7,7 @@
  */
 
 export const weddingConfig = {
+  version: '2026.11.14-v1', // Versi data untuk auto-invalidation cache localStorage browser
   // Brand Agensi
   brand: {
     name: 'INVATERA',
@@ -28,7 +29,7 @@ export const weddingConfig = {
   monogram: {
     enabled: true,
     useCustomInitials: false,
-    customInitials: 'K & S',
+    customInitials: 'D & R',
     separator: '&', // '&' | '•' | '|' | '♥'
     style: 'spray-horizontal', // 'spray-horizontal' (Pendekatan B: Ranting melintang/asimetris anggun) | 'intertwined' | 'crest-footing'
     tagline: 'The Wedding of',
@@ -70,53 +71,52 @@ export const weddingConfig = {
 
   // Data Mempelai Pria & Wanita
   groom: {
-    fullName: 'Kevin Pratama, S.T.',
-    shortName: 'Kevin',
-    parents:
-      'Putra pertama dari Bpk. Ir. H. Bambang Irawan & Ibu Hj. Sri Wahyuni',
-    instagram: 'https://instagram.com/kevinpratama',
+    fullName: 'Rakafansa Saputra',
+    shortName: 'Raka',
+    parents: 'Putra dari Bpk. Mashudi & Ibu Lenny Gusnita',
+    instagram: 'https://instagram.com/rakafansa',
     avatarType: 'suit', // 'suit' (jas modern) | 'peci' (busana muslim/adat)
   },
   bride: {
-    fullName: 'Sarah Amanda, S.Kom.',
-    shortName: 'Sarah',
-    parents: 'Putri kedua dari Bpk. Hendra Gunawan & Ibu Rina Marlina',
-    instagram: 'https://instagram.com/sarahamanda',
+    fullName: 'Destia Dwi Ramadhani',
+    shortName: 'Destia',
+    parents: 'Putri dari Alm. Bpk. M. Hastronugi & Ibu Sri Mulyati',
+    instagram: 'https://instagram.com/destiadwir',
     avatarType: 'hijab', // 'hijab' (syar'i/hijab) | 'modern' (non-hijab elegan)
   },
 
   // Tanggal Target Countdown (Akad)
-  countdownTarget: '2026-10-24T08:00:00+07:00',
+  countdownTarget: '2026-11-14T08:00:00+07:00',
 
   // Detail Acara Pernikahan
   events: [
     {
       id: 'akad',
       title: 'Akad Nikah',
-      dateFormatted: 'Sabtu, 24 Oktober 2026',
-      dateIso: '2026-10-24',
+      dateFormatted: 'Sabtu, 14 November 2026',
+      dateIso: '2026-11-14',
       time: '08.00 - 10.00 WIB',
       venue: 'Masjid Agung Al-Ikhlas',
       address: 'Jl. Melati Raya No. 12, Kebayoran Baru, Jakarta Selatan',
       googleMapsUrl:
         'https://maps.google.com/?q=Masjid+Agung+Al-Ikhlas+Jakarta',
-      calendarTitle: 'Akad Nikah Kevin & Sarah',
-      calendarStart: '20261024T080000',
-      calendarEnd: '20261024T100000',
+      calendarTitle: 'Akad Nikah Destia & Raka',
+      calendarStart: '20261114T080000',
+      calendarEnd: '20261114T100000',
     },
     {
       id: 'resepsi',
       title: 'Resepsi Pernikahan',
-      dateFormatted: 'Sabtu, 24 Oktober 2026',
-      dateIso: '2026-10-24',
+      dateFormatted: 'Sabtu, 14 November 2026',
+      dateIso: '2026-11-14',
       time: '11.00 - 13.00 WIB',
       venue: 'Grand Ballroom Hotel Sapphire',
       address:
         'Hotel Sapphire Jakarta, Jl. Jend. Sudirman Kav. 45, Jakarta Selatan',
       googleMapsUrl: 'https://maps.google.com/?q=Hotel+Sapphire+Jakarta',
-      calendarTitle: 'Resepsi Pernikahan Kevin & Sarah',
-      calendarStart: '20261024T110000',
-      calendarEnd: '20261024T130000',
+      calendarTitle: 'Resepsi Pernikahan Destia & Raka',
+      calendarStart: '20261114T110000',
+      calendarEnd: '20261114T130000',
     },
   ],
 
@@ -151,18 +151,18 @@ export const weddingConfig = {
         id: 'bca',
         bankName: 'BCA',
         accountNumber: '8830123456',
-        accountHolder: 'Kevin Pratama',
+        accountHolder: 'Destia Dwi Ramadhani',
       },
       {
         id: 'mandiri',
         bankName: 'Bank Mandiri',
         accountNumber: '1370009876543',
-        accountHolder: 'Sarah Amanda',
+        accountHolder: 'Rakafansa Saputra',
       },
     ],
     physicalGift: {
       enabled: true,
-      recipientName: 'Kevin Pratama & Sarah Amanda',
+      recipientName: 'Destia Dwi Ramadhani & Rakafansa Saputra',
       phone: '0812-3456-7890',
       address:
         'Jl. Kemang Selatan No. 20, RT 05 / RW 02, Bangka, Mampang Prapatan, Jakarta Selatan 12730',
@@ -178,7 +178,7 @@ export const weddingConfig = {
       attendance: 'hadir',
       guestsCount: 2,
       message:
-        "Barakallahu lakuma wa baraka 'alaikuma wa jama'a bainakuma fii khoir. Selamat menempuh hidup baru Kevin & Sarah, semoga menjadi keluarga sakinah mawaddah warahmah.",
+        "Barakallahu lakuma wa baraka 'alaikuma wa jama'a bainakuma fii khoir. Selamat menempuh hidup baru Destia & Raka, semoga menjadi keluarga sakinah mawaddah warahmah.",
       timestamp: 'Kemarin, 14:20 WIB',
     },
     {
@@ -187,7 +187,7 @@ export const weddingConfig = {
       attendance: 'hadir',
       guestsCount: 2,
       message:
-        'Happy wedding Sarah & Kevin! Cantik dan ganteng banget, semoga pernikahannya selalu dipenuhi kebahagiaan dan cinta sampai kakek nenek aamiin!',
+        'Happy wedding Destia & Raka! Cantik dan ganteng banget, semoga pernikahannya selalu dipenuhi kebahagiaan dan cinta sampai kakek nenek aamiin!',
       timestamp: 'Kemarin, 16:45 WIB',
     },
     {
@@ -196,7 +196,7 @@ export const weddingConfig = {
       attendance: 'tidak_hadir',
       guestsCount: 0,
       message:
-        'Selamat ya bro Kevin! Mohon maaf belum bisa hadir langsung karena masih di luar kota, tapi doa terbaik selalu mengiringi langkah kalian berdua.',
+        'Selamat ya bro Raka! Mohon maaf belum bisa hadir langsung karena masih di luar kota, tapi doa terbaik selalu mengiringi langkah kalian berdua.',
       timestamp: 'Hari ini, 09:12 WIB',
     },
   ],

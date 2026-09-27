@@ -19,12 +19,12 @@ export const FooterSection = () => {
             Kami yang berbahagia,
           </p>
 
-          <h3 className="font-serif text-scale-h3 sm:text-scale-h2 font-bold text-primary mt-2">
-            {config.groom.shortName}{' '}
-            <span className="font-script text-scale-h3 sm:text-scale-h2 text-gold font-normal px-1">
+          <h3 className="font-serif text-[24px] sm:text-scale-h3 md:text-scale-h2 font-bold text-primary mt-2">
+            {config.bride.shortName}{' '}
+            <span className="font-script text-[26px] sm:text-scale-h3 md:text-scale-h2 text-gold font-normal px-1">
               &
             </span>{' '}
-            {config.bride.shortName}
+            {config.groom.shortName}
           </h3>
 
           <FloralDivider className="w-28 h-6 text-gold mx-auto my-3" />

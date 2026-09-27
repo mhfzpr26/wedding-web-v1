@@ -7,7 +7,7 @@ export const TopMonogram = () => {
   const monogram = config.monogram || {
     enabled: true,
     useCustomInitials: false,
-    customInitials: 'K & S',
+    customInitials: 'D & R',
     separator: '&',
     tagline: 'The Wedding of',
     showTagline: true,
@@ -16,18 +16,18 @@ export const TopMonogram = () => {
 
   if (!monogram.enabled) return null;
 
-  // Tentukan teks inisial mempelai otomatis
-  const groomInitial = config.groom?.shortName
-    ? config.groom.shortName.charAt(0).toUpperCase()
-    : 'K';
+  // Tentukan teks inisial mempelai otomatis (Mempelai Wanita Dahulu)
   const brideInitial = config.bride?.shortName
     ? config.bride.shortName.charAt(0).toUpperCase()
-    : 'S';
+    : 'D';
+  const groomInitial = config.groom?.shortName
+    ? config.groom.shortName.charAt(0).toUpperCase()
+    : 'R';
   const defaultSeparator = monogram.separator || '&';
 
-  // Ekstraksi inisial & pemisah (mendukung otomatis & customInitials dengan format atas & bawah yang sama persis)
-  let firstInitial = groomInitial;
-  let secondInitial = brideInitial;
+  // Ekstraksi inisial & pemisah (Mempelai Wanita di Atas, Mempelai Pria di Bawah)
+  let firstInitial = brideInitial;
+  let secondInitial = groomInitial;
   let activeSeparator = defaultSeparator;
 
   if (monogram.useCustomInitials && monogram.customInitials) {

@@ -96,7 +96,7 @@ export const CoupleAvatar = ({
         <div className="relative z-10 w-full h-[95%] flex items-end justify-center">
           <img
             src="/images/custom-ornaments/invatera-couple-art.png"
-            alt="Mempelai Kevin & Sarah"
+            alt="Mempelai Destia & Raka"
             className="w-full h-full object-contain object-bottom drop-shadow-md"
           />
         </div>

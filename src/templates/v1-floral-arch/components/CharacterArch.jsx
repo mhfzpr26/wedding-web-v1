@@ -1,3 +1,7 @@
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useRef } from 'react';
 import { ScrollReveal } from '../../../components/common/ScrollReveal';
 import { useWedding } from '../../../context/WeddingContext';
 import {
@@ -6,6 +10,8 @@ import {
   FloralDivider,
 } from '../assets/VectorOrnaments';
 import { OrganicTitleBadge } from './OrganicTitleBadge';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const InstagramIcon = ({ className = 'w-3.5 h-3.5' }) => (
   <svg
@@ -25,6 +31,53 @@ const InstagramIcon = ({ className = 'w-3.5 h-3.5' }) => (
 
 export const CharacterArch = () => {
   const { config } = useWedding();
+  const coupleGridRef = useRef(null);
+
+  useGSAP(
+    () => {
+      // Animasi masuk kartu Mempelai Wanita dari kiri
+      gsap.from('.bride-profile-card', {
+        scrollTrigger: {
+          trigger: coupleGridRef.current,
+          start: 'top 85%',
+          toggleActions: 'play none none reverse',
+        },
+        x: -36,
+        opacity: 0,
+        duration: 0.9,
+        ease: 'power3.out',
+      });
+
+      // Animasi masuk kartu Mempelai Pria dari kanan
+      gsap.from('.groom-profile-card', {
+        scrollTrigger: {
+          trigger: coupleGridRef.current,
+          start: 'top 85%',
+          toggleActions: 'play none none reverse',
+        },
+        x: 36,
+        opacity: 0,
+        duration: 0.9,
+        ease: 'power3.out',
+      });
+
+      // Animasi ampersand (&) meletup anggun di tengah
+      gsap.from('.ampersand-badge', {
+        scrollTrigger: {
+          trigger: coupleGridRef.current,
+          start: 'top 85%',
+          toggleActions: 'play none none reverse',
+        },
+        scale: 0,
+        rotation: -45,
+        opacity: 0,
+        duration: 0.7,
+        delay: 0.2,
+        ease: 'back.out(2)',
+      });
+    },
+    { scope: coupleGridRef },
+  );
 
   return (
     <section className="relative pt-4 sm:pt-6 pb-12 px-3 sm:px-6 max-w-2xl sm:max-w-3xl mx-auto my-2 overflow-visible">
@@ -107,55 +160,14 @@ export const CharacterArch = () => {
             <CoupleAvatar />
           </div>
 
-          {/* 6. PROFIL MEMPELAI PRIA & MEMPELAI WANITA */}
+          {/* 6. PROFIL MEMPELAI WANITA & MEMPELAI PRIA (Mempelai Wanita Dahulu) */}
           <div className="relative z-10 w-full max-w-xl mx-auto my-6 px-1 sm:px-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative">
-              {/* Kartu Profil Mempelai Pria */}
-              <div className="group relative p-6 pt-7 pb-6 rounded-3xl bg-white/75 border border-gold/35 shadow-2xs backdrop-blur-xs flex flex-col items-center justify-between text-center overflow-hidden transition-all duration-300 hover:-translate-y-1">
-                {/* Garis Border Inset */}
-                <div className="absolute inset-2 rounded-2xl border border-gold/20 pointer-events-none" />
-
-                <div className="relative z-10 flex flex-col items-center mb-1">
-                  <span className="text-scale-xs tracking-widest uppercase font-semibold text-secondary block mb-1.5">
-                    Mempelai Pria
-                  </span>
-                  <h3 className="font-serif text-scale-h4 sm:text-scale-h3 font-bold text-primary mb-2">
-                    {config.groom?.fullName}
-                  </h3>
-                  <p className="text-scale-small text-muted leading-relaxed mb-4 px-1">
-                    {config.groom?.parents}
-                  </p>
-                </div>
-
-                {config.groom?.instagram && (
-                  <a
-                    href={config.groom.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="relative z-10 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-scale-xs font-semibold text-secondary bg-white hover:bg-gold hover:text-white transition-all border border-gold/35 shadow-2xs group-hover:border-gold"
-                  >
-                    <InstagramIcon className="w-3.5 h-3.5 text-gold group-hover:text-white" />
-                    <span>{config.groom?.shortName}</span>
-                  </a>
-                )}
-              </div>
-
-              {/* Medallion Ampersand (&) di Tengah */}
-              <div className="hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white border border-gold/60 shadow-soft items-center justify-center font-serif text-gold font-bold text-sm">
-                &
-              </div>
-
-              {/* Pemisah Ampersand untuk Mobile */}
-              <div className="md:hidden flex items-center justify-center gap-3 my-0.5">
-                <div className="flex-1 h-px bg-gold/25" />
-                <div className="w-7 h-7 rounded-full bg-white border border-gold/60 shadow-2xs flex items-center justify-center font-serif text-gold font-bold text-xs">
-                  &
-                </div>
-                <div className="flex-1 h-px bg-gold/25" />
-              </div>
-
+            <div
+              ref={coupleGridRef}
+              className="grid grid-cols-1 md:grid-cols-2 gap-6 relative"
+            >
               {/* Kartu Profil Mempelai Wanita */}
-              <div className="group relative p-6 pt-7 pb-6 rounded-3xl bg-white/75 border border-gold/35 shadow-2xs backdrop-blur-xs flex flex-col items-center justify-between text-center overflow-hidden transition-all duration-300 hover:-translate-y-1">
+              <div className="bride-profile-card will-change-transform group relative p-6 pt-7 pb-6 rounded-3xl bg-white/75 border border-gold/35 shadow-2xs backdrop-blur-xs flex flex-col items-center justify-between text-center overflow-hidden transition-all duration-300 hover:-translate-y-1">
                 {/* Garis Border Inset */}
                 <div className="absolute inset-2 rounded-2xl border border-gold/20 pointer-events-none" />
 
@@ -163,7 +175,7 @@ export const CharacterArch = () => {
                   <span className="text-scale-xs tracking-widest uppercase font-semibold text-secondary block mb-1.5">
                     Mempelai Wanita
                   </span>
-                  <h3 className="font-serif text-scale-h4 sm:text-scale-h3 font-bold text-primary mb-2">
+                  <h3 className="font-serif text-[21px] sm:text-scale-h4 md:text-scale-h3 font-bold text-primary mb-2">
                     {config.bride?.fullName}
                   </h3>
                   <p className="text-scale-small text-muted leading-relaxed mb-4 px-1">
@@ -180,6 +192,50 @@ export const CharacterArch = () => {
                   >
                     <InstagramIcon className="w-3.5 h-3.5 text-gold group-hover:text-white" />
                     <span>{config.bride?.shortName}</span>
+                  </a>
+                )}
+              </div>
+
+              {/* Medallion Ampersand (&) di Tengah */}
+              <div className="ampersand-badge will-change-transform hidden md:flex absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white border border-gold/60 shadow-soft items-center justify-center font-serif text-gold font-bold text-sm">
+                &
+              </div>
+
+              {/* Pemisah Ampersand untuk Mobile */}
+              <div className="ampersand-badge will-change-transform md:hidden flex items-center justify-center gap-3 my-0.5">
+                <div className="flex-1 h-px bg-gold/25" />
+                <div className="w-7 h-7 rounded-full bg-white border border-gold/60 shadow-2xs flex items-center justify-center font-serif text-gold font-bold text-xs">
+                  &
+                </div>
+                <div className="flex-1 h-px bg-gold/25" />
+              </div>
+
+              {/* Kartu Profil Mempelai Pria */}
+              <div className="groom-profile-card will-change-transform group relative p-6 pt-7 pb-6 rounded-3xl bg-white/75 border border-gold/35 shadow-2xs backdrop-blur-xs flex flex-col items-center justify-between text-center overflow-hidden transition-all duration-300 hover:-translate-y-1">
+                {/* Garis Border Inset */}
+                <div className="absolute inset-2 rounded-2xl border border-gold/20 pointer-events-none" />
+
+                <div className="relative z-10 flex flex-col items-center mb-1">
+                  <span className="text-scale-xs tracking-widest uppercase font-semibold text-secondary block mb-1.5">
+                    Mempelai Pria
+                  </span>
+                  <h3 className="font-serif text-[21px] sm:text-scale-h4 md:text-scale-h3 font-bold text-primary mb-2">
+                    {config.groom?.fullName}
+                  </h3>
+                  <p className="text-scale-small text-muted leading-relaxed mb-4 px-1">
+                    {config.groom?.parents}
+                  </p>
+                </div>
+
+                {config.groom?.instagram && (
+                  <a
+                    href={config.groom.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative z-10 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-scale-xs font-semibold text-secondary bg-white hover:bg-gold hover:text-white transition-all border border-gold/35 shadow-2xs group-hover:border-gold"
+                  >
+                    <InstagramIcon className="w-3.5 h-3.5 text-gold group-hover:text-white" />
+                    <span>{config.groom?.shortName}</span>
                   </a>
                 )}
               </div>

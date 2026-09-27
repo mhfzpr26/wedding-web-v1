@@ -28,6 +28,19 @@ export const WeddingProvider = ({ children }) => {
       const saved = localStorage.getItem('invatera_wedding_config');
       if (saved) {
         const parsed = JSON.parse(saved);
+        // Validasi sinkronisasi: jika versi berbeda atau nama mempelai di konfigurasi kode
+        // berbeda dengan yang tersimpan di localStorage browser, bersihkan cache lama agar data baru aktif
+        const isStale =
+          !parsed.version ||
+          parsed.version !== weddingConfig.version ||
+          parsed.groom?.fullName !== weddingConfig.groom?.fullName ||
+          parsed.bride?.fullName !== weddingConfig.bride?.fullName;
+
+        if (isStale) {
+          localStorage.removeItem('invatera_wedding_config');
+          return weddingConfig;
+        }
+
         return {
           ...weddingConfig,
           ...parsed,
@@ -76,12 +89,13 @@ export const WeddingProvider = ({ children }) => {
     setWeddingData((prev) => {
       const next =
         typeof updater === 'function' ? updater(prev) : { ...prev, ...updater };
+      const toSave = { ...next, version: weddingConfig.version };
       try {
-        localStorage.setItem('invatera_wedding_config', JSON.stringify(next));
+        localStorage.setItem('invatera_wedding_config', JSON.stringify(toSave));
       } catch (err) {
         console.warn('Gagal menyimpan ke localStorage:', err);
       }
-      return next;
+      return toSave;
     });
   };
 

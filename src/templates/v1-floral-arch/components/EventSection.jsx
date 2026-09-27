@@ -11,10 +11,10 @@ export const EventSection = () => {
   const createGoogleCalendarUrl = (event) => {
     const title = encodeURIComponent(event.calendarTitle || event.title);
     const details = encodeURIComponent(
-      `The Wedding of ${config.groom.shortName} & ${config.bride.shortName} - ${event.title}`,
+      `The Wedding of ${config.bride.shortName} & ${config.groom.shortName} - ${event.title}`,
     );
     const location = encodeURIComponent(`${event.venue}, ${event.address}`);
-    const cleanDate = (event.dateIso || '2026-10-24').replace(/-/g, '');
+    const cleanDate = (event.dateIso || '2026-11-14').replace(/-/g, '');
     const start = event.calendarStart || `${cleanDate}T090000`;
     const end = event.calendarEnd || `${cleanDate}T120000`;
     const dates = `${start}/${end}`;
