@@ -5,6 +5,7 @@ import {
   CoupleAvatar,
   FloralDivider,
 } from '../assets/VectorOrnaments';
+import { OrganicTitleBadge } from './OrganicTitleBadge';
 
 const InstagramIcon = ({ className = 'w-3.5 h-3.5' }) => (
   <svg
@@ -26,7 +27,7 @@ export const CharacterArch = () => {
   const { config } = useWedding();
 
   return (
-    <section className="relative py-12 px-3 sm:px-6 max-w-2xl sm:max-w-3xl mx-auto my-4 overflow-visible">
+    <section className="relative pt-4 sm:pt-6 pb-12 px-3 sm:px-6 max-w-2xl sm:max-w-3xl mx-auto my-2 overflow-visible">
       <ScrollReveal animation="fade-up" duration={850} repeat={true}>
         {/* KARTU TUNGGAL GERBANG KUBAH LENGKUNG PENUH (Continuous Cathedral Arch Portal) */}
         <div className="relative p-6 sm:p-10 md:p-12 pt-20 sm:pt-24 md:pt-28 pb-20 sm:pb-24 md:pb-28 cathedral-arch-portal luxury-pearl-card shadow-luxury border border-gold/45 flex flex-col items-center text-center overflow-hidden">
@@ -35,57 +36,70 @@ export const CharacterArch = () => {
           <div className="absolute inset-4 sm:inset-5 cathedral-arch-inner-dashed border border-dashed border-gold/20 pointer-events-none" />
 
           {/* Watermark Siluet Flora Alam Tipis di 4 Sudut Kubah */}
-          <CardBotanicalWatermark className="w-36 sm:w-48 opacity-[0.06] -top-2 -right-2 pointer-events-none" />
-          <CardBotanicalWatermark className="w-36 sm:w-48 opacity-[0.06] -top-2 -left-2 transform scale-x-[-1] pointer-events-none" />
-          <CardBotanicalWatermark className="w-36 sm:w-48 opacity-[0.06] -bottom-2 -right-2 pointer-events-none" />
-          <CardBotanicalWatermark className="w-36 sm:w-48 opacity-[0.06] -bottom-2 -left-2 transform scale-x-[-1] pointer-events-none" />
+          <CardBotanicalWatermark className="w-36 sm:w-48 opacity-[0.14] -top-2 -right-2 pointer-events-none" />
+          <CardBotanicalWatermark className="w-36 sm:w-48 opacity-[0.14] -top-2 -left-2 transform scale-x-[-1] pointer-events-none" />
+          <CardBotanicalWatermark className="w-36 sm:w-48 opacity-[0.14] -bottom-2 -right-2 pointer-events-none" />
+          <CardBotanicalWatermark className="w-36 sm:w-48 opacity-[0.14] -bottom-2 -left-2 transform scale-x-[-1] pointer-events-none" />
 
-          {/* 1. BAGIAN AYAT AL-QUR'AN (QS. AR-RUM: 21) */}
-          <div className="relative z-10 max-w-xl mx-auto mb-6">
-            <span className="font-serif italic text-gold text-lg sm:text-xl block mb-2 font-normal tracking-wide">
-              Bismillahirrohmaanirrohiim
-            </span>
+          {/* 1. BAGIAN AYAT AL-QUR'AN / KUTIPAN PERNIKAHAN */}
+          {(config.quote?.arabic ||
+            config.quote?.translation ||
+            config.greeting?.bismillah) && (
+            <div className="relative z-10 max-w-xl mx-auto mb-6">
+              {config.greeting?.bismillah && (
+                <span className="font-serif italic text-gold text-lg sm:text-xl block mb-2 font-normal tracking-wide">
+                  {config.greeting.bismillah}
+                </span>
+              )}
 
-            {/* Kaligrafi Arab */}
-            <p
-              className="font-['Amiri',_serif] text-2xl sm:text-3xl text-primary leading-[2.3] my-4 font-normal px-2 sm:px-6"
-              dir="rtl"
-            >
-              {config.quote?.arabic}
-            </p>
+              {/* Kaligrafi Arab (Jika Ada) */}
+              {config.quote?.arabic && (
+                <p
+                  className="font-['Amiri',_serif] text-2xl sm:text-3xl text-primary leading-[2.3] my-4 font-normal px-2 sm:px-6"
+                  dir="rtl"
+                >
+                  {config.quote.arabic}
+                </p>
+              )}
 
-            <FloralDivider className="w-32 h-5 text-gold mx-auto my-3 opacity-90" />
+              <FloralDivider className="w-32 h-5 text-gold mx-auto my-3 opacity-90" />
 
-            {/* Terjemahan Ayat */}
-            <p className="text-scale-small sm:text-scale-p text-muted leading-relaxed italic px-3 sm:px-6 max-w-lg mx-auto">
-              "{config.quote?.translation}"
-            </p>
+              {/* Terjemahan Ayat / Kutipan */}
+              {config.quote?.translation && (
+                <p className="text-scale-small sm:text-scale-p text-muted leading-relaxed italic px-3 sm:px-6 max-w-lg mx-auto">
+                  "{config.quote.translation}"
+                </p>
+              )}
 
-            <p className="text-scale-xs font-semibold text-secondary tracking-[0.25em] uppercase mt-4">
-              — {config.quote?.source} —
-            </p>
-          </div>
+              {config.quote?.source && (
+                <p className="text-scale-xs font-semibold text-secondary tracking-[0.25em] uppercase mt-4">
+                  — {config.quote.source} —
+                </p>
+              )}
 
-          {/* 3. PEMISAH ORNAMEN EMAS (Sacred Divider) */}
-          <div className="relative z-10 flex items-center justify-center gap-3 w-full max-w-xs mx-auto my-6">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gold/40 to-gold/70" />
-            <div className="w-2 h-2 rotate-45 border border-gold/70 bg-gold/20" />
-            <div className="flex-1 h-px bg-gradient-to-l from-transparent via-gold/40 to-gold/70" />
-          </div>
+              {/* Pembatas setelah kutipan / QS. Ar-Rum: 21 */}
+              <FloralDivider className="w-32 h-5 text-gold mx-auto mt-6 opacity-90" />
+            </div>
+          )}
 
-          {/* 4. SALAM & SAMBUTAN MEMPELAI */}
+          {/* 3. SALAM & SAMBUTAN MEMPELAI */}
           <div className="relative z-10 mb-6 max-w-lg mx-auto">
-            <span className="text-scale-xs uppercase tracking-[0.25em] text-secondary font-semibold block mb-1.5">
-              Assalamu’alaikum Warahmatullahi Wabarakatuh
-            </span>
-            <h2 className="font-serif text-scale-h3 sm:text-scale-h2 text-primary font-bold">
-              Mempelai Pengantin
-            </h2>
-            <FloralDivider className="w-32 h-5 text-gold mx-auto my-2" />
-            <p className="text-scale-small text-muted max-w-md mx-auto mt-2 leading-relaxed px-2">
-              Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud
-              menyelenggarakan syukuran pernikahan putra-putri kami:
+            {config.greeting?.salam && (
+              <span className="text-scale-xs uppercase tracking-[0.25em] text-secondary font-semibold block mb-2">
+                {config.greeting.salam}
+              </span>
+            )}
+            <p className="text-scale-small text-muted max-w-md mx-auto leading-relaxed px-2 mb-3">
+              {config.greeting?.introText ||
+                'Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud menyelenggarakan syukuran pernikahan putra-putri kami:'}
             </p>
+
+            {/* Pembatas dipindahkan ke bawah teks intro */}
+            <FloralDivider className="w-32 h-5 text-gold mx-auto my-3" />
+
+            <div className="mt-4">
+              <OrganicTitleBadge title="Mempelai Pengantin" />
+            </div>
           </div>
 
           {/* 5. ILUSTRASI PASANGAN "TOGETHER IN LOVE" */}
@@ -170,11 +184,6 @@ export const CharacterArch = () => {
                 )}
               </div>
             </div>
-          </div>
-
-          {/* 7. ORNAMEN PENUTUP KUBAH BAWAH */}
-          <div className="relative z-10 flex flex-col items-center mt-6">
-            <FloralDivider className="w-28 h-5 text-gold opacity-80" />
           </div>
         </div>
       </ScrollReveal>

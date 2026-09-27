@@ -17,9 +17,11 @@ export const BulkWhatsAppTool = () => {
     .map((name) => name.trim())
     .filter((name) => name.length > 0);
 
-  // Buat link unik per tamu
+  // Buat link unik per tamu (Pastikan slug /admin tidak terbawa ke link tamu)
   const getGuestUrl = (name) => {
-    const baseUrl = window.location.origin + window.location.pathname;
+    const cleanPath =
+      window.location.pathname.replace(/\/admin\/?$/i, '') || '';
+    const baseUrl = `${window.location.origin}${cleanPath}/`;
     return `${baseUrl}?to=${encodeURIComponent(name)}`;
   };
 

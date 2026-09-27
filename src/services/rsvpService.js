@@ -28,8 +28,11 @@ export const rsvpService = {
   /**
    * Dapatkan daftar ucapan (dari Google Sheets atau LocalStorage fallback)
    */
-  async getWishes() {
-    const scriptUrl = weddingConfig.integration?.googleAppsScriptUrl;
+  async getWishes(customScriptUrl) {
+    const scriptUrl =
+      customScriptUrl !== undefined
+        ? customScriptUrl
+        : weddingConfig.integration?.googleAppsScriptUrl;
 
     // Jika ada URL Google Apps Script yang valid
     if (scriptUrl?.startsWith('http')) {
@@ -61,8 +64,11 @@ export const rsvpService = {
   /**
    * Kirim konfirmasi kehadiran & ucapan
    */
-  async submitRSVP(payload) {
-    const scriptUrl = weddingConfig.integration?.googleAppsScriptUrl;
+  async submitRSVP(payload, customScriptUrl) {
+    const scriptUrl =
+      customScriptUrl !== undefined
+        ? customScriptUrl
+        : weddingConfig.integration?.googleAppsScriptUrl;
     const newWish = {
       id: `local-${Date.now()}`,
       name: payload.name,

@@ -10,11 +10,8 @@ import {
 import { useState } from 'react';
 import { ScrollReveal } from '../../../components/common/ScrollReveal';
 import { useWedding } from '../../../context/WeddingContext';
-import {
-  CardBotanicalWatermark,
-  FloralBranch,
-  FloralDivider,
-} from '../assets/VectorOrnaments';
+import { CardBotanicalWatermark } from '../assets/VectorOrnaments';
+import { OrganicTitleBadge } from './OrganicTitleBadge';
 
 // Helper inisial avatar tamu
 const getInitial = (name) => {
@@ -69,20 +66,12 @@ export const RSVPSection = () => {
 
   return (
     <section className="relative py-16 px-4 max-w-2xl mx-auto overflow-hidden">
-      {/* Ornamen Floral Halus di Sisi RSVP */}
-      <div className="absolute -top-4 right-14 pointer-events-none opacity-30 w-32 hidden lg:block">
-        <FloralBranch className="w-full h-auto transform rotate-45" />
-      </div>
-
       <ScrollReveal animation="fade-up" duration={750} repeat={true}>
         <div className="text-center mb-8">
-          <span className="text-scale-xs uppercase tracking-[0.25em] text-secondary font-semibold block mb-1.5">
-            Konfirmasi & Doa Restu
-          </span>
-          <h2 className="font-serif text-scale-h3 sm:text-scale-h2 text-primary font-bold">
-            Buku Tamu & RSVP
-          </h2>
-          <FloralDivider className="w-32 h-6 text-gold mx-auto my-2" />
+          <OrganicTitleBadge
+            subtitle="Konfirmasi & Doa Restu"
+            title="Buku Tamu & RSVP"
+          />
           <p className="text-scale-small text-muted max-w-md mx-auto mt-1 leading-relaxed">
             Mohon kesediaan Bapak/Ibu/Saudara/i untuk mengonfirmasi kehadiran
             dan memberikan doa restu.
@@ -103,7 +92,7 @@ export const RSVPSection = () => {
             <div className="absolute inset-2 rounded-[22px] border border-emerald-500/25 pointer-events-none" />
 
             {/* Watermark Flora Alam Halus */}
-            <CardBotanicalWatermark className="w-36 opacity-[0.06]" />
+            <CardBotanicalWatermark className="w-36 sm:w-44 opacity-[0.18]" />
 
             <div className="relative z-10">
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 mb-3">
@@ -148,7 +137,7 @@ export const RSVPSection = () => {
             <div className="absolute inset-2 rounded-[22px] border border-gold/25 pointer-events-none" />
 
             {/* Watermark Flora Alam Halus */}
-            <CardBotanicalWatermark className="w-44 sm:w-56 opacity-[0.08]" />
+            <CardBotanicalWatermark className="w-44 sm:w-56 opacity-[0.20]" />
 
             <div className="relative z-10 space-y-5">
               {/* NAMA TAMU (TERKUNCI / READ ONLY) */}
@@ -297,7 +286,7 @@ export const RSVPSection = () => {
                   className="relative p-4 sm:p-5 rounded-2xl luxury-pearl-card border border-gold/35 flex items-start gap-3.5 transition-all hover:-translate-y-0.5 overflow-hidden"
                 >
                   {/* Watermark Flora Halus */}
-                  <CardBotanicalWatermark className="w-24 sm:w-32 opacity-[0.05]" />
+                  <CardBotanicalWatermark className="w-24 sm:w-32 opacity-[0.15]" />
 
                   {/* Avatar Inisial Nama */}
                   <div className="relative z-10 shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-white to-gold/20 border-2 border-gold/40 flex items-center justify-center text-primary font-bold text-scale-small font-serif shadow-xs">

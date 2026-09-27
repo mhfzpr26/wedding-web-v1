@@ -35,9 +35,14 @@ export const WeddingProvider = ({ children }) => {
           groom: { ...weddingConfig.groom, ...(parsed.groom || {}) },
           bride: { ...weddingConfig.bride, ...(parsed.bride || {}) },
           quote: { ...weddingConfig.quote, ...(parsed.quote || {}) },
+          greeting: { ...weddingConfig.greeting, ...(parsed.greeting || {}) },
           brand: { ...weddingConfig.brand, ...(parsed.brand || {}) },
           theme: { ...weddingConfig.theme, ...(parsed.theme || {}) },
           audio: { ...weddingConfig.audio, ...(parsed.audio || {}) },
+          integration: {
+            ...weddingConfig.integration,
+            ...(parsed.integration || {}),
+          },
           gift: {
             ...weddingConfig.gift,
             ...(parsed.gift || {}),
@@ -107,7 +112,6 @@ export const WeddingProvider = ({ children }) => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const toParam = params.get('to');
-    const adminParam = params.get('admin');
 
     if (toParam && toParam.trim() !== '') {
       const decoded = decodeURIComponent(toParam.replace(/\+/g, ' ')).trim();
@@ -121,11 +125,35 @@ export const WeddingProvider = ({ children }) => {
       }
     }
 
-    if (adminParam === 'true' || adminParam === '1') {
+    // Deteksi route /admin murni
+    const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+    const isAdminSlug = path === '/admin' || path.endsWith('/admin');
+
+    if (isAdminSlug) {
       setIsAdminMode(true);
-      // Admin drawer tetap tertutup saat pertama load agar tidak memblokir layar undangan
+      setIsAdminPanelOpen(true); // Otomatis langsung buka Admin Drawer saat buka /admin
+    } else {
+      setIsAdminMode(false);
       setIsAdminPanelOpen(false);
     }
+  }, []);
+
+  // Sinkronisasi navigasi history browser (tombol back/forward)
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
+      const isAdminSlug = path === '/admin' || path.endsWith('/admin');
+      if (isAdminSlug) {
+        setIsAdminMode(true);
+        setIsAdminPanelOpen(true);
+      } else {
+        setIsAdminMode(false);
+        setIsAdminPanelOpen(false);
+      }
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
   }, []);
 
   // Update atribut data-theme di elemen <html> saat palet warna berganti
@@ -137,14 +165,16 @@ export const WeddingProvider = ({ children }) => {
   const loadWishes = useCallback(async () => {
     setIsLoadingWishes(true);
     try {
-      const data = await rsvpService.getWishes();
+      const data = await rsvpService.getWishes(
+        weddingData.integration?.googleAppsScriptUrl,
+      );
       setWishes(data);
     } catch (err) {
       console.error('Error fetching wishes:', err);
     } finally {
       setIsLoadingWishes(false);
     }
-  }, []);
+  }, [weddingData.integration?.googleAppsScriptUrl]);
 
   useEffect(() => {
     loadWishes();
@@ -181,12 +211,15 @@ export const WeddingProvider = ({ children }) => {
 
   // Submit RSVP
   const submitRSVP = async (data) => {
-    const result = await rsvpService.submitRSVP({
-      name: guestName,
-      attendance: data.attendance,
-      guestsCount: data.guestsCount,
-      message: data.message,
-    });
+    const result = await rsvpService.submitRSVP(
+      {
+        name: guestName,
+        attendance: data.attendance,
+        guestsCount: data.guestsCount,
+        message: data.message,
+      },
+      weddingData.integration?.googleAppsScriptUrl,
+    );
 
     setExistingConfirmation({
       name: guestName,

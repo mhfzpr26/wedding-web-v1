@@ -2,11 +2,8 @@ import { CalendarPlus, Clock, ExternalLink, MapPin } from 'lucide-react';
 import { CountdownTimer } from '../../../components/common/CountdownTimer';
 import { ScrollReveal } from '../../../components/common/ScrollReveal';
 import { useWedding } from '../../../context/WeddingContext';
-import {
-  CardBotanicalWatermark,
-  FloralBranch,
-  FloralDivider,
-} from '../assets/VectorOrnaments';
+import { CardBotanicalWatermark } from '../assets/VectorOrnaments';
+import { OrganicTitleBadge } from './OrganicTitleBadge';
 
 export const EventSection = () => {
   const { config } = useWedding();
@@ -17,26 +14,21 @@ export const EventSection = () => {
       `The Wedding of ${config.groom.shortName} & ${config.bride.shortName} - ${event.title}`,
     );
     const location = encodeURIComponent(`${event.venue}, ${event.address}`);
-    const dates = `${event.calendarStart}/${event.calendarEnd}`;
+    const cleanDate = (event.dateIso || '2026-10-24').replace(/-/g, '');
+    const start = event.calendarStart || `${cleanDate}T090000`;
+    const end = event.calendarEnd || `${cleanDate}T120000`;
+    const dates = `${start}/${end}`;
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}&location=${location}`;
   };
 
   return (
     <section className="relative py-16 px-4 max-w-3xl mx-auto overflow-hidden">
-      {/* Ornamen Floral Sudut Samping */}
-      <div className="absolute top-1/2 right-12 pointer-events-none opacity-30 w-24 hidden lg:block">
-        <FloralBranch className="w-full h-auto transform rotate-45" />
-      </div>
-
       <ScrollReveal animation="fade-up" duration={750} repeat={true}>
         <div className="text-center mb-6">
-          <span className="text-scale-xs uppercase tracking-[0.25em] text-secondary font-semibold block mb-1.5">
-            Waktu & Lokasi
-          </span>
-          <h2 className="font-serif text-scale-h3 sm:text-scale-h2 text-primary font-bold">
-            Rangkaian Acara
-          </h2>
-          <FloralDivider className="w-32 h-6 text-gold mx-auto my-2" />
+          <OrganicTitleBadge
+            subtitle="Waktu & Lokasi"
+            title="Rangkaian Acara"
+          />
         </div>
       </ScrollReveal>
 
@@ -66,7 +58,7 @@ export const EventSection = () => {
               <div className="absolute inset-2 rounded-[22px] border border-gold/25 pointer-events-none" />
 
               {/* Watermark Siluet Flora Alam Tipis di Sudut Bawah Kartu */}
-              <CardBotanicalWatermark className="w-40 sm:w-48 opacity-[0.08]" />
+              <CardBotanicalWatermark className="w-40 sm:w-48 opacity-[0.20]" />
 
               <div className="relative z-10">
                 {/* Header Pita Emas Kartu Acara */}

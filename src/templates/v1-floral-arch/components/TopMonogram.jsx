@@ -16,74 +16,92 @@ export const TopMonogram = () => {
 
   if (!monogram.enabled) return null;
 
-  // Tentukan teks inisial
+  // Tentukan teks inisial mempelai otomatis
   const groomInitial = config.groom?.shortName
     ? config.groom.shortName.charAt(0).toUpperCase()
     : 'K';
   const brideInitial = config.bride?.shortName
     ? config.bride.shortName.charAt(0).toUpperCase()
     : 'S';
-  const separator = monogram.separator || '&';
+  const defaultSeparator = monogram.separator || '&';
+
+  // Ekstraksi inisial & pemisah (mendukung otomatis & customInitials dengan format atas & bawah yang sama persis)
+  let firstInitial = groomInitial;
+  let secondInitial = brideInitial;
+  let activeSeparator = defaultSeparator;
+
+  if (monogram.useCustomInitials && monogram.customInitials) {
+    const raw = monogram.customInitials.trim();
+    // Pisahkan jika format custom berisi pemisah seperti K & S, K • S, dsb.
+    const match = raw.match(
+      /^([A-Za-z0-9]+)\s*([&•♥|–—\-+])?\s*([A-Za-z0-9]+)?$/,
+    );
+    if (match) {
+      firstInitial = match[1] || firstInitial;
+      if (match[2]) activeSeparator = match[2];
+      if (match[3]) secondInitial = match[3];
+    } else {
+      const parts = raw.split(/\s+/);
+      if (parts.length >= 2) {
+        firstInitial = parts[0];
+        secondInitial = parts[1];
+      }
+    }
+  }
 
   return (
-    <section className="relative pt-12 sm:pt-16 pb-4 px-4 max-w-sm sm:max-w-md mx-auto text-center select-none overflow-visible">
+    <section className="relative pt-12 sm:pt-16 md:pt-20 pb-4 px-4 max-w-sm sm:max-w-md md:max-w-lg mx-auto text-center select-none overflow-visible">
       <ScrollReveal animation="fade-up" duration={750} repeat={true}>
         {/* 1. Ambient Glow Emas Lembut di Belakang Inisial */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 sm:w-60 h-28 sm:h-36 rounded-full bg-gold/10 blur-2xl pointer-events-none -z-10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 sm:w-60 md:w-72 h-28 sm:h-36 md:h-44 rounded-full bg-gold/10 blur-2xl pointer-events-none -z-10" />
 
         {/* 2. Tagline Atas */}
         {monogram.showTagline && monogram.tagline && (
-          <div className="relative z-10 mb-4 sm:mb-5">
-            <span className="text-[10px] sm:text-scale-xs uppercase tracking-[0.4em] text-secondary font-semibold">
+          <div className="relative z-10 mb-2 sm:mb-3">
+            <span className="text-[10px] sm:text-scale-xs uppercase tracking-[0.4em] text-secondary font-semibold pl-[0.4em]">
               {monogram.tagline}
             </span>
           </div>
         )}
 
-        {/* 3. INISIAL NAMA PASANGAN ASIMETRIS (HURUF 1 KE ATAS SEDIKIT, HURUF 2 KE BAWAH SEDIKIT) */}
-        <div className="relative z-10 inline-flex items-center justify-center py-2 sm:py-3 px-4">
-          {monogram.useCustomInitials ? (
-            <h2 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold tracking-widest text-primary drop-shadow-[0_3px_10px_rgba(40,54,95,0.14)]">
-              {monogram.customInitials}
-            </h2>
-          ) : (
-            <div className="flex items-center justify-center gap-0.5 sm:gap-1.5">
-              {/* Huruf Mempelai 1: Naik Lebih Terlihat ke Atas */}
-              <span className="relative -translate-y-4 sm:-translate-y-5 font-serif text-5xl sm:text-6xl md:text-7xl font-bold text-primary tracking-tight drop-shadow-[0_4px_12px_rgba(40,54,95,0.15)] transition-transform duration-300">
-                {groomInitial}
-              </span>
+        {/* 3. INISIAL NAMA PASANGAN ASIMETRIS (HURUF 1 DI ATAS, HURUF 2 DI BAWAH) - RESPONSIVE MOBILE & DESKTOP */}
+        <div className="relative z-10 inline-flex items-center justify-center py-4 sm:py-6 md:py-8 px-4 sm:px-6">
+          <div className="flex items-center justify-center -space-x-1 sm:-space-x-2 md:-space-x-3">
+            {/* Huruf Mempelai 1: Naik Nyata ke Atas */}
+            <span className="relative -translate-y-5 sm:-translate-y-7 md:-translate-y-9 font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-primary tracking-tight drop-shadow-[0_4px_14px_rgba(40,54,95,0.18)] select-none transition-transform duration-300">
+              {firstInitial}
+            </span>
 
-              {/* Simbol Pemisah / Ampersand Anggun di Tengah */}
-              {separator === '&' ? (
-                <span className="font-['Great_Vibes'] text-4xl sm:text-5xl md:text-6xl text-gold font-normal px-1 sm:px-2 z-10 select-none drop-shadow-2xs">
-                  &
-                </span>
-              ) : separator === '•' ? (
-                <span className="text-gold text-2xl sm:text-3xl px-1.5 font-bold select-none">
-                  •
-                </span>
-              ) : separator === '♥' ? (
-                <span className="text-gold text-xl sm:text-2xl px-1.5 select-none">
-                  ♥
-                </span>
-              ) : (
-                <span className="font-serif text-3xl sm:text-4xl text-gold font-light px-2 select-none">
-                  {separator}
-                </span>
-              )}
-
-              {/* Huruf Mempelai 2: Turun Sedikit ke Bawah */}
-              <span className="relative translate-y-2.5 sm:translate-y-3.5 font-serif text-5xl sm:text-6xl md:text-7xl font-bold text-primary tracking-tight drop-shadow-[0_4px_12px_rgba(40,54,95,0.15)] transition-transform duration-300">
-                {brideInitial}
+            {/* Simbol Pemisah / Ampersand Anggun di Tengah */}
+            {activeSeparator === '&' ? (
+              <span className="font-['Great_Vibes'] text-4xl sm:text-5xl md:text-6xl text-gold font-normal px-1.5 sm:px-2.5 z-10 select-none drop-shadow-2xs leading-none">
+                &
               </span>
-            </div>
-          )}
+            ) : activeSeparator === '•' ? (
+              <span className="text-gold text-2xl sm:text-3xl md:text-4xl px-2 font-bold select-none leading-none">
+                •
+              </span>
+            ) : activeSeparator === '♥' ? (
+              <span className="text-gold text-xl sm:text-2xl md:text-3xl px-2 select-none leading-none">
+                ♥
+              </span>
+            ) : (
+              <span className="font-serif text-3xl sm:text-4xl md:text-5xl text-gold font-light px-2 select-none leading-none">
+                {activeSeparator}
+              </span>
+            )}
+
+            {/* Huruf Mempelai 2: Turun Nyata ke Bawah */}
+            <span className="relative translate-y-4 sm:translate-y-5 md:translate-y-7 font-serif text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-primary tracking-tight drop-shadow-[0_4px_14px_rgba(40,54,95,0.18)] select-none transition-transform duration-300">
+              {secondInitial}
+            </span>
+          </div>
         </div>
 
         {/* 4. Tanggal / Subtitle Bawah (Opsional) */}
         {monogram.showDate && config.events?.[0]?.dateFormatted && (
-          <div className="relative z-10 mt-3">
-            <p className="text-[10px] text-muted tracking-widest font-medium">
+          <div className="relative z-10 mt-2">
+            <p className="text-[10px] sm:text-scale-xs text-muted tracking-widest font-medium">
               {config.events[0].dateFormatted}
             </p>
           </div>

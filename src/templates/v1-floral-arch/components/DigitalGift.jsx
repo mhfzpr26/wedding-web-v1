@@ -3,10 +3,8 @@ import { useState } from 'react';
 import { CopyButton } from '../../../components/common/CopyButton';
 import { ScrollReveal } from '../../../components/common/ScrollReveal';
 import { useWedding } from '../../../context/WeddingContext';
-import {
-  CardBotanicalWatermark,
-  FloralDivider,
-} from '../assets/VectorOrnaments';
+import { CardBotanicalWatermark } from '../assets/VectorOrnaments';
+import { OrganicTitleBadge } from './OrganicTitleBadge';
 
 // Ikon Microchip Emas untuk Kartu ATM Mewah
 const CardChipIcon = () => (
@@ -52,13 +50,7 @@ export const DigitalGift = () => {
     <section className="relative py-16 px-4 max-w-xl mx-auto text-center overflow-hidden">
       <ScrollReveal animation="fade-up" duration={750} repeat={true}>
         <div className="mb-6">
-          <span className="text-scale-xs uppercase tracking-[0.25em] text-secondary font-semibold block mb-1.5">
-            Tanda Kasih
-          </span>
-          <h2 className="font-serif text-scale-h3 sm:text-scale-h2 text-primary font-bold">
-            Wedding Gift
-          </h2>
-          <FloralDivider className="w-32 h-6 text-gold mx-auto my-2" />
+          <OrganicTitleBadge subtitle="Tanda Kasih" title="Wedding Gift" />
           <p className="text-scale-small text-muted max-w-md mx-auto mt-2 leading-relaxed">
             Doa restu Anda merupakan karunia terindah bagi kami. Namun jika Anda
             bermaksud memberikan tanda kasih, Anda dapat menyampaikannya secara
@@ -154,7 +146,7 @@ export const DigitalGift = () => {
                 <div className="absolute inset-2 rounded-[22px] border border-gold/20 pointer-events-none" />
 
                 {/* Watermark Flora Alam Halus */}
-                <CardBotanicalWatermark className="w-40 opacity-[0.06]" />
+                <CardBotanicalWatermark className="w-40 sm:w-48 opacity-[0.20]" />
 
                 <div className="relative z-10 flex flex-col items-center">
                   <div className="inline-flex items-center justify-center w-11 h-11 rounded-full bg-gold/15 text-gold mb-3 border border-gold/40 shadow-xs">

@@ -3,44 +3,7 @@ import { MailOpen } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { useWedding } from '../../../context/WeddingContext';
 import { FloralCornerBunch, FloralDivider } from '../assets/VectorOrnaments';
-
-// Kunang-Kunang Emas Berpendar (Golden Firefly with Soft Radiant Bokeh)
-const GoldenFirefly = ({ className, delay = '0s', duration = '6.5s' }) => (
-  <div
-    className={`absolute pointer-events-none select-none z-10 w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#FFE29A] anim-firefly ${className}`}
-    style={{ animationDelay: delay, animationDuration: duration }}
-  />
-);
-
-// Debu Bintang Emas Berkilau (Twinkling Stardust)
-const GoldenStardust = ({ className, delay = '0s', duration = '8s' }) => (
-  <div
-    className={`absolute pointer-events-none select-none z-10 w-1.5 h-1.5 rounded-full bg-gold-light/80 anim-stardust ${className}`}
-    style={{ animationDelay: delay, animationDuration: duration }}
-  />
-);
-
-// Kelopak Bunga Halus Melayang
-const FloatingPetal = ({ className, delay = '0s', duration = '9s' }) => (
-  <div
-    className={`absolute pointer-events-none select-none z-10 opacity-35 ${className}`}
-    style={{ animationDelay: delay, animationDuration: duration }}
-  >
-    <svg
-      width="18"
-      height="22"
-      viewBox="0 0 24 28"
-      fill="none"
-      className="text-secondary-light/40"
-    >
-      <path
-        d="M12 0C18 7 24 16 19 23C14 28 7 27 3 22C-2 16 4 7 12 0Z"
-        fill="currentColor"
-        fillOpacity="0.5"
-      />
-    </svg>
-  </div>
-);
+import { FallingLeaves } from './FallingLeaves';
 
 export const CoverModal = () => {
   const { config, guestName, isOpened, openInvitation } = useWedding();
@@ -123,57 +86,8 @@ export const CoverModal = () => {
       <div className="absolute -bottom-24 -right-24 w-96 sm:w-[520px] h-96 sm:h-[520px] rounded-full bg-primary-light/40 blur-3xl pointer-events-none" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 sm:w-[560px] h-80 sm:h-[560px] rounded-full bg-primary-light/25 blur-2xl pointer-events-none" />
 
-      {/* 3. Kunang-kunang Emas & Debu Bintang Berpendar (Golden Stardust & Fireflies) */}
-      <GoldenFirefly
-        className="top-20 left-12 sm:left-28"
-        delay="0s"
-        duration="6s"
-      />
-      <GoldenFirefly
-        className="top-1/3 right-10 sm:right-32"
-        delay="1.8s"
-        duration="7s"
-      />
-      <GoldenFirefly
-        className="bottom-28 left-14 sm:left-36"
-        delay="3.2s"
-        duration="6.5s"
-      />
-      <GoldenFirefly
-        className="bottom-1/3 right-16 sm:right-40"
-        delay="4.5s"
-        duration="7.5s"
-      />
-
-      <GoldenStardust className="top-28 right-1/4" delay="0.5s" duration="8s" />
-      <GoldenStardust className="top-1/2 left-16" delay="2.2s" duration="9s" />
-      <GoldenStardust
-        className="bottom-36 left-1/3"
-        delay="4.0s"
-        duration="7.5s"
-      />
-      <GoldenStardust
-        className="bottom-24 right-1/4"
-        delay="1.2s"
-        duration="8.5s"
-      />
-
-      {/* Kelopak Bunga Lembut Melayang */}
-      <FloatingPetal
-        className="top-16 left-8 sm:left-20"
-        delay="0s"
-        duration="10s"
-      />
-      <FloatingPetal
-        className="top-1/4 right-8 sm:right-24"
-        delay="3s"
-        duration="11s"
-      />
-      <FloatingPetal
-        className="bottom-20 left-10 sm:left-24"
-        delay="5s"
-        duration="9.5s"
-      />
+      {/* 3. Efek Partikel Daun Emas Gugur Melayang 3D (Falling Golden Botanical Leaves) */}
+      <FallingLeaves />
 
       {/* 4. Ornamen Buket Bunga Transparan di 2 SUDUT BERLAWANAN secara Simetris (Living Botanical Sway) */}
       {/* Sudut 1: Kanan Atas - Menempel pas di sudut kanan atas */}
@@ -189,7 +103,7 @@ export const CoverModal = () => {
       {/* 5. KONTEN COVER POLOS (TANPA KOTAK CARD / FRAMELESS) */}
       <div className="relative z-20 w-full max-w-xl mx-auto my-auto text-center px-4 py-6 flex flex-col items-center justify-center">
         <p className="text-scale-xs uppercase tracking-[0.35em] text-[#E5C77A] font-medium mb-1">
-          The Wedding of
+          {config.monogram?.tagline || 'The Wedding of'}
         </p>
 
         {/* Nama Mempelai Megah (Putih & Emas Bersinar di atas Navy) */}

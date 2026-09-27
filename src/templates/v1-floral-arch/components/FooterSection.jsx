@@ -1,10 +1,10 @@
-import { Heart, Settings } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import { ScrollReveal } from '../../../components/common/ScrollReveal';
 import { useWedding } from '../../../context/WeddingContext';
 import { FloralDivider } from '../assets/VectorOrnaments';
 
 export const FooterSection = () => {
-  const { config, setIsAdminPanelOpen } = useWedding();
+  const { config } = useWedding();
 
   return (
     <footer className="relative py-16 px-4 text-center border-t border-gold/30 bg-base-surface/50 mt-16 overflow-hidden">
@@ -37,43 +37,35 @@ export const FooterSection = () => {
           duration={800}
           repeat={true}
         >
-          <div className="pt-6 flex flex-col items-center justify-center gap-1.5 opacity-90">
-            <a
-              href={config.brand.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 hover:opacity-100 transition-opacity"
-            >
-              <img
-                src={config.brand.logo}
-                alt={config.brand.name}
-                className="h-7 w-auto object-contain"
-              />
-              <span className="font-sans font-bold text-sm tracking-wider text-primary">
-                {config.brand.name}
+          <div className="pt-6 flex flex-col items-center justify-center select-none text-center">
+            {/* Symmetrical Brand Lockup Box */}
+            <div className="inline-flex flex-col items-center justify-center">
+              {/* Line 1: [ ICON LOGO ] + INVATERA */}
+              <div className="flex items-center justify-center gap-2 sm:gap-2.5">
+                <img
+                  src={config.brand.logo}
+                  alt={config.brand.name}
+                  className="h-5 sm:h-6 w-auto object-contain shrink-0"
+                />
+                <span className="font-sans font-bold text-sm sm:text-base tracking-[0.2em] text-primary uppercase leading-none">
+                  {config.brand.name}
+                </span>
+              </div>
+
+              {/* Line 2: DIGITAL INVITATIONS (Centered directly under the icon + brand name) */}
+              <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.28em] text-muted font-medium text-center mt-1.5 pl-[0.28em]">
+                {config.brand.tagline}
               </span>
-            </a>
-            <span className="text-[9px] uppercase tracking-[0.25em] text-muted font-semibold">
-              {config.brand.tagline}
-            </span>
-            <p className="text-[10px] text-muted/60 mt-1 flex items-center gap-1">
+            </div>
+
+            {/* Line 3: Crafted with ♥ for your special day */}
+            <p className="text-[10px] text-muted/60 mt-2.5 flex items-center justify-center gap-1 font-light tracking-wide text-center">
               <span>Crafted with</span>
-              <Heart className="w-2.5 h-2.5 text-rose-500 fill-rose-500" />
+              <Heart className="w-2.5 h-2.5 text-rose-500 fill-rose-500 inline-block" />
               <span>for your special day</span>
             </p>
           </div>
         </ScrollReveal>
-
-        {/* Tombol Tersembunyi untuk Akses Admin / Helper Tool */}
-        <div className="pt-6">
-          <button
-            onClick={() => setIsAdminPanelOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] text-muted/60 hover:text-primary hover:bg-white/60 transition-colors"
-          >
-            <Settings className="w-3 h-3" />
-            <span>Admin & Tools Agensi</span>
-          </button>
-        </div>
       </div>
     </footer>
   );

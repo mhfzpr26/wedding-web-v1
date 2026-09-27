@@ -49,6 +49,10 @@ export const ContentEditor = () => {
     updateSection('quote', { [field]: value });
   };
 
+  const handleGreetingChange = (field, value) => {
+    updateSection('greeting', { [field]: value });
+  };
+
   const handleAudioChange = (field, value) => {
     updateSection('audio', { [field]: value });
   };
@@ -70,6 +74,9 @@ export const ContentEditor = () => {
       venue: 'Gedung Serbaguna',
       address: 'Jl. Mawar Indah No. 10, Jakarta',
       googleMapsUrl: 'https://maps.google.com',
+      calendarTitle: 'Acara Pernikahan',
+      calendarStart: '20261024T190000',
+      calendarEnd: '20261024T210000',
     };
     updateWeddingData({ events: [...(config.events || []), newEvent] });
   };
@@ -304,6 +311,26 @@ export const ContentEditor = () => {
                   ? 'Menggunakan teks kustom yang Anda ketik di atas.'
                   : `Otomatis: Huruf "${config.groom?.shortName?.[0] || 'K'}" naik ke atas, huruf "${config.bride?.shortName?.[0] || 'S'}" turun ke bawah.`}
               </p>
+            </div>
+
+            {/* Toggle Tampilkan Tanggal di Bawah Inisial */}
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+              <div>
+                <p className="font-bold text-[11px] text-primary">
+                  Tampilkan Tanggal di Bawah Monogram
+                </p>
+                <p className="text-[10px] text-muted">
+                  Menampilkan tanggal acara di bawah inisial nama
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={config.monogram?.showDate || false}
+                onChange={(e) =>
+                  handleMonogramChange('showDate', e.target.checked)
+                }
+                className="w-4 h-4 accent-gold cursor-pointer"
+              />
             </div>
           </div>
         )}
@@ -663,10 +690,69 @@ export const ContentEditor = () => {
         </button>
 
         {activeSection === 'quote' && (
-          <div className="p-4 space-y-3 border-t border-slate-100 bg-white">
+          <div className="p-4 space-y-3.5 border-t border-slate-100 bg-white">
+            {/* Salam & Pembuka (Universal untuk semua agama/adat) */}
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+              <span className="font-bold text-[11px] text-primary uppercase tracking-wider block">
+                🕊️ Salam & Sambutan (Dapat Disesuaikan Agama / Adat)
+              </span>
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-600 mb-0.5">
+                  Bismillah / Kalimat Suci Puncak (Kosongkan jika non-muslim):
+                </label>
+                <input
+                  type="text"
+                  value={
+                    config.greeting?.bismillah ?? 'Bismillahirrohmaanirrohiim'
+                  }
+                  onChange={(e) =>
+                    handleGreetingChange('bismillah', e.target.value)
+                  }
+                  placeholder="Bismillahirrohmaanirrohiim"
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:border-gold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-600 mb-0.5">
+                  Salam Pembuka (Contoh: Assalamu'alaikum..., Shalom, Salam
+                  Sejahtera):
+                </label>
+                <input
+                  type="text"
+                  value={
+                    config.greeting?.salam ??
+                    'Assalamu’alaikum Warahmatullahi Wabarakatuh'
+                  }
+                  onChange={(e) =>
+                    handleGreetingChange('salam', e.target.value)
+                  }
+                  placeholder="Assalamu’alaikum Warahmatullahi Wabarakatuh"
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:border-gold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-semibold text-slate-600 mb-0.5">
+                  Kalimat Pengantar Syukuran / Undangan:
+                </label>
+                <textarea
+                  rows={2}
+                  value={
+                    config.greeting?.introText ??
+                    'Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud menyelenggarakan syukuran pernikahan putra-putri kami:'
+                  }
+                  onChange={(e) =>
+                    handleGreetingChange('introText', e.target.value)
+                  }
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs bg-white focus:outline-none focus:border-gold"
+                />
+              </div>
+            </div>
+
             <div>
               <label className="block text-[10px] font-semibold text-slate-600 mb-0.5">
-                Teks Arab:
+                Teks Arab / Kaligrafi (Kosongkan jika tidak memakai):
               </label>
               <textarea
                 dir="rtl"
@@ -733,7 +819,30 @@ export const ContentEditor = () => {
         </button>
 
         {activeSection === 'stories' && (
-          <div className="p-4 space-y-3 border-t border-slate-100 bg-white">
+          <div className="p-4 space-y-3.5 border-t border-slate-100 bg-white">
+            {/* Toggle Tampilkan Seksi Love Story */}
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+              <div>
+                <p className="font-bold text-[11px] text-primary">
+                  Tampilkan Seksi Kisah Cinta
+                </p>
+                <p className="text-[10px] text-muted">
+                  Matikan jika pengantin tidak ingin menampilkan alur love story
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={config.storiesEnabled !== false}
+                  onChange={(e) =>
+                    updateWeddingData({ storiesEnabled: e.target.checked })
+                  }
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gold"></div>
+              </label>
+            </div>
+
             {(config.stories || []).map((story, idx) => (
               <div
                 key={idx}
@@ -838,6 +947,29 @@ export const ContentEditor = () => {
 
         {activeSection === 'gifts' && (
           <div className="p-4 space-y-4 border-t border-slate-100 bg-white">
+            {/* Toggle Tampilkan Seksi Amplop Digital */}
+            <div className="flex items-center justify-between p-2.5 rounded-lg bg-slate-50 border border-slate-200">
+              <div>
+                <p className="font-bold text-[11px] text-primary">
+                  Tampilkan Seksi Amplop Digital & Hadiah
+                </p>
+                <p className="text-[10px] text-muted">
+                  Matikan jika pengantin tidak ingin membuka opsi hadiah/amplop
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={config.gift?.enabled ?? true}
+                  onChange={(e) =>
+                    updateSection('gift', { enabled: e.target.checked })
+                  }
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-gold"></div>
+              </label>
+            </div>
+
             {/* Rekening Bank */}
             <div className="space-y-2.5">
               <span className="font-bold text-[11px] text-primary block">
@@ -930,49 +1062,70 @@ export const ContentEditor = () => {
             </div>
 
             {/* Alamat Kado Fisik */}
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
-              <span className="font-bold text-[11px] text-primary block">
-                📦 Pengiriman Kado Fisik:
-              </span>
-              <div>
-                <label className="block text-[10px] font-semibold text-slate-600 mb-0.5">
-                  Nama Penerima & No HP:
+            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-[11px] text-primary">
+                  📦 Pengiriman Kado Fisik (Paket)
+                </span>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={config.gift?.physicalGift?.enabled ?? true}
+                    onChange={(e) =>
+                      handlePhysicalGiftChange('enabled', e.target.checked)
+                    }
+                    className="sr-only peer"
+                  />
+                  <div className="w-8 h-4 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-gold"></div>
                 </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    value={config.gift?.physicalGift?.recipientName || ''}
-                    onChange={(e) =>
-                      handlePhysicalGiftChange('recipientName', e.target.value)
-                    }
-                    placeholder="Nama Penerima"
-                    className="w-full px-2 py-1 rounded border border-slate-200 text-xs bg-white focus:outline-none focus:border-gold"
-                  />
-                  <input
-                    type="text"
-                    value={config.gift?.physicalGift?.phone || ''}
-                    onChange={(e) =>
-                      handlePhysicalGiftChange('phone', e.target.value)
-                    }
-                    placeholder="0812-xxxx-xxxx"
-                    className="w-full px-2 py-1 rounded border border-slate-200 text-xs bg-white focus:outline-none focus:border-gold"
-                  />
+              </div>
+
+              {config.gift?.physicalGift?.enabled !== false && (
+                <div className="space-y-2 pt-1 border-t border-slate-200">
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-600 mb-0.5">
+                      Nama Penerima & No HP:
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        value={config.gift?.physicalGift?.recipientName || ''}
+                        onChange={(e) =>
+                          handlePhysicalGiftChange(
+                            'recipientName',
+                            e.target.value,
+                          )
+                        }
+                        placeholder="Nama Penerima"
+                        className="w-full px-2 py-1 rounded border border-slate-200 text-xs bg-white focus:outline-none focus:border-gold"
+                      />
+                      <input
+                        type="text"
+                        value={config.gift?.physicalGift?.phone || ''}
+                        onChange={(e) =>
+                          handlePhysicalGiftChange('phone', e.target.value)
+                        }
+                        placeholder="0812-xxxx-xxxx"
+                        className="w-full px-2 py-1 rounded border border-slate-200 text-xs bg-white focus:outline-none focus:border-gold"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-semibold text-slate-600 mb-0.5">
+                      Alamat Lengkap Pengiriman:
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={config.gift?.physicalGift?.address || ''}
+                      onChange={(e) =>
+                        handlePhysicalGiftChange('address', e.target.value)
+                      }
+                      placeholder="Jl. ..."
+                      className="w-full px-2 py-1 rounded border border-slate-200 text-xs bg-white focus:outline-none focus:border-gold"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div>
-                <label className="block text-[10px] font-semibold text-slate-600 mb-0.5">
-                  Alamat Lengkap Pengiriman:
-                </label>
-                <textarea
-                  rows={2}
-                  value={config.gift?.physicalGift?.address || ''}
-                  onChange={(e) =>
-                    handlePhysicalGiftChange('address', e.target.value)
-                  }
-                  placeholder="Jl. ..."
-                  className="w-full px-2 py-1 rounded border border-slate-200 text-xs bg-white focus:outline-none focus:border-gold"
-                />
-              </div>
+              )}
             </div>
           </div>
         )}

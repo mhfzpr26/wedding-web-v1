@@ -23,21 +23,9 @@ const FloralArchFrame = ({
   />
 );
 
-export const FloralBranch = ({
-  className = 'w-32 sm:w-40 h-auto',
-  style = {},
-}) => (
-  <img
-    src="/images/custom-ornaments/invatera-floral-branch.png"
-    alt="Floral Branch"
-    className={`ref-floral-ornament pointer-events-none select-none object-contain drop-shadow-xs ${className}`}
-    style={style}
-  />
-);
-
 // Watermark Siluet Flora Alam Tipis untuk Dalam Kartu (Subtle Botanical Card Watermark)
 export const CardBotanicalWatermark = ({
-  className = 'w-36 sm:w-48 opacity-[0.07]',
+  className = 'w-36 sm:w-48 opacity-[0.18]',
 }) => (
   <div
     className={`absolute -bottom-2 -right-2 pointer-events-none select-none z-0 mix-blend-multiply overflow-hidden ${className}`}

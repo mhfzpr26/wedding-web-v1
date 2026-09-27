@@ -15,19 +15,29 @@ import { ContentEditor } from './ContentEditor';
 import { TemplateSelector } from './TemplateSelector';
 
 export const AdminDrawer = () => {
-  const { config, isAdminPanelOpen, setIsAdminPanelOpen } = useWedding();
+  const { config, isAdminPanelOpen, setIsAdminPanelOpen, updateSection } =
+    useWedding();
   const [activeTab, setActiveTab] = useState('content');
   const [scriptCopied, setScriptCopied] = useState(false);
 
   if (!isAdminPanelOpen) return null;
 
-  const isSheetConnected = Boolean(config.integration?.googleAppsScriptUrl);
+  const isSheetConnected = Boolean(
+    config.integration?.googleAppsScriptUrl?.trim(),
+  );
 
   const copyScriptTutorial = () => {
     const text = `Petunjuk Google Apps Script INVATERA:\n1. Buka Google Sheet klien Anda\n2. Extensions > Apps Script\n3. Salin kode dari file docs/GoogleAppsScript_Template.js\n4. Deploy > New Deployment > Web app > Access: Anyone\n5. Masukkan URL ke weddingConfig.js`;
     navigator.clipboard.writeText(text);
     setScriptCopied(true);
     setTimeout(() => setScriptCopied(false), 2000);
+  };
+
+  const handleCloseDrawer = () => {
+    setIsAdminPanelOpen(false);
+    if (window.location.pathname.toLowerCase().endsWith('/admin')) {
+      window.history.pushState({}, '', '/');
+    }
   };
 
   return (
@@ -39,7 +49,7 @@ export const AdminDrawer = () => {
             <img
               src={config.brand.logo}
               alt={config.brand.name}
-              className="h-7 w-auto object-contain bg-white rounded p-0.5"
+              className="h-7 w-auto object-contain drop-shadow-xs"
             />
             <div>
               <div className="flex items-center gap-1.5">
@@ -57,8 +67,9 @@ export const AdminDrawer = () => {
           </div>
 
           <button
-            onClick={() => setIsAdminPanelOpen(false)}
+            onClick={handleCloseDrawer}
             className="p-1.5 rounded-lg hover:bg-white/10 text-slate-300 hover:text-white transition-colors"
+            title="Tutup & Kembali ke Undangan"
           >
             <X className="w-5 h-5" />
           </button>
@@ -170,15 +181,37 @@ export const AdminDrawer = () => {
                 <div>
                   <p className="text-xs font-bold">
                     {isSheetConnected
-                      ? '✓ Terhubung ke Google Sheets'
+                      ? '✓ Terhubung ke Google Sheets Klien'
                       : '⚡ Mode Pitching / Demo (LocalStorage)'}
                   </p>
                   <p className="text-[11px] opacity-85 mt-0.5">
                     {isSheetConnected
-                      ? 'Data RSVP langsung tersinkronisasi ke Google Drive klien.'
+                      ? 'Data RSVP langsung tersinkronisasi otomatis ke Google Spreadsheet klien.'
                       : 'Data tersimpan di browser lokal. Web tetap berfungsi penuh untuk demo ke calon klien.'}
                   </p>
                 </div>
+              </div>
+
+              {/* Form Input URL Google Apps Script */}
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+                <label className="block text-xs font-bold text-primary">
+                  URL Web App Google Apps Script (RSVP):
+                </label>
+                <input
+                  type="text"
+                  value={config.integration?.googleAppsScriptUrl || ''}
+                  onChange={(e) =>
+                    updateSection('integration', {
+                      googleAppsScriptUrl: e.target.value.trim(),
+                    })
+                  }
+                  placeholder="https://script.google.com/macros/s/.../exec"
+                  className="w-full px-2.5 py-2 rounded-lg border border-slate-300 text-xs bg-white font-mono focus:outline-none focus:border-gold"
+                />
+                <p className="text-[10px] text-muted">
+                  Tempelkan URL Web App dari Apps Script. Kosongkan kolom jika
+                  ingin kembali ke mode demo lokal.
+                </p>
               </div>
 
               {/* Petunjuk Setup */}
@@ -236,8 +269,8 @@ export const AdminDrawer = () => {
 
         {/* Footer Admin Drawer */}
         <div className="p-3 bg-slate-100 border-t border-slate-200 text-center text-[10px] text-muted">
-          <span>{config.brand.name} Agency Studio • Tip: Buka dengan URL </span>
-          <code className="text-primary font-bold">?admin=true</code>
+          <span>{config.brand.name} Agency Studio • Akses via URL: </span>
+          <code className="text-primary font-bold">/admin</code>
         </div>
       </div>
     </div>

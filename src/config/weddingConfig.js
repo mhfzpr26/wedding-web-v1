@@ -51,6 +51,14 @@ export const weddingConfig = {
     googleAppsScriptUrl: '', // Isi dengan URL Web App Google Apps Script klien
   },
 
+  // Salam & Pembuka Sambutan Mempelai (Bisa disesuaikan untuk berbagai agama/adat/nasional)
+  greeting: {
+    bismillah: 'Bismillahirrohmaanirrohiim',
+    salam: 'Assalamu’alaikum Warahmatullahi Wabarakatuh',
+    introText:
+      'Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud menyelenggarakan syukuran pernikahan putra-putri kami:',
+  },
+
   // Kutipan Pembuka / Ayat Suci
   quote: {
     arabic:
@@ -113,6 +121,7 @@ export const weddingConfig = {
   ],
 
   // Kisah Cinta (Timeline)
+  storiesEnabled: true,
   stories: [
     {
       year: '2021',

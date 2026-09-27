@@ -1,33 +1,24 @@
 import { Heart } from 'lucide-react';
 import { ScrollReveal } from '../../../components/common/ScrollReveal';
 import { useWedding } from '../../../context/WeddingContext';
-import {
-  CardBotanicalWatermark,
-  FloralBranch,
-  FloralDivider,
-} from '../assets/VectorOrnaments';
+import { CardBotanicalWatermark } from '../assets/VectorOrnaments';
+import { OrganicTitleBadge } from './OrganicTitleBadge';
 
 export const StorySection = () => {
   const { config } = useWedding();
 
-  if (!config.stories || config.stories.length === 0) return null;
+  if (
+    config.storiesEnabled === false ||
+    !config.stories ||
+    config.stories.length === 0
+  )
+    return null;
 
   return (
     <section className="relative py-16 px-5 sm:px-8 max-w-2xl mx-auto my-8 rounded-[36px] bg-gradient-to-b from-base-surface/40 via-base-surface/75 to-base-surface/40 border border-gold/30 shadow-xs overflow-hidden">
-      {/* Kelopak Bunga Melayang di Sisi Cerita */}
-      <div className="absolute top-12 right-5 sm:right-6 pointer-events-none opacity-40">
-        <FloralBranch className="w-10 sm:w-12 h-auto transform rotate-45" />
-      </div>
-
       <ScrollReveal animation="fade-up" duration={750} repeat={true}>
         <div className="text-center mb-8">
-          <span className="text-scale-xs uppercase tracking-[0.25em] text-secondary font-semibold block mb-1.5">
-            Kisah Kami
-          </span>
-          <h2 className="font-serif text-scale-h3 sm:text-scale-h2 text-primary font-bold">
-            Love Story
-          </h2>
-          <FloralDivider className="w-32 h-6 text-gold mx-auto my-2" />
+          <OrganicTitleBadge subtitle="Kisah Kami" title="Love Story" />
         </div>
       </ScrollReveal>
 
@@ -53,7 +44,7 @@ export const StorySection = () => {
                 <div className="absolute inset-1.5 rounded-xl border border-gold/20 pointer-events-none" />
 
                 {/* Watermark Flora Alam Halus */}
-                <CardBotanicalWatermark className="w-28 sm:w-36 opacity-[0.06]" />
+                <CardBotanicalWatermark className="w-32 sm:w-40 opacity-[0.20]" />
 
                 <div className="relative z-10">
                   <span className="inline-block px-3 py-0.5 rounded-full text-scale-xs font-bold tracking-wider bg-primary text-white border border-gold/30 mb-2 shadow-2xs">

@@ -1,5 +1,6 @@
 import { FloatingMusic } from '../../components/common/FloatingMusic';
 import { useWedding } from '../../context/WeddingContext';
+import { CathedralArchBackdrop } from './components/CathedralArchBackdrop';
 import { CharacterArch } from './components/CharacterArch';
 import { CoverModal } from './components/CoverModal';
 import { DigitalGift } from './components/DigitalGift';
@@ -16,10 +17,10 @@ const TemplateV1FloralArch = () => {
     <div
       className={`relative min-h-screen min-h-[100dvh] bg-base overflow-x-clip ${!isOpened ? 'h-[100dvh] overflow-hidden' : ''} selection:bg-gold selection:text-white transition-colors duration-500`}
     >
-      {/* Dynamic Fine-Art Cotton Paper Backdrop (Soft Sky Mist Nature Watercolor Canvas) */}
+      {/* Dynamic Fine-Art Cotton Paper Backdrop with Grand Cathedral Arch Watermark */}
       <div className="fixed inset-0 fine-art-paper-bg pointer-events-none transition-colors duration-700" />
-      <div className="fixed inset-0 nature-watercolor-overlay pointer-events-none" />
-      <div className="fixed inset-0 fine-art-paper-texture pointer-events-none" />
+      <CathedralArchBackdrop />
+      <div className="fixed inset-0 fine-art-paper-texture pointer-events-none opacity-45" />
 
       {/* 1. Cover Modal (Halaman Pembuka & Unlock Audio) */}
       <CoverModal />
