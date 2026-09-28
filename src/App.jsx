@@ -1,22 +1,18 @@
-import { AdminDrawer } from './components/admin/AdminDrawer';
+import { AdminPage } from './components/admin/AdminPage';
 import { useWedding, WeddingProvider } from './context/WeddingContext';
 import { getTemplateById } from './templates/registry';
 
 const WeddingAppContent = () => {
-  const { activeTemplateId } = useWedding();
+  const { isAdminMode, activeTemplateId } = useWedding();
 
-  // Ambil komponen template aktif dari Registry
+  // Jika URL adalah /admin, tampilkan Halaman Admin Khusus (Standalone Page)
+  if (isAdminMode) {
+    return <AdminPage />;
+  }
+
+  // Jika bukan /admin, tampilkan Website Undangan Pernikahan secara murni
   const ActiveTemplateComponent = getTemplateById(activeTemplateId).component;
-
-  return (
-    <div className="relative min-h-screen">
-      {/* Render Template Aktif */}
-      <ActiveTemplateComponent />
-
-      {/* Panel Kontrol Admin (Hanya tampil saat URL /admin dibuka) */}
-      <AdminDrawer />
-    </div>
-  );
+  return <ActiveTemplateComponent />;
 };
 
 export default function App() {

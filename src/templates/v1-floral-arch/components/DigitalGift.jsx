@@ -47,9 +47,9 @@ export const DigitalGift = () => {
   if (!config.gift?.enabled) return null;
 
   return (
-    <section className="relative py-16 px-4 max-w-xl mx-auto text-center overflow-hidden">
+    <section className="relative py-8 sm:py-10 px-4 max-w-xl mx-auto text-center overflow-hidden">
       <ScrollReveal animation="fade-up" duration={750} repeat={true}>
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-5">
           <OrganicTitleBadge subtitle="Tanda Kasih" title="Wedding Gift" />
           <p className="text-scale-small text-muted max-w-md mx-auto mt-2 leading-relaxed">
             Doa restu Anda merupakan karunia terindah bagi kami. Namun jika Anda
@@ -61,18 +61,18 @@ export const DigitalGift = () => {
         {/* Tombol Segel Amplop Digital (Royal Wax Seal Button) */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="group inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-gradient-to-r from-gold/15 via-white to-gold/15 border-2 border-gold/45 shadow-soft hover:shadow-glow/40 text-primary hover:text-gold-dark text-scale-small font-bold tracking-wider transition-all duration-300 active:scale-95 mb-6 cursor-pointer"
+          className="group inline-flex items-center gap-2.5 px-7 sm:px-9 py-3.5 rounded-full bg-gradient-to-r from-gold via-gold-light to-gold text-primary font-bold text-scale-small tracking-wider shadow-[0_6px_20px_rgba(200,160,70,0.32)] hover:shadow-[0_8px_25px_rgba(200,160,70,0.48)] hover:brightness-105 active:scale-95 transition-all duration-300 mb-4 border border-white/40 cursor-pointer"
         >
-          <div className="w-6 h-6 rounded-full bg-gold/20 flex items-center justify-center text-gold group-hover:scale-110 transition-transform">
-            <Gift className="w-3.5 h-3.5 text-gold" />
+          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+            <Gift className="w-3.5 h-3.5 text-primary" />
           </div>
           <span>
             {isOpen ? 'Tutup Amplop Digital' : 'Buka Amplop Digital & Rekening'}
           </span>
           {isOpen ? (
-            <ChevronUp className="w-4 h-4 text-gold" />
+            <ChevronUp className="w-4 h-4 text-primary" />
           ) : (
-            <ChevronDown className="w-4 h-4 text-gold" />
+            <ChevronDown className="w-4 h-4 text-primary" />
           )}
         </button>
       </ScrollReveal>
@@ -126,7 +126,8 @@ export const DigitalGift = () => {
                   <CopyButton
                     textToCopy={account.accountNumber}
                     label="Salin Rekening"
-                    className="bg-gold hover:bg-gold-light text-primary font-bold shadow-md self-start sm:self-auto"
+                    variant="gold"
+                    className="self-start sm:self-auto"
                   />
                 </div>
               </div>

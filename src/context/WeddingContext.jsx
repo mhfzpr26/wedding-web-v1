@@ -28,19 +28,6 @@ export const WeddingProvider = ({ children }) => {
       const saved = localStorage.getItem('invatera_wedding_config');
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Validasi sinkronisasi: jika versi berbeda atau nama mempelai di konfigurasi kode
-        // berbeda dengan yang tersimpan di localStorage browser, bersihkan cache lama agar data baru aktif
-        const isStale =
-          !parsed.version ||
-          parsed.version !== weddingConfig.version ||
-          parsed.groom?.fullName !== weddingConfig.groom?.fullName ||
-          parsed.bride?.fullName !== weddingConfig.bride?.fullName;
-
-        if (isStale) {
-          localStorage.removeItem('invatera_wedding_config');
-          return weddingConfig;
-        }
-
         return {
           ...weddingConfig,
           ...parsed,
@@ -75,6 +62,8 @@ export const WeddingProvider = ({ children }) => {
     return weddingConfig;
   });
 
+  const [isDirty, setIsDirty] = useState(false);
+
   // Template & Preset Warna Dinamis
   const [activeTemplateId, setActiveTemplateId] = useState(
     weddingData.theme?.templateId || 'v1-floral-arch',
@@ -84,18 +73,18 @@ export const WeddingProvider = ({ children }) => {
   );
   const [isAdminPanelOpen, setIsAdminPanelOpen] = useState(false);
 
-  // Helper untuk update data konfigurasi
+  // Helper untuk update data konfigurasi di state
   const updateWeddingData = (updater) => {
     setWeddingData((prev) => {
       const next =
         typeof updater === 'function' ? updater(prev) : { ...prev, ...updater };
-      const toSave = { ...next, version: weddingConfig.version };
+      setIsDirty(true);
       try {
-        localStorage.setItem('invatera_wedding_config', JSON.stringify(toSave));
+        localStorage.setItem('invatera_wedding_config', JSON.stringify(next));
       } catch (err) {
         console.warn('Gagal menyimpan ke localStorage:', err);
       }
-      return toSave;
+      return next;
     });
   };
 
@@ -109,9 +98,63 @@ export const WeddingProvider = ({ children }) => {
     }));
   };
 
+  // Simpan data permanen (ke LocalStorage & File Fisik src/config/weddingConfig.js via Vite API)
+  const saveWeddingConfig = async (customData) => {
+    const dataToSave = customData || weddingData;
+
+    // 1. Simpan ke localStorage
+    try {
+      localStorage.setItem(
+        'invatera_wedding_config',
+        JSON.stringify(dataToSave),
+      );
+    } catch (e) {
+      console.warn('LocalStorage error:', e);
+    }
+
+    // 2. Kirim ke Vite Server untuk menimpa file src/config/weddingConfig.js
+    let savedToFile = false;
+    let message = 'Perubahan berhasil disimpan ke browser lokal!';
+
+    try {
+      const res = await fetch('/api/save-config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dataToSave),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        savedToFile = true;
+        message = json.message || 'Berhasil disimpan permanen ke file proyek!';
+      }
+    } catch (err) {
+      console.info(
+        'Mode standalone/preview (tanpa Vite API server), tersimpan di browser:',
+        err,
+      );
+    }
+
+    setIsDirty(false);
+    return { success: true, savedToFile, message };
+  };
+
+  // Unduh file weddingConfig.js sebagai cadangan
+  const downloadConfigFile = () => {
+    const fileContent = `/**\n * =======================================================================\n * INVATERA - WEDDING CONFIGURATION (SINGLE SOURCE OF TRUTH)\n * =======================================================================\n * File ini diunduh dari Admin Studio.\n */\n\nexport const weddingConfig = ${JSON.stringify(weddingData, null, 2)};\n`;
+    const blob = new Blob([fileContent], { type: 'text/javascript' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'weddingConfig.js';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const resetWeddingData = () => {
     localStorage.removeItem('invatera_wedding_config');
     setWeddingData(weddingConfig);
+    setIsDirty(false);
     if (weddingConfig.theme?.colorPreset) {
       setActiveColorPreset(weddingConfig.theme.colorPreset);
     }
@@ -253,7 +296,10 @@ export const WeddingProvider = ({ children }) => {
         config: weddingData,
         updateWeddingData,
         updateSection,
+        saveWeddingConfig,
+        downloadConfigFile,
         resetWeddingData,
+        isDirty,
         guestName,
         hasCustomGuest,
         isAdminMode,
@@ -276,15 +322,18 @@ export const WeddingProvider = ({ children }) => {
       }}
     >
       {children}
-      {/* Hidden Global Audio Element */}
-      <audio
-        ref={audioRef}
-        src={
-          weddingData.audio?.externalAudio || weddingConfig.audio.externalAudio
-        }
-        preload="auto"
-        loop
-      />
+      {/* Hidden Global Audio Element (Hanya aktif di luar Admin Mode) */}
+      {!isAdminMode && (
+        <audio
+          ref={audioRef}
+          src={
+            weddingData.audio?.externalAudio ||
+            weddingConfig.audio.externalAudio
+          }
+          preload="auto"
+          loop
+        />
+      )}
     </WeddingContext.Provider>
   );
 };

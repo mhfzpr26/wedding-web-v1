@@ -80,10 +80,10 @@ export const CharacterArch = () => {
   );
 
   return (
-    <section className="relative pt-4 sm:pt-6 pb-12 px-3 sm:px-6 max-w-2xl sm:max-w-3xl mx-auto my-2 overflow-visible">
+    <section className="relative pt-2 sm:pt-4 pb-4 sm:pb-6 px-3 sm:px-6 max-w-2xl sm:max-w-3xl mx-auto my-1 overflow-visible">
       <ScrollReveal animation="fade-up" duration={850} repeat={true}>
         {/* KARTU TUNGGAL GERBANG KUBAH LENGKUNG PENUH (Continuous Cathedral Arch Portal) */}
-        <div className="relative p-6 sm:p-10 md:p-12 pt-20 sm:pt-24 md:pt-28 pb-20 sm:pb-24 md:pb-28 cathedral-arch-portal luxury-pearl-card shadow-luxury border border-gold/45 flex flex-col items-center text-center overflow-hidden">
+        <div className="relative p-5 sm:p-8 md:p-10 pt-12 sm:pt-16 md:pt-20 pb-20 sm:pb-24 md:pb-28 cathedral-arch-portal luxury-pearl-card shadow-luxury border border-gold/45 flex flex-col items-center text-center overflow-hidden">
           {/* Garis Border Ganda Bagian Dalam (Concentric Continuous Arch Hairlines) */}
           <div className="absolute inset-2.5 sm:inset-3.5 cathedral-arch-inner-solid border border-gold/30 pointer-events-none" />
           <div className="absolute inset-4 sm:inset-5 cathedral-arch-inner-dashed border border-dashed border-gold/20 pointer-events-none" />
@@ -98,9 +98,9 @@ export const CharacterArch = () => {
           {(config.quote?.arabic ||
             config.quote?.translation ||
             config.greeting?.bismillah) && (
-            <div className="relative z-10 max-w-xl mx-auto mb-6">
+            <div className="relative z-10 max-w-xl mx-auto mb-4">
               {config.greeting?.bismillah && (
-                <span className="font-serif italic text-gold text-lg sm:text-xl block mb-2 font-normal tracking-wide">
+                <span className="font-serif italic text-gold text-lg sm:text-xl block mb-1.5 font-normal tracking-wide">
                   {config.greeting.bismillah}
                 </span>
               )}
@@ -108,14 +108,14 @@ export const CharacterArch = () => {
               {/* Kaligrafi Arab (Jika Ada) */}
               {config.quote?.arabic && (
                 <p
-                  className="font-['Amiri',_serif] text-2xl sm:text-3xl text-primary leading-[2.3] my-4 font-normal px-2 sm:px-6"
+                  className="font-['Amiri',_serif] text-2xl sm:text-3xl text-primary leading-[2.2] my-2.5 sm:my-3 font-normal px-2 sm:px-6"
                   dir="rtl"
                 >
                   {config.quote.arabic}
                 </p>
               )}
 
-              <FloralDivider className="w-32 h-5 text-gold mx-auto my-3 opacity-90" />
+              <FloralDivider className="w-32 h-5 text-gold mx-auto my-2 opacity-90" />
 
               {/* Terjemahan Ayat / Kutipan */}
               {config.quote?.translation && (
@@ -125,46 +125,46 @@ export const CharacterArch = () => {
               )}
 
               {config.quote?.source && (
-                <p className="text-scale-xs font-semibold text-secondary tracking-[0.25em] uppercase mt-4">
+                <p className="text-scale-xs font-semibold text-secondary tracking-[0.25em] uppercase mt-2.5">
                   — {config.quote.source} —
                 </p>
               )}
 
               {/* Pembatas setelah kutipan / QS. Ar-Rum: 21 */}
-              <FloralDivider className="w-32 h-5 text-gold mx-auto mt-6 opacity-90" />
+              <FloralDivider className="w-32 h-5 text-gold mx-auto mt-4 opacity-90" />
             </div>
           )}
 
           {/* 3. SALAM & SAMBUTAN MEMPELAI */}
-          <div className="relative z-10 mb-6 max-w-lg mx-auto">
+          <div className="relative z-10 mb-4 max-w-lg mx-auto">
             {config.greeting?.salam && (
-              <span className="text-scale-xs uppercase tracking-[0.25em] text-secondary font-semibold block mb-2">
+              <span className="text-scale-xs uppercase tracking-[0.25em] text-secondary font-semibold block mb-1.5">
                 {config.greeting.salam}
               </span>
             )}
-            <p className="text-scale-small text-muted max-w-md mx-auto leading-relaxed px-2 mb-3">
+            <p className="text-scale-small text-muted max-w-md mx-auto leading-relaxed px-2 mb-2">
               {config.greeting?.introText ||
                 'Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud menyelenggarakan syukuran pernikahan putra-putri kami:'}
             </p>
 
             {/* Pembatas dipindahkan ke bawah teks intro */}
-            <FloralDivider className="w-32 h-5 text-gold mx-auto my-3" />
+            <FloralDivider className="w-32 h-5 text-gold mx-auto my-2" />
 
-            <div className="mt-4">
+            <div className="mt-2.5">
               <OrganicTitleBadge title="Mempelai Pengantin" />
             </div>
           </div>
 
           {/* 5. ILUSTRASI PASANGAN "TOGETHER IN LOVE" */}
-          <div className="relative z-10 my-6">
+          <div className="relative z-10 my-3 sm:my-4">
             <CoupleAvatar />
           </div>
 
           {/* 6. PROFIL MEMPELAI WANITA & MEMPELAI PRIA (Mempelai Wanita Dahulu) */}
-          <div className="relative z-10 w-full max-w-xl mx-auto my-6 px-1 sm:px-3">
+          <div className="relative z-10 w-full max-w-xl mx-auto mt-3 sm:mt-4 mb-3 px-1.5 sm:px-3">
             <div
               ref={coupleGridRef}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6 relative"
+              className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 relative"
             >
               {/* Kartu Profil Mempelai Wanita */}
               <div className="bride-profile-card will-change-transform group relative p-6 pt-7 pb-6 rounded-3xl bg-white/75 border border-gold/35 shadow-2xs backdrop-blur-xs flex flex-col items-center justify-between text-center overflow-hidden transition-all duration-300 hover:-translate-y-1">

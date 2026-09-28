@@ -22,9 +22,9 @@ export const EventSection = () => {
   };
 
   return (
-    <section className="relative py-16 px-4 max-w-3xl mx-auto overflow-hidden">
+    <section className="relative pt-4 sm:pt-6 pb-8 sm:pb-12 px-4 max-w-3xl mx-auto overflow-hidden">
       <ScrollReveal animation="fade-up" duration={750} repeat={true}>
-        <div className="text-center mb-6">
+        <div className="text-center mb-3 sm:mb-4">
           <OrganicTitleBadge
             subtitle="Waktu & Lokasi"
             title="Rangkaian Acara"
@@ -43,7 +43,7 @@ export const EventSection = () => {
       </ScrollReveal>
 
       {/* Daftar Kartu Acara (Desain Papan Acara / Regal Calendar Plaque) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 my-4 sm:my-6">
         {config.events.map((event, idx) => (
           <ScrollReveal
             key={event.id || idx}

@@ -526,47 +526,47 @@ body {
 .cathedral-arch-portal {
   border-top-left-radius: 50% 160px;
   border-top-right-radius: 50% 160px;
-  border-bottom-left-radius: 50% 160px;
-  border-bottom-right-radius: 50% 160px;
+  border-bottom-left-radius: 50% 90px;
+  border-bottom-right-radius: 50% 90px;
 }
 
 @media (min-width: 640px) {
   .cathedral-arch-portal {
     border-top-left-radius: 50% 210px;
     border-top-right-radius: 50% 210px;
-    border-bottom-left-radius: 50% 210px;
-    border-bottom-right-radius: 50% 210px;
+    border-bottom-left-radius: 50% 120px;
+    border-bottom-right-radius: 50% 120px;
   }
 }
 
 .cathedral-arch-inner-solid {
   border-top-left-radius: 50% 150px;
   border-top-right-radius: 50% 150px;
-  border-bottom-left-radius: 50% 150px;
-  border-bottom-right-radius: 50% 150px;
+  border-bottom-left-radius: 50% 82px;
+  border-bottom-right-radius: 50% 82px;
 }
 
 @media (min-width: 640px) {
   .cathedral-arch-inner-solid {
     border-top-left-radius: 50% 200px;
     border-top-right-radius: 50% 200px;
-    border-bottom-left-radius: 50% 200px;
-    border-bottom-right-radius: 50% 200px;
+    border-bottom-left-radius: 50% 112px;
+    border-bottom-right-radius: 50% 112px;
   }
 }
 
 .cathedral-arch-inner-dashed {
   border-top-left-radius: 50% 142px;
   border-top-right-radius: 50% 142px;
-  border-bottom-left-radius: 50% 142px;
-  border-bottom-right-radius: 50% 142px;
+  border-bottom-left-radius: 50% 76px;
+  border-bottom-right-radius: 50% 76px;
 }
 
 @media (min-width: 640px) {
   .cathedral-arch-inner-dashed {
     border-top-left-radius: 50% 190px;
     border-top-right-radius: 50% 190px;
-    border-bottom-left-radius: 50% 190px;
-    border-bottom-right-radius: 50% 190px;
+    border-bottom-left-radius: 50% 104px;
+    border-bottom-right-radius: 50% 104px;
   }
 }

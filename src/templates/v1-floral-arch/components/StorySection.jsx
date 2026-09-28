@@ -15,15 +15,15 @@ export const StorySection = () => {
     return null;
 
   return (
-    <section className="relative py-16 px-5 sm:px-8 max-w-2xl mx-auto my-8 rounded-[36px] bg-gradient-to-b from-base-surface/40 via-base-surface/75 to-base-surface/40 border border-gold/30 shadow-xs overflow-hidden">
+    <section className="relative py-8 sm:py-10 px-4 sm:px-8 max-w-2xl mx-auto my-4 sm:my-6 rounded-[32px] sm:rounded-[36px] bg-gradient-to-b from-base-surface/40 via-base-surface/75 to-base-surface/40 border border-gold/30 shadow-xs overflow-hidden">
       <ScrollReveal animation="fade-up" duration={750} repeat={true}>
-        <div className="text-center mb-8">
+        <div className="text-center mb-4 sm:mb-6">
           <OrganicTitleBadge subtitle="Kisah Kami" title="Love Story" />
         </div>
       </ScrollReveal>
 
       {/* Alur Garis Waktu Emas (Golden Narrative Ribbon) */}
-      <div className="relative ml-2 sm:ml-4 pl-10 sm:pl-11 space-y-7 before:absolute before:top-4 before:bottom-4 before:left-3.5 sm:before:left-3.5 before:w-[2px] before:bg-gradient-to-b before:from-gold/20 via-gold before:to-gold/20">
+      <div className="relative ml-2 sm:ml-4 pl-10 sm:pl-11 space-y-4 sm:space-y-5 before:absolute before:top-4 before:bottom-4 before:left-3.5 sm:before:left-3.5 before:w-[2px] before:bg-gradient-to-b before:from-gold/20 via-gold before:to-gold/20">
         {config.stories.map((story, index) => (
           <ScrollReveal
             key={index}

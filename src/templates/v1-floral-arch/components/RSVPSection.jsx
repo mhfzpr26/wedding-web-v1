@@ -65,9 +65,9 @@ export const RSVPSection = () => {
   };
 
   return (
-    <section className="relative py-16 px-4 max-w-2xl mx-auto overflow-hidden">
+    <section className="relative py-8 sm:py-10 px-4 max-w-2xl mx-auto overflow-hidden">
       <ScrollReveal animation="fade-up" duration={750} repeat={true}>
-        <div className="text-center mb-8">
+        <div className="text-center mb-4 sm:mb-6">
           <OrganicTitleBadge
             subtitle="Konfirmasi & Doa Restu"
             title="Buku Tamu & RSVP"

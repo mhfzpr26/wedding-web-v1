@@ -6,7 +6,7 @@ import TemplateV1FloralArch from './v1-floral-arch';
  * 1. Buat folder baru di `src/templates/v2-nama-template/`
  * 2. Daftarkan di objek TEMPLATES di bawah ini.
  */
-export const TEMPLATES = {
+const TEMPLATES = {
   'v1-floral-arch': {
     id: 'v1-floral-arch',
     name: 'Template V1 - Floral Arch Vector',
