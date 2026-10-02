@@ -59,9 +59,11 @@ export const AdminPage = () => {
   };
 
   const handleOpenPreview = () => {
-    const cleanPath =
-      window.location.pathname.replace(/\/admin\/?$/i, '') || '';
-    const previewUrl = `${window.location.origin}${cleanPath}/`;
+    let cleanPath = window.location.pathname.replace(/\/admin\/?$/i, '') || '';
+    if (!cleanPath || cleanPath === '/') {
+      cleanPath = '/destia-raka';
+    }
+    const previewUrl = `${window.location.origin}${cleanPath.replace(/\/+$/, '')}/`;
     window.open(previewUrl, '_blank');
   };
 

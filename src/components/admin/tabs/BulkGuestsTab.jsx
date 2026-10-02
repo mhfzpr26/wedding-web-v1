@@ -34,9 +34,11 @@ export const BulkGuestsTab = ({ config }) => {
 
   // Buat link unik per tamu (Pastikan slug /admin tidak terbawa ke link tamu)
   const getGuestUrl = (name) => {
-    const cleanPath =
-      window.location.pathname.replace(/\/admin\/?$/i, '') || '';
-    const baseUrl = `${window.location.origin}${cleanPath}/`;
+    let cleanPath = window.location.pathname.replace(/\/admin\/?$/i, '') || '';
+    if (!cleanPath || cleanPath === '/') {
+      cleanPath = '/destia-raka';
+    }
+    const baseUrl = `${window.location.origin}${cleanPath.replace(/\/+$/, '')}/`;
     return `${baseUrl}?to=${encodeURIComponent(name)}`;
   };
 
