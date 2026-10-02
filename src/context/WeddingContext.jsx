@@ -224,9 +224,13 @@ export const WeddingProvider = ({ children }) => {
       }
     }
 
-    // Deteksi route /admin murni
+    // Deteksi route /admin murni (Canonical: selalu di /admin tanpa slug pasangan)
     const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
-    const isAdminSlug = path === '/admin' || path.endsWith('/admin');
+    if (path !== '/admin' && path.endsWith('/admin')) {
+      window.location.replace('/admin');
+      return;
+    }
+    const isAdminSlug = path === '/admin';
 
     if (isAdminSlug) {
       setIsAdminMode(true);
@@ -241,7 +245,11 @@ export const WeddingProvider = ({ children }) => {
   useEffect(() => {
     const handleLocationChange = () => {
       const path = window.location.pathname.toLowerCase().replace(/\/+$/, '');
-      const isAdminSlug = path === '/admin' || path.endsWith('/admin');
+      if (path !== '/admin' && path.endsWith('/admin')) {
+        window.location.replace('/admin');
+        return;
+      }
+      const isAdminSlug = path === '/admin';
       if (isAdminSlug) {
         setIsAdminMode(true);
         setIsAdminPanelOpen(true);
