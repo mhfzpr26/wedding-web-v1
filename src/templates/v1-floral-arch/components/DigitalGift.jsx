@@ -79,7 +79,7 @@ export const DigitalGift = () => {
 
       {/* Konten Amplop Digital (Desain Kartu ATM Mewah) */}
       {isOpen && (
-        <div className="space-y-6 transition-all duration-500 animate-fadeIn">
+        <div className="space-y-6 transition-all duration-700 animate-in fade-in slide-in-from-top-4">
           {/* Daftar Kartu Bank Bertema ATM Eksklusif */}
           {config.gift.accounts?.map((account, idx) => (
             <ScrollReveal
@@ -90,6 +90,9 @@ export const DigitalGift = () => {
               repeat={true}
             >
               <div className="relative p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-[#1C2B4E] via-[#28365F] to-[#122347] text-white shadow-luxury border border-gold/45 flex flex-col justify-between overflow-hidden text-left">
+                {/* Efek Kilau Hologram Kartu ATM */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-metallic-sweep pointer-events-none" />
+
                 {/* Ornamen Lingkaran Refleksi Kartu */}
                 <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-white/5 pointer-events-none" />
                 <div className="absolute right-12 bottom-0 w-24 h-24 rounded-full bg-gold/10 pointer-events-none" />

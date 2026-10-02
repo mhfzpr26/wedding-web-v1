@@ -13,8 +13,8 @@ export const ScrollReveal = ({
   delay = 0, // Delay kemunculan dalam milidetik (ms)
   duration = 750, // Durasi animasi (ms)
   repeat = true, // true = animasi berjalan bolak-balik saat scroll down & up
-  threshold = 0.12, // Berapa persen elemen terlihat sebelum memicu animasi
-  rootMargin = '0px 0px -30px 0px',
+  threshold = 0.08, // Berapa persen elemen terlihat sebelum memicu animasi
+  rootMargin = '40px 0px 40px 0px',
   className = '',
   style = {},
   as: Component = 'div',

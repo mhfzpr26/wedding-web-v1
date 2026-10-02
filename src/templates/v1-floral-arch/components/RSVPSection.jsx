@@ -48,11 +48,13 @@ export const RSVPSection = () => {
       });
 
       confetti({
-        particleCount: 50,
-        spread: 65,
-        origin: { y: 0.8 },
-        colors: ['#28365F', '#A87F01', '#CAD6E4'],
-        ticks: 150,
+        particleCount: 70,
+        spread: 75,
+        origin: { y: 0.72 },
+        colors: ['#A87F01', '#DCB658', '#28365F', '#CAD6E4', '#FAF3E0'],
+        ticks: 200,
+        gravity: 0.85,
+        scalar: 1.15,
       });
 
       setMessage('');

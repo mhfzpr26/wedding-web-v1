@@ -8,15 +8,18 @@ export const FloatingMusic = () => {
   if (!isOpened) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-40">
+    <div className="fixed bottom-6 right-6 z-40 animate-in fade-in zoom-in-75 duration-700">
       <button
         onClick={toggleMusic}
         aria-label={isPlaying ? 'Jeda Musik' : 'Putar Musik'}
-        className="group relative flex items-center justify-center w-12 h-12 rounded-full bg-white/90 backdrop-blur-md border border-gold/50 shadow-luxury text-primary hover:text-gold transition-all duration-300 hover:scale-110 active:scale-95"
+        className="group relative flex items-center justify-center w-12 h-12 rounded-full bg-white/95 backdrop-blur-md border border-gold/50 shadow-luxury text-primary hover:text-gold transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
       >
-        {/* Glow effect saat musik berputar */}
+        {/* Breathing Gold Halo saat musik berputar */}
         {isPlaying && (
-          <span className="absolute -inset-1 rounded-full bg-gold/20 animate-ping opacity-75 pointer-events-none" />
+          <>
+            <span className="absolute -inset-1 rounded-full bg-gold/25 blur-xs animate-pulse pointer-events-none" />
+            <span className="absolute -inset-2 rounded-full border border-gold/30 animate-ping opacity-30 pointer-events-none" />
+          </>
         )}
 
         {/* Piringan / Icon musik */}

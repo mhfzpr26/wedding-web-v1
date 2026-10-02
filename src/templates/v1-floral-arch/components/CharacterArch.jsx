@@ -35,45 +35,88 @@ export const CharacterArch = () => {
 
   useGSAP(
     () => {
-      // Animasi masuk kartu Mempelai Wanita dari kiri
-      gsap.from('.bride-profile-card', {
-        scrollTrigger: {
-          trigger: coupleGridRef.current,
-          start: 'top 85%',
-          toggleActions: 'play none none reverse',
-        },
-        x: -36,
-        opacity: 0,
-        duration: 0.9,
-        ease: 'power3.out',
+      const mm = gsap.matchMedia();
+
+      // Mobile (< 768px): Vertical Stagger Cascade (mengalir alami mengikuti scroll vertikal)
+      mm.add('(max-width: 767px)', () => {
+        gsap.from('.bride-profile-card', {
+          scrollTrigger: {
+            trigger: coupleGridRef.current,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+          },
+          y: 28,
+          opacity: 0,
+          duration: 0.85,
+          ease: 'power3.out',
+        });
+
+        gsap.from('.ampersand-badge', {
+          scrollTrigger: {
+            trigger: coupleGridRef.current,
+            start: 'top 80%',
+            toggleActions: 'play none none none',
+          },
+          scale: 0.4,
+          opacity: 0,
+          duration: 0.6,
+          delay: 0.12,
+          ease: 'back.out(2)',
+        });
+
+        gsap.from('.groom-profile-card', {
+          scrollTrigger: {
+            trigger: coupleGridRef.current,
+            start: 'top 75%',
+            toggleActions: 'play none none none',
+          },
+          y: 28,
+          opacity: 0,
+          duration: 0.85,
+          delay: 0.22,
+          ease: 'power3.out',
+        });
       });
 
-      // Animasi masuk kartu Mempelai Pria dari kanan
-      gsap.from('.groom-profile-card', {
-        scrollTrigger: {
-          trigger: coupleGridRef.current,
-          start: 'top 85%',
-          toggleActions: 'play none none reverse',
-        },
-        x: 36,
-        opacity: 0,
-        duration: 0.9,
-        ease: 'power3.out',
-      });
+      // Desktop (>= 768px): Horizontal Entrance dari Kiri & Kanan
+      mm.add('(min-width: 768px)', () => {
+        gsap.from('.bride-profile-card', {
+          scrollTrigger: {
+            trigger: coupleGridRef.current,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+          },
+          x: -36,
+          opacity: 0,
+          duration: 0.9,
+          ease: 'power3.out',
+        });
 
-      // Animasi ampersand (&) meletup anggun di tengah
-      gsap.from('.ampersand-badge', {
-        scrollTrigger: {
-          trigger: coupleGridRef.current,
-          start: 'top 85%',
-          toggleActions: 'play none none reverse',
-        },
-        scale: 0,
-        rotation: -45,
-        opacity: 0,
-        duration: 0.7,
-        delay: 0.2,
-        ease: 'back.out(2)',
+        gsap.from('.groom-profile-card', {
+          scrollTrigger: {
+            trigger: coupleGridRef.current,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+          },
+          x: 36,
+          opacity: 0,
+          duration: 0.9,
+          ease: 'power3.out',
+        });
+
+        gsap.from('.ampersand-badge', {
+          scrollTrigger: {
+            trigger: coupleGridRef.current,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+          },
+          scale: 0,
+          rotation: -45,
+          opacity: 0,
+          duration: 0.7,
+          delay: 0.2,
+          ease: 'back.out(2)',
+        });
       });
     },
     { scope: coupleGridRef },
@@ -97,12 +140,16 @@ export const CharacterArch = () => {
           {/* 1. BAGIAN AYAT AL-QUR'AN / KUTIPAN PERNIKAHAN */}
           {(config.quote?.arabic ||
             config.quote?.translation ||
+            config.quote?.bismillah ||
             config.greeting?.bismillah) && (
             <div className="relative z-10 max-w-xl mx-auto mb-4">
-              {config.greeting?.bismillah && (
-                <span className="font-serif italic text-gold text-lg sm:text-xl block mb-1.5 font-normal tracking-wide">
-                  {config.greeting.bismillah}
-                </span>
+              {(config.quote?.bismillah || config.greeting?.bismillah) && (
+                <p
+                  className="font-['Amiri',_serif] text-xl sm:text-2xl text-gold leading-relaxed mb-2 font-normal"
+                  dir="rtl"
+                >
+                  {config.quote?.bismillah || config.greeting?.bismillah}
+                </p>
               )}
 
               {/* Kaligrafi Arab (Jika Ada) */}
@@ -183,17 +230,18 @@ export const CharacterArch = () => {
                   </p>
                 </div>
 
-                {config.bride?.instagram && (
-                  <a
-                    href={config.bride.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="relative z-10 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-scale-xs font-semibold text-secondary bg-white hover:bg-gold hover:text-white transition-all border border-gold/35 shadow-2xs group-hover:border-gold"
-                  >
-                    <InstagramIcon className="w-3.5 h-3.5 text-gold group-hover:text-white" />
-                    <span>{config.bride?.shortName}</span>
-                  </a>
-                )}
+                {config.bride?.showInstagram !== false &&
+                  config.bride?.instagram && (
+                    <a
+                      href={config.bride.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative z-10 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-scale-xs font-semibold text-secondary bg-white hover:bg-gold hover:text-white transition-all border border-gold/35 shadow-2xs group-hover:border-gold"
+                    >
+                      <InstagramIcon className="w-3.5 h-3.5 text-gold group-hover:text-white" />
+                      <span>{config.bride?.shortName}</span>
+                    </a>
+                  )}
               </div>
 
               {/* Medallion Ampersand (&) di Tengah */}
@@ -227,17 +275,18 @@ export const CharacterArch = () => {
                   </p>
                 </div>
 
-                {config.groom?.instagram && (
-                  <a
-                    href={config.groom.instagram}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="relative z-10 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-scale-xs font-semibold text-secondary bg-white hover:bg-gold hover:text-white transition-all border border-gold/35 shadow-2xs group-hover:border-gold"
-                  >
-                    <InstagramIcon className="w-3.5 h-3.5 text-gold group-hover:text-white" />
-                    <span>{config.groom?.shortName}</span>
-                  </a>
-                )}
+                {config.groom?.showInstagram !== false &&
+                  config.groom?.instagram && (
+                    <a
+                      href={config.groom.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="relative z-10 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-scale-xs font-semibold text-secondary bg-white hover:bg-gold hover:text-white transition-all border border-gold/35 shadow-2xs group-hover:border-gold"
+                    >
+                      <InstagramIcon className="w-3.5 h-3.5 text-gold group-hover:text-white" />
+                      <span>{config.groom?.shortName}</span>
+                    </a>
+                  )}
               </div>
             </div>
           </div>

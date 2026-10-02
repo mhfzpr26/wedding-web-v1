@@ -73,7 +73,7 @@ export const AdminPage = () => {
       icon: Calendar,
       badge: config.events?.length || 2,
     },
-    { id: 'greetings', label: 'Salam & Ayat', icon: BookOpen, badge: null },
+    { id: 'greetings', label: 'Salam & Penutup', icon: BookOpen, badge: null },
     {
       id: 'gifts',
       label: 'Amplop Digital',

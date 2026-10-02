@@ -7,6 +7,7 @@ import { FallingLeaves } from './FallingLeaves';
 
 export const CoverModal = () => {
   const { config, guestName, isOpened, openInvitation } = useWedding();
+  const [isOpening, setIsOpening] = useState(false);
   const [isFullyExited, setIsFullyExited] = useState(isOpened);
 
   const coverRef = useRef(null);
@@ -14,9 +15,9 @@ export const CoverModal = () => {
   const cornerTRRef = useRef(null);
   const cornerBLRef = useRef(null);
 
-  // Kunci scroll halaman web sepenuhnya selama cover belum dibuka
+  // Kunci scroll halaman web sepenuhnya selama cover belum selesai meluncur keluar
   useEffect(() => {
-    if (!isOpened) {
+    if (!isFullyExited) {
       document.body.style.overflow = 'hidden';
       document.body.style.touchAction = 'none';
       document.documentElement.style.overflow = 'hidden';
@@ -31,48 +32,42 @@ export const CoverModal = () => {
       document.body.style.touchAction = '';
       document.documentElement.style.overflow = '';
     }
-  }, [isOpened]);
+  }, [isFullyExited]);
 
   const handleOpen = () => {
-    // 1. Putar musik latar & tandai status terbuka
+    if (isOpening || isFullyExited) return;
+    setIsOpening(true);
+
+    // 1. Putar musik latar & tandai status terbuka di context
     openInvitation();
 
-    // 2. Animasi Transisi Sinematik Ethereal Dissolve (Bukan Tirai, Bukan Gerbang)
+    // 2. Animasi Transisi Sinematik Curtain Glide-Up (Tirai Meluncur Anggun ke Atas)
+    // Seluruh elemen cover, bunga sudut, teks, dan kartu bergerak utuh tanpa ada yang lenyap mendadak
     const tl = gsap.timeline({
       onComplete: () => {
         setIsFullyExited(true);
       },
     });
 
-    // Konten teks & kartu tamu melayang lembut dan memudar
-    tl.to(contentRef.current, {
-      y: -22,
-      opacity: 0,
-      scale: 0.98,
-      duration: 0.55,
-      ease: 'power2.inOut',
-    })
-      // Ornamen buket bunga sudut memudar lembut bersamaan
-      .to(
-        [cornerTRRef.current, cornerBLRef.current],
-        {
-          opacity: 0,
-          scale: 0.96,
-          duration: 0.65,
-          ease: 'power2.inOut',
-        },
-        '-=0.4',
-      )
-      // Seluruh bidang cover melenyap halus (Cinematic Soft Zoom & Dissolve)
+    // Konten teks & kartu bergerak sedikit melayang ke atas memberi kedalaman ruang (parallax)
+    tl.to(
+      contentRef.current,
+      {
+        y: -35,
+        duration: 1.15,
+        ease: 'power3.inOut',
+      },
+      0,
+    )
+      // Seluruh layar cover meluncur anggun ke atas keluar layar (seperti kartu ditarik dari amplop)
       .to(
         coverRef.current,
         {
-          opacity: 0,
-          scale: 1.04,
-          duration: 0.85,
-          ease: 'power2.inOut',
+          yPercent: -100,
+          duration: 1.15,
+          ease: 'power3.inOut',
         },
-        '-=0.45',
+        0,
       );
   };
 
@@ -83,7 +78,7 @@ export const CoverModal = () => {
   return (
     <div
       ref={coverRef}
-      className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-8 cover-backdrop-primary overflow-hidden will-change-transform select-none ${
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 md:p-8 cover-backdrop-primary overflow-hidden will-change-transform select-none shadow-[0_25px_60px_rgba(0,0,0,0.65)] border-b border-gold/40 ${
         isOpened ? 'pointer-events-none' : ''
       }`}
       style={{
@@ -91,8 +86,8 @@ export const CoverModal = () => {
         height: '100dvh',
       }}
       onTouchMove={(e) => {
-        // Cegah gesture scroll tembus sebelum cover dibuka
-        if (!isOpened && e.cancelable) e.preventDefault();
+        // Cegah gesture scroll tembus sebelum cover selesai keluar
+        if (!isFullyExited && e.cancelable) e.preventDefault();
       }}
     >
       {/* 1. Tekstur Halus Royal Gold Lace Pattern di atas Background Primary */}
@@ -165,7 +160,8 @@ export const CoverModal = () => {
         {/* Tombol Buka Undangan (Gold Ochre Bercahaya / Stand Out) */}
         <button
           onClick={handleOpen}
-          className="group relative inline-flex items-center gap-2.5 px-8 sm:px-10 py-3.5 rounded-full bg-gradient-to-r from-gold via-gold-light to-gold text-primary font-bold text-scale-small sm:text-scale-p tracking-wider shadow-[0_10px_25px_rgba(168,127,1,0.4)] hover:shadow-[0_10px_35px_rgba(220,182,88,0.65)] hover:scale-105 active:scale-95 transition-all duration-300 mt-4 border border-white/30 cursor-pointer"
+          disabled={isOpening}
+          className="group relative inline-flex items-center gap-2.5 px-8 sm:px-10 py-3.5 rounded-full bg-gradient-to-r from-gold via-gold-light to-gold text-primary font-bold text-scale-small sm:text-scale-p tracking-wider shadow-[0_10px_25px_rgba(168,127,1,0.4)] hover:shadow-[0_10px_35px_rgba(220,182,88,0.65)] hover:scale-105 active:scale-95 disabled:pointer-events-none transition-all duration-300 mt-4 border border-white/30 cursor-pointer"
         >
           <MailOpen className="w-4 h-4 text-primary group-hover:scale-110 transition-transform duration-300" />
           <span>Buka Undangan</span>

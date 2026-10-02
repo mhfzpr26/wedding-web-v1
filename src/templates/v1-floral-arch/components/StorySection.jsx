@@ -35,7 +35,8 @@ export const StorySection = () => {
             <div className="relative group">
               {/* Titik Lingkaran Simbol Emas (Illuminated Node) - Terpusat persis di atas garis */}
               <div className="absolute -left-9 sm:-left-9 top-4 w-7 h-7 rounded-full bg-white border-2 border-gold flex items-center justify-center text-gold shadow-md z-10 group-hover:scale-110 group-hover:shadow-glow/40 transition-all duration-300">
-                <Heart className="w-3.5 h-3.5 fill-gold/30 text-gold" />
+                <span className="absolute -inset-1 rounded-full bg-gold/20 animate-ping opacity-20 pointer-events-none" />
+                <Heart className="w-3.5 h-3.5 fill-gold/30 text-gold animate-gentle-pulse" />
               </div>
 
               {/* Kartu Bab Cerita (Parchment Chapter Card) */}

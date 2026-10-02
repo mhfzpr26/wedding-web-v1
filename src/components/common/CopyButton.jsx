@@ -45,7 +45,7 @@ export const CopyButton = ({
     >
       {copied ? (
         <>
-          <Check className="w-3.5 h-3.5 text-white animate-bounce" />
+          <Check className="w-3.5 h-3.5 text-white animate-in zoom-in-75 duration-200" />
           <span>Tersalin ke Clipboard!</span>
         </>
       ) : (

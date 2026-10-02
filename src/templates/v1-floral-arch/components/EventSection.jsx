@@ -23,23 +23,23 @@ export const EventSection = () => {
 
   return (
     <section className="relative pt-4 sm:pt-6 pb-8 sm:pb-12 px-4 max-w-3xl mx-auto overflow-hidden">
-      <ScrollReveal animation="fade-up" duration={750} repeat={true}>
-        <div className="text-center mb-3 sm:mb-4">
+      {/* Countdown Timer */}
+      <ScrollReveal animation="zoom-in" duration={800} repeat={true}>
+        <CountdownTimer />
+      </ScrollReveal>
+
+      <ScrollReveal
+        animation="fade-up"
+        duration={750}
+        delay={100}
+        repeat={true}
+      >
+        <div className="text-center mt-6 sm:mt-8 mb-3 sm:mb-4">
           <OrganicTitleBadge
             subtitle="Waktu & Lokasi"
             title="Rangkaian Acara"
           />
         </div>
-      </ScrollReveal>
-
-      {/* Countdown Timer */}
-      <ScrollReveal
-        animation="zoom-in"
-        duration={800}
-        delay={100}
-        repeat={true}
-      >
-        <CountdownTimer />
       </ScrollReveal>
 
       {/* Daftar Kartu Acara (Desain Papan Acara / Regal Calendar Plaque) */}

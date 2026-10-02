@@ -570,3 +570,78 @@ body {
     border-bottom-right-radius: 50% 104px;
   }
 }
+
+/* Luxury Shimmer & Metallic Sheen Animations */
+@keyframes metallicSweep {
+  0% {
+    transform: translateX(-120%) skewX(-20deg);
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.45;
+  }
+  70%,
+  100% {
+    transform: translateX(220%) skewX(-20deg);
+    opacity: 0;
+  }
+}
+
+.animate-metallic-sweep {
+  animation: metallicSweep 6s ease-in-out infinite;
+}
+
+@keyframes gentlePulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.09);
+  }
+}
+
+.animate-gentle-pulse {
+  animation: gentlePulse 2.8s ease-in-out infinite;
+}
+
+/* Organic Botanical Wind Sway Animations */
+@keyframes botanicalSwayLeft {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  32% {
+    transform: rotate(2.4deg) scale(1.015);
+  }
+  68% {
+    transform: rotate(-1.5deg) scale(0.995);
+  }
+}
+
+@keyframes botanicalSwayRight {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  38% {
+    transform: rotate(-2.2deg) scale(1.012);
+  }
+  72% {
+    transform: rotate(1.8deg) scale(0.992);
+  }
+}
+
+.animate-botanical-sway-left {
+  transform-origin: 10% 10%;
+  animation: botanicalSwayLeft 5.6s cubic-bezier(0.45, 0.05, 0.55, 0.95)
+    infinite;
+  will-change: transform;
+}
+
+.animate-botanical-sway-right {
+  transform-origin: 90% 90%;
+  animation: botanicalSwayRight 6.8s cubic-bezier(0.45, 0.05, 0.55, 0.95)
+    infinite;
+  will-change: transform;
+}

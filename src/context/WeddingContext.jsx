@@ -31,14 +31,56 @@ export const WeddingProvider = ({ children }) => {
         return {
           ...weddingConfig,
           ...parsed,
-          monogram: { ...weddingConfig.monogram, ...(parsed.monogram || {}) },
-          groom: { ...weddingConfig.groom, ...(parsed.groom || {}) },
-          bride: { ...weddingConfig.bride, ...(parsed.bride || {}) },
-          quote: { ...weddingConfig.quote, ...(parsed.quote || {}) },
+          closing: { ...weddingConfig.closing, ...(parsed.closing || {}) },
+          groom: {
+            ...weddingConfig.groom,
+            ...(parsed.groom || {}),
+            showInstagram:
+              parsed.groom?.showInstagram !== undefined
+                ? parsed.groom.showInstagram
+                : true,
+          },
+          bride: {
+            ...weddingConfig.bride,
+            ...(parsed.bride || {}),
+            showInstagram:
+              parsed.bride?.showInstagram !== undefined
+                ? parsed.bride.showInstagram
+                : true,
+          },
+          quote: {
+            ...weddingConfig.quote,
+            ...(parsed.quote || {}),
+            bismillah:
+              parsed.quote?.bismillah ||
+              (parsed.greeting?.bismillah &&
+              parsed.greeting.bismillah !== 'Bismillahirrohmaanirrohiim'
+                ? parsed.greeting.bismillah
+                : weddingConfig.quote.bismillah),
+          },
           greeting: { ...weddingConfig.greeting, ...(parsed.greeting || {}) },
           brand: { ...weddingConfig.brand, ...(parsed.brand || {}) },
           theme: { ...weddingConfig.theme, ...(parsed.theme || {}) },
-          audio: { ...weddingConfig.audio, ...(parsed.audio || {}) },
+          monogram: {
+            ...weddingConfig.monogram,
+            ...(parsed.monogram || {}),
+            useCustomInitials: false,
+          },
+          audio: (() => {
+            const a = { ...weddingConfig.audio, ...(parsed.audio || {}) };
+            // Bersihkan URL lama yang sudah 404 dari cache
+            if (
+              a.externalAudio?.includes('freemusicarchive.org') ||
+              a.url?.includes('freemusicarchive.org') ||
+              a.url?.includes('rain_heavy.ogg')
+            ) {
+              a.url = weddingConfig.audio.url;
+              a.externalAudio = weddingConfig.audio.externalAudio;
+              a.title = weddingConfig.audio.title;
+              a.artist = weddingConfig.audio.artist;
+            }
+            return a;
+          })(),
           integration: {
             ...weddingConfig.integration,
             ...(parsed.integration || {}),
@@ -328,7 +370,9 @@ export const WeddingProvider = ({ children }) => {
           ref={audioRef}
           src={
             weddingData.audio?.externalAudio ||
-            weddingConfig.audio.externalAudio
+            weddingData.audio?.url ||
+            weddingConfig.audio.externalAudio ||
+            '/audio/wedding-song.mp3'
           }
           preload="auto"
           loop

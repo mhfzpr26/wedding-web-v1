@@ -4,7 +4,7 @@
     "enabled": false
   },
   "files": {
-    "includes": ["src/**/*", "index.html", "package.json"],
+    "includes": ["src/**/*", "!src/config/weddingConfig.js", "index.html", "package.json"],
     "ignoreUnknown": true
   },
   "formatter": {
