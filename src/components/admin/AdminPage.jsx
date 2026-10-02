@@ -6,6 +6,7 @@ import {
   ExternalLink,
   Gift,
   Heart,
+  LogOut,
   Palette,
   RotateCcw,
   Save,
@@ -14,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { useWedding } from '../../context/WeddingContext';
+import { AdminLogin } from './AdminLogin';
 import { AudioThemeTab } from './tabs/AudioThemeTab';
 import { BulkGuestsTab } from './tabs/BulkGuestsTab';
 import { CoupleTab } from './tabs/CoupleTab';
@@ -23,6 +25,10 @@ import { GreetingsTab } from './tabs/GreetingsTab';
 import { StoriesTab } from './tabs/StoriesTab';
 
 export const AdminPage = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => sessionStorage.getItem('invatera_admin_auth') === 'true',
+  );
+
   const {
     config,
     updateWeddingData,
@@ -39,6 +45,15 @@ export const AdminPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  if (!isAuthenticated) {
+    return <AdminLogin onLoginSuccess={() => setIsAuthenticated(true)} />;
+  }
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('invatera_admin_auth');
+    setIsAuthenticated(false);
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -167,6 +182,17 @@ export const AdminPage = () => {
           >
             <ExternalLink className="w-3.5 h-3.5 text-gold" />
             <span>Buka Undangan (Preview)</span>
+          </button>
+
+          {/* Tombol Logout */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-950/60 hover:bg-red-900/80 text-red-200 hover:text-white text-xs font-semibold border border-red-500/40 shadow-xs transition-colors cursor-pointer"
+            title="Keluar dari Admin Studio"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Keluar</span>
           </button>
         </div>
       </header>
