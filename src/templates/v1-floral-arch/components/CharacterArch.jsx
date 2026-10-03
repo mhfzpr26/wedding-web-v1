@@ -37,88 +37,82 @@ export const CharacterArch = () => {
     () => {
       if (!isOpened) return;
 
-      // 1. Pembukaan Megah & Khidmat (Sacred Opening Sequence: Bismillah, Kaligrafi QS Ar-Rum, Ranting Emas, Salam)
-      // Mengalir tenang setelah tirai cover selesai keluar (delay: 1.1s)
+      // 1. Pembukaan Megah & Khidmat (Sacred Opening Sequence)
+      // Diberi jeda waktu yang tenang dan luas agar tamu di mobile bisa menikmati setiap baris tanpa terburu-buru
       const sacredTl = gsap.timeline({
-        delay: 1.1,
+        delay: 1.8,
       });
 
-      // Kartu Kubah Utama Masuk dengan Keanggunan Penuh
+      // Momen 1: Kubah Portal & Bismillah
       sacredTl.fromTo(
         '.cathedral-arch-portal',
-        { y: 20, opacity: 0.8 },
-        { y: 0, opacity: 1, duration: 1.0, ease: 'power2.out' },
+        { y: 18, opacity: 0.85 },
+        { y: 0, opacity: 1, duration: 1.2, ease: 'power2.out' },
         0,
       );
 
-      // Bismillah Emas Berpendar Lembut
       sacredTl.fromTo(
         '.sacred-bismillah',
         { y: 12, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.9, ease: 'power2.out' },
-        0.1,
+        { y: 0, opacity: 1, duration: 1.2, ease: 'power2.out' },
+        0.2,
       );
 
-      // Kaligrafi Ayat Suci Al-Qur'an (QS. Ar-Rum: 21) Terangkat Anggun
+      // Momen 2: Kaligrafi Ayat Suci Al-Qur'an (QS. Ar-Rum: 21)
       sacredTl.fromTo(
         '.sacred-arabic-verse',
-        { y: 16, opacity: 0 },
-        { y: 0, opacity: 1, duration: 1.0, ease: 'power2.out' },
-        0.25,
+        { y: 15, opacity: 0 },
+        { y: 0, opacity: 1, duration: 1.3, ease: 'power2.out' },
+        0.9,
       );
 
-      // Ranting Pembatas Floral 1 Mekar Melebar dari Titik Tengah ke Sisi Kiri-Kanan
+      // Momen 3: Ranting Pembatas Floral 1 & Terjemahan Ayat
       sacredTl.fromTo(
         '.sacred-divider-1',
         { scaleX: 0, opacity: 0, transformOrigin: 'center center' },
-        { scaleX: 1, opacity: 0.9, duration: 0.85, ease: 'power2.out' },
-        0.5,
+        { scaleX: 1, opacity: 0.9, duration: 1.1, ease: 'power2.out' },
+        1.7,
       );
 
-      // Terjemahan Ayat & Sumber Surat
       sacredTl.fromTo(
-        '.sacred-translation',
+        ['.sacred-translation', '.sacred-source'],
         { y: 10, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.85, ease: 'power2.out' },
-        0.7,
+        {
+          y: 0,
+          opacity: 1,
+          duration: 1.2,
+          stagger: 0.2,
+          ease: 'power2.out',
+        },
+        2.1,
       );
 
-      sacredTl.fromTo(
-        '.sacred-source',
-        { opacity: 0 },
-        { opacity: 1, duration: 0.7, ease: 'power2.out' },
-        0.85,
-      );
-
-      // Ranting Pembatas Floral 2 Mekar
+      // Momen 4: Pembatas Floral 2, Salam, dan Teks Sambutan
       sacredTl.fromTo(
         '.sacred-divider-2',
         { scaleX: 0, opacity: 0, transformOrigin: 'center center' },
-        { scaleX: 1, opacity: 0.9, duration: 0.85, ease: 'power2.out' },
-        1.0,
-      );
-
-      // Salam & Teks Sambutan Pengantin
-      sacredTl.fromTo(
-        '.sacred-salam',
-        { y: 10, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.8, ease: 'power2.out' },
-        1.15,
+        { scaleX: 1, opacity: 0.9, duration: 1.0, ease: 'power2.out' },
+        2.9,
       );
 
       sacredTl.fromTo(
-        '.sacred-intro',
+        ['.sacred-salam', '.sacred-intro'],
         { y: 10, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.85, ease: 'power2.out' },
-        1.25,
+        {
+          y: 0,
+          opacity: 1,
+          duration: 1.2,
+          stagger: 0.2,
+          ease: 'power2.out',
+        },
+        3.3,
       );
 
-      // Ranting Pembatas Floral 3 Mekar
       sacredTl.fromTo(
         '.sacred-divider-3',
         { scaleX: 0, opacity: 0, transformOrigin: 'center center' },
-        { scaleX: 1, opacity: 0.9, duration: 0.85, ease: 'power2.out' },
-        1.4,
+        { scaleX: 1, opacity: 0.9, duration: 1.0, ease: 'power2.out' },
+        3.9,
       );
 
       // 2. Animasi Entrance & Breathing Melayang Lembut untuk Ilustrasi Mempelai (ScrollTrigger)

@@ -21,122 +21,71 @@ export const TopMonogram = () => {
     () => {
       if (!isOpened) return;
 
+      // Animasi masuk satu kali yang tenang, anggun, dan kokoh (tanpa bergerak-gerak terus)
       const tl = gsap.timeline({
-        delay: 0.55,
+        delay: 0.9,
       });
 
-      // 1. Pendar ambient emas membesar perlahan
+      // 1. Pendar ambient emas membesar lembut
       tl.fromTo(
         '.monogram-glow',
-        { scale: 0.5, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 1.3, ease: 'power2.out' },
+        { scale: 0.7, opacity: 0 },
+        { scale: 1, opacity: 0.22, duration: 1.4, ease: 'power2.out' },
         0,
       )
         // 2. Tagline muncul dari atas
         .fromTo(
           '.monogram-tagline',
-          { y: -12, opacity: 0 },
+          { y: -10, opacity: 0 },
           {
             y: 0,
             opacity: 1,
-            duration: 0.85,
+            duration: 0.95,
             ease: 'power2.out',
             clearProps: 'transform',
           },
           0.15,
         )
-        // 3. Huruf Mempelai 1 meluncur turun dari atas
+        // 3. Huruf Inisial Mempelai 1 & 2 masuk tenang dan kokoh
         .fromTo(
-          '.monogram-char-1',
-          { y: -22, opacity: 0 },
+          ['.monogram-char-1', '.monogram-char-2'],
+          { y: 14, opacity: 0 },
           {
             y: 0,
             opacity: 1,
-            duration: 1.0,
-            ease: 'power3.out',
-            clearProps: 'transform',
-          },
-          0.25,
-        )
-        // 4. Huruf Mempelai 2 meluncur naik dari bawah
-        .fromTo(
-          '.monogram-char-2',
-          { y: 22, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 1.0,
-            ease: 'power3.out',
+            duration: 1.15,
+            stagger: 0.12,
+            ease: 'power2.out',
             clearProps: 'transform',
           },
           0.3,
         )
-        // 5. Simbol pemisah meletup anggun di tengah
+        // 4. Simbol pemisah mekar lembut di tengah
         .fromTo(
           '.monogram-sep',
-          { scale: 0.35, rotation: -12, opacity: 0 },
+          { scale: 0.6, opacity: 0 },
           {
             scale: 1,
-            rotation: 0,
             opacity: 1,
-            duration: 0.85,
-            ease: 'back.out(1.8)',
+            duration: 0.95,
+            ease: 'back.out(1.4)',
             clearProps: 'transform',
           },
           0.45,
         )
-        // 6. Tanggal muncul
+        // 5. Tanggal muncul
         .fromTo(
           '.monogram-date',
           { y: 8, opacity: 0 },
           {
             y: 0,
             opacity: 1,
-            duration: 0.7,
+            duration: 0.85,
             ease: 'power2.out',
             clearProps: 'transform',
           },
           0.6,
         );
-
-      // 7. Ambient Breathing & Floating Lembut Berkelanjutan (Layar Terasa Hidup & Bernapas)
-      gsap.to('.monogram-glow', {
-        scale: 1.15,
-        opacity: 0.28,
-        duration: 3.5,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-        delay: 1.8,
-      });
-
-      gsap.to('.monogram-char-1', {
-        y: -3,
-        duration: 3.2,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-        delay: 1.8,
-      });
-
-      gsap.to('.monogram-char-2', {
-        y: 3,
-        duration: 3.2,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-        delay: 1.8,
-      });
-
-      gsap.to('.monogram-sep', {
-        scale: 1.08,
-        duration: 0.6,
-        repeat: -1,
-        yoyo: true,
-        repeatDelay: 2.5,
-        ease: 'power2.inOut',
-        delay: 2.2,
-      });
     },
     { dependencies: [isOpened], scope: monogramRef },
   );
