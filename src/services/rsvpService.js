@@ -53,6 +53,10 @@ export function isGroupGuest(name) {
     'rt ',
     'rw ',
     'partner',
+    'rombongan',
+    'panitia',
+    'kel.',
+    'kel ',
   ];
   return groupKeywords.some((kw) => lower.includes(kw));
 }

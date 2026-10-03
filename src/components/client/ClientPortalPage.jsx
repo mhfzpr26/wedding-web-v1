@@ -24,13 +24,14 @@ import {
   Tag,
   Trash2,
   Upload,
+  User,
   UserCheck,
   Users,
   UserX,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useWedding } from '../../context/WeddingContext';
-import { parseDisplayName } from '../../services/rsvpService';
+import { isGroupGuest, parseDisplayName } from '../../services/rsvpService';
 
 // Normalisasi nomor telepon ke format internasional WhatsApp (628...)
 function normalizePhone(rawPhone) {
@@ -167,6 +168,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
   const [quickName, setQuickName] = useState('');
   const [quickPhone, setQuickPhone] = useState('');
   const [quickCategory, setQuickCategory] = useState('Keluarga');
+  const [quickIsGroup, setQuickIsGroup] = useState(false);
   const [quickFeedback, setQuickFeedback] = useState(false);
 
   // File Upload Ref
@@ -215,6 +217,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
   const [isEditingTemplate, setIsEditingTemplate] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'unsent' | 'sent'
+  const [groupFilter, setGroupFilter] = useState('all'); // 'all' | 'individual' | 'group'
   const [categoryFilter, setCategoryFilter] = useState('Semua');
   const [copiedType, setCopiedType] = useState(null);
 
@@ -294,12 +297,19 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
 
         if (!name) return null;
 
+        const isGroup =
+          isGroupGuest(name) ||
+          category.toLowerCase().includes('rombongan') ||
+          category.toLowerCase().includes('grup') ||
+          category.toLowerCase().includes('group');
+
         const id = `guest-${idx}-${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
         return {
           id,
           name,
           phone,
-          category: category || 'Umum',
+          category: category || (isGroup ? 'Keluarga' : 'Umum'),
+          isGroup,
           raw: trimmed,
           lineIndex: idx,
         };
@@ -341,12 +351,14 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
     return dupes;
   }, [parsedGuests]);
 
-  // Filter tamu berdasarkan status, kategori, dan pencarian teks
+  // Filter tamu berdasarkan status, kategori, tipe rombongan/perorangan, dan pencarian teks
   const filteredGuests = useMemo(() => {
     return parsedGuests.filter((guest) => {
       const isSent = sentGuests.includes(guest.id);
       if (statusFilter === 'sent' && !isSent) return false;
       if (statusFilter === 'unsent' && isSent) return false;
+      if (groupFilter === 'individual' && guest.isGroup) return false;
+      if (groupFilter === 'group' && !guest.isGroup) return false;
       if (
         categoryFilter !== 'Semua' &&
         guest.category.toLowerCase() !== categoryFilter.toLowerCase()
@@ -365,10 +377,19 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
       }
       return true;
     });
-  }, [parsedGuests, sentGuests, statusFilter, categoryFilter, searchTerm]);
+  }, [
+    parsedGuests,
+    sentGuests,
+    statusFilter,
+    groupFilter,
+    categoryFilter,
+    searchTerm,
+  ]);
 
   // Statistik Kirim
   const totalGuests = parsedGuests.length;
+  const groupGuestsCount = parsedGuests.filter((g) => g.isGroup).length;
+  const individualGuestsCount = totalGuests - groupGuestsCount;
   const sentCount = parsedGuests.filter((g) =>
     sentGuests.includes(g.id),
   ).length;
@@ -399,14 +420,22 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
     const trimmedName = quickName.trim();
     if (!trimmedName) return;
 
-    let newLine = trimmedName;
+    const finalName = trimmedName;
+    let finalCategory =
+      quickCategory.trim() || (quickIsGroup ? 'Keluarga' : 'Umum');
+
+    if (quickIsGroup && !isGroupGuest(finalName)) {
+      if (finalCategory === 'Umum') finalCategory = 'Rombongan';
+    }
+
+    let newLine = finalName;
     if (quickPhone.trim()) {
       newLine += `, ${quickPhone.trim()}`;
-      if (quickCategory.trim() && quickCategory !== 'Umum') {
-        newLine += `, ${quickCategory.trim()}`;
+      if (finalCategory && finalCategory !== 'Umum') {
+        newLine += `, ${finalCategory}`;
       }
-    } else if (quickCategory.trim() && quickCategory !== 'Umum') {
-      newLine += `, , ${quickCategory.trim()}`;
+    } else if (finalCategory && finalCategory !== 'Umum') {
+      newLine += `, , ${finalCategory}`;
     }
 
     const updated = rawNames.trim()
@@ -520,11 +549,21 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
         ? customMessage
         : getTemplateDefaultText(templateType);
 
-    return rawTemplate
+    let msg = rawTemplate
       .replace(/{nama}/g, guestName)
       .replace(/{link}/g, url)
       .replace(/{pengantin}/g, coupleName)
       .replace(/{tanggal}/g, eventDate);
+
+    // Jika undangan rombongan/keluarga besar & menggunakan template standar, sesuaikan sapaan agar natural untuk grup
+    if (isGroupGuest(guestName) && templateType !== 'custom') {
+      msg = msg.replace(
+        /Bapak\/Ibu\/Saudara\/i/g,
+        'Bapak/Ibu/Saudara/i serta seluruh keluarga besar/rekan',
+      );
+    }
+
+    return msg;
   };
 
   // Contoh nama dan pesan untuk kartu pratinjau live
@@ -1188,7 +1227,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
 
             {/* QUICK ADD BAR (INPUT TAMU SATUAN CEPAT) */}
             <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center">
                     <Plus className="w-4 h-4" />
@@ -1205,12 +1244,64 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                 </div>
 
                 {quickFeedback && (
-                  <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                  <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full shrink-0">
                     <Check className="w-3 h-3" />
                     Tamu Ditambahkan!
                   </span>
                 )}
               </div>
+
+              {/* TOGGLE TIPE TAMU: PERORANGAN VS ROMBONGAN */}
+              <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100">
+                <span className="text-[11px] font-bold text-slate-500">
+                  Tipe Undangan:
+                </span>
+                <div className="inline-flex rounded-xl p-0.5 bg-slate-100 border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuickIsGroup(false);
+                      if (quickCategory === 'Rombongan')
+                        setQuickCategory('Umum');
+                    }}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      !quickIsGroup
+                        ? 'bg-white text-slate-800 shadow-2xs font-bold'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <User className="w-3.5 h-3.5 text-slate-600" />
+                    <span>👤 Tamu Perorangan</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setQuickIsGroup(true);
+                      setQuickCategory('Keluarga');
+                    }}
+                    className={`px-3 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      quickIsGroup
+                        ? 'bg-amber-500 text-white shadow-2xs font-bold'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    <span>👥 Undangan Rombongan / Grup</span>
+                  </button>
+                </div>
+              </div>
+
+              {quickIsGroup && (
+                <div className="p-2.5 rounded-xl bg-amber-50/80 border border-amber-200 text-amber-900 text-[11px] flex items-start gap-2">
+                  <Users className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <span>
+                    <strong>Tips Undangan Rombongan:</strong> Tautan ini dapat
+                    dibagikan ke grup WhatsApp. Anggota keluarga/rekan dapat
+                    membuka tautan yang sama dan menuliskan nama serta
+                    konfirmasi kehadiran mereka masing-masing di form RSVP.
+                  </span>
+                </div>
+              )}
 
               <form
                 onSubmit={handleQuickAdd}
@@ -1221,7 +1312,11 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                     type="text"
                     value={quickName}
                     onChange={(e) => setQuickName(e.target.value)}
-                    placeholder="Nama Tamu (misal: Bpk. Hendra & Istri)"
+                    placeholder={
+                      quickIsGroup
+                        ? 'Nama Rombongan (misal: Keluarga Besar Bpk. Hendra)'
+                        : 'Nama Tamu (misal: Bpk. Dr. Hendra / Rina Agustina)'
+                    }
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-500 shadow-2xs"
                     required
                   />
@@ -1249,6 +1344,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                     <option value="Keluarga">Keluarga</option>
                     <option value="Teman Kantor">Teman Kantor</option>
                     <option value="Sahabat">Sahabat</option>
+                    <option value="Rombongan">Rombongan</option>
                     <option value="VIP">VIP</option>
                     <option value="Umum">Umum</option>
                   </select>
@@ -1307,6 +1403,87 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                     placeholder="Cari nama, no HP, kategori..."
                     className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
                   />
+                </div>
+              </div>
+
+              {/* FILTER BAR 1: TIPE UNDANGAN (SEMUA | PERORANGAN | ROMBONGAN) & STATUS KIRIM */}
+              <div className="flex flex-wrap items-center justify-between gap-2.5 pb-1">
+                {/* Filter Tipe: Semua | Perorangan | Rombongan */}
+                <div className="inline-flex rounded-xl p-0.5 bg-slate-100 border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => setGroupFilter('all')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      groupFilter === 'all'
+                        ? 'bg-white text-slate-800 shadow-2xs font-bold'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <span>Semua Tipe</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700">
+                      {totalGuests}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setGroupFilter('individual')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      groupFilter === 'individual'
+                        ? 'bg-white text-slate-800 shadow-2xs font-bold'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <User className="w-3.5 h-3.5 text-slate-600" />
+                    <span>Perorangan</span>
+                    <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 text-slate-700">
+                      {individualGuestsCount}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setGroupFilter('group')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                      groupFilter === 'group'
+                        ? 'bg-amber-500 text-white shadow-2xs font-bold'
+                        : 'text-slate-500 hover:text-slate-800'
+                    }`}
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    <span>Rombongan / Grup</span>
+                    <span
+                      className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                        groupFilter === 'group'
+                          ? 'bg-amber-600 text-white'
+                          : 'bg-slate-200 text-slate-700'
+                      }`}
+                    >
+                      {groupGuestsCount}
+                    </span>
+                  </button>
+                </div>
+
+                {/* Filter Status Pengiriman */}
+                <div className="flex items-center gap-1 text-xs">
+                  {[
+                    { id: 'all', label: 'Semua Status' },
+                    { id: 'unsent', label: `Belum (${unsentCount})` },
+                    { id: 'sent', label: `Terkirim (${sentCount})` },
+                  ].map((s) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => setStatusFilter(s.id)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                        statusFilter === s.id
+                          ? 'bg-slate-800 text-white shadow-2xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -1449,10 +1626,23 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                           </button>
 
                           <div className="truncate">
-                            <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-1.5">
                               <h5 className="text-xs font-bold text-slate-800 truncate">
                                 {guest.name}
                               </h5>
+
+                              {/* Badge Tipe: Rombongan vs Perorangan */}
+                              {guest.isGroup ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                  <Users className="w-2.5 h-2.5 text-amber-600" />
+                                  <span>Rombongan</span>
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[9px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+                                  <User className="w-2.5 h-2.5 text-slate-400" />
+                                  <span>Perorangan</span>
+                                </span>
+                              )}
 
                               {/* Badge Kategori */}
                               <span
