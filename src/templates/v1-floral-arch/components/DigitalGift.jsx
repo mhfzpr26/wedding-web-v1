@@ -1,5 +1,6 @@
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ChevronDown, ChevronUp, Gift, Home, Wifi } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { CopyButton } from '../../../components/common/CopyButton';
@@ -7,6 +8,8 @@ import { ScrollReveal } from '../../../components/common/ScrollReveal';
 import { useWedding } from '../../../context/WeddingContext';
 import { CardBotanicalWatermark } from '../assets/VectorOrnaments';
 import { OrganicTitleBadge } from './OrganicTitleBadge';
+
+gsap.registerPlugin(ScrollTrigger);
 
 // Ikon Microchip Emas untuk Kartu ATM Mewah
 const CardChipIcon = () => (
@@ -43,9 +46,31 @@ const CardChipIcon = () => (
 );
 
 export const DigitalGift = () => {
-  const { config } = useWedding();
+  const { config, isOpened } = useWedding();
   const [isOpen, setIsOpen] = useState(false);
+  const giftSectionRef = useRef(null);
   const giftCardsRef = useRef(null);
+
+  useGSAP(
+    () => {
+      if (!isOpened) return;
+
+      // 1. Tombol Segel Amplop Digital (Two-Way Scroll-Back)
+      gsap.from('.digital-gift-btn-box', {
+        scrollTrigger: {
+          trigger: '.digital-gift-btn-box',
+          start: 'top 85%',
+          toggleActions: 'play reverse play reverse',
+        },
+        y: 20,
+        scale: 0.95,
+        opacity: 0,
+        duration: 0.8,
+        ease: 'power2.out',
+      });
+    },
+    { dependencies: [isOpened], scope: giftSectionRef },
+  );
 
   useGSAP(
     () => {
@@ -73,7 +98,10 @@ export const DigitalGift = () => {
   if (!config.gift?.enabled) return null;
 
   return (
-    <section className="relative py-8 sm:py-10 px-4 max-w-xl mx-auto text-center overflow-hidden">
+    <section
+      ref={giftSectionRef}
+      className="relative py-8 sm:py-10 px-4 max-w-xl mx-auto text-center overflow-hidden"
+    >
       <ScrollReveal animation="fade-up" duration={750} repeat={true}>
         <div className="mb-4 sm:mb-5">
           <OrganicTitleBadge subtitle="Tanda Kasih" title="Wedding Gift" />
@@ -83,11 +111,13 @@ export const DigitalGift = () => {
             cashless melalui:
           </p>
         </div>
+      </ScrollReveal>
 
-        {/* Tombol Segel Amplop Digital (Royal Wax Seal Button) */}
+      {/* Tombol Segel Amplop Digital (Royal Wax Seal Button) */}
+      <div className="digital-gift-btn-box will-change-transform mb-4">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="group inline-flex items-center gap-2.5 px-7 sm:px-9 py-3.5 rounded-full bg-gradient-to-r from-gold via-gold-light to-gold text-primary font-bold text-scale-small tracking-wider shadow-[0_6px_20px_rgba(200,160,70,0.32)] hover:shadow-[0_8px_25px_rgba(200,160,70,0.48)] hover:brightness-105 active:scale-95 transition-all duration-300 mb-4 border border-white/40 cursor-pointer"
+          className="group inline-flex items-center gap-2.5 px-7 sm:px-9 py-3.5 rounded-full bg-gradient-to-r from-gold via-gold-light to-gold text-primary font-bold text-scale-small tracking-wider shadow-[0_6px_20px_rgba(200,160,70,0.32)] hover:shadow-[0_8px_25px_rgba(200,160,70,0.48)] hover:brightness-105 active:scale-95 transition-all duration-300 border border-white/40 cursor-pointer"
         >
           <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
             <Gift className="w-3.5 h-3.5 text-primary" />
@@ -101,7 +131,7 @@ export const DigitalGift = () => {
             <ChevronDown className="w-4 h-4 text-primary" />
           )}
         </button>
-      </ScrollReveal>
+      </div>
 
       {/* Konten Amplop Digital (Desain Kartu ATM Mewah) */}
       {isOpen && (

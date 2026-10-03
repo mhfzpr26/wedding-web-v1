@@ -1,12 +1,53 @@
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useRef } from 'react';
 import { useWedding } from '../../../context/WeddingContext';
 import {
   CardBotanicalWatermark,
   FloralDivider,
 } from '../assets/VectorOrnaments';
 
+gsap.registerPlugin(ScrollTrigger);
+
 export const FooterSection = () => {
-  const { config, activeColorPreset } = useWedding();
+  const { config, activeColorPreset, isOpened } = useWedding();
   const closing = config.closing || {};
+  const footerRef = useRef(null);
+
+  useGSAP(
+    () => {
+      if (!isOpened) return;
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: footerRef.current,
+          start: 'top 92%',
+          toggleActions: 'play reverse play reverse',
+        },
+      });
+
+      tl.fromTo(
+        '.footer-thank-you',
+        { y: 16, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.9, ease: 'power2.out' },
+        0,
+      )
+        .fromTo(
+          '.footer-names',
+          { y: 20, opacity: 0, scale: 0.96 },
+          { y: 0, opacity: 1, scale: 1, duration: 1.0, ease: 'power2.out' },
+          0.15,
+        )
+        .fromTo(
+          '.footer-divider',
+          { scaleX: 0, opacity: 0, transformOrigin: 'center center' },
+          { scaleX: 1, opacity: 0.9, duration: 0.85, ease: 'power2.out' },
+          0.35,
+        );
+    },
+    { dependencies: [isOpened], scope: footerRef },
+  );
 
   // Warna latar belakang gelap pekat dinamis sesuai preset
   const bgDarkClass =
@@ -31,6 +72,7 @@ export const FooterSection = () => {
 
   return (
     <footer
+      ref={footerRef}
       className={`relative pt-12 pb-16 sm:pt-14 sm:pb-20 px-4 text-center ${bgDarkClass} text-white overflow-hidden`}
     >
       {/* Efek Pendar Emas Lembut di Bagian Tengah (Radial Ambient Gold Glow) */}
@@ -50,18 +92,20 @@ export const FooterSection = () => {
       <CardBotanicalWatermark className="w-32 sm:w-40 opacity-15 -top-2 -right-2 text-gold pointer-events-none" />
       <CardBotanicalWatermark className="w-32 sm:w-40 opacity-15 -top-2 -left-2 transform scale-x-[-1] text-gold pointer-events-none" />
 
-      <div className="relative z-10 max-w-md mx-auto space-y-3.5 animate-in fade-in duration-700">
-        <p className="text-scale-small text-slate-200/90 leading-relaxed font-light">
-          {thankYouText}
-        </p>
-
-        {closingSalutation && (
-          <p className="text-scale-xs uppercase tracking-[0.3em] text-gold-light font-bold mt-4">
-            {closingSalutation}
+      <div className="relative z-10 max-w-md mx-auto space-y-3.5">
+        <div className="footer-thank-you will-change-transform space-y-2">
+          <p className="text-scale-small text-slate-200/90 leading-relaxed font-light">
+            {thankYouText}
           </p>
-        )}
 
-        <h3 className="font-serif text-[26px] sm:text-scale-h3 md:text-scale-h2 font-bold text-white tracking-wide mt-2 drop-shadow-md">
+          {closingSalutation && (
+            <p className="text-scale-xs uppercase tracking-[0.3em] text-gold-light font-bold mt-4">
+              {closingSalutation}
+            </p>
+          )}
+        </div>
+
+        <h3 className="footer-names will-change-transform font-serif text-[26px] sm:text-scale-h3 md:text-scale-h2 font-bold text-white tracking-wide mt-2 drop-shadow-md">
           {customNames ? (
             customNames
           ) : (
@@ -75,7 +119,9 @@ export const FooterSection = () => {
           )}
         </h3>
 
-        <FloralDivider className="w-28 h-6 text-gold mx-auto my-3 opacity-90" />
+        <div className="footer-divider will-change-transform origin-center">
+          <FloralDivider className="w-28 h-6 text-gold mx-auto my-3 opacity-90" />
+        </div>
 
         {showSubfooter && (
           <p className="text-[10px] text-slate-400/80 tracking-widest uppercase mt-4">

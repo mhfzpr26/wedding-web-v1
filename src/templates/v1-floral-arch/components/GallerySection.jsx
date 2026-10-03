@@ -1,9 +1,14 @@
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ChevronLeft, ChevronRight, Eye, Video, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScrollReveal } from '../../../components/common/ScrollReveal';
 import { useWedding } from '../../../context/WeddingContext';
 import { CardBotanicalWatermark } from '../assets/VectorOrnaments';
 import { OrganicTitleBadge } from './OrganicTitleBadge';
+
+gsap.registerPlugin(ScrollTrigger);
 
 // Helper konversi URL YouTube biasa ke format embed aman
 function getYoutubeEmbedUrl(url) {
@@ -35,7 +40,7 @@ function getYoutubeEmbedUrl(url) {
 }
 
 export const GallerySection = () => {
-  const { config } = useWedding();
+  const { config, isOpened } = useWedding();
   const gallery = config.gallery || {};
   const isGalleryEnabled = gallery.enabled !== false;
   const video = gallery.video || {};
@@ -44,6 +49,50 @@ export const GallerySection = () => {
 
   // Lightbox State
   const [activePhotoIdx, setActivePhotoIdx] = useState(null);
+  const galleryRef = useRef(null);
+
+  useGSAP(
+    () => {
+      if (!isOpened) return;
+
+      // 1. Pemutar Video Prewedding
+      if (video.enabled !== false && embedVideoUrl) {
+        gsap.from('.gallery-video-card', {
+          scrollTrigger: {
+            trigger: '.gallery-video-card',
+            start: 'top 85%',
+            toggleActions: 'play reverse play reverse',
+          },
+          scale: 0.94,
+          y: 24,
+          opacity: 0,
+          duration: 0.9,
+          ease: 'power2.out',
+        });
+      }
+
+      // 2. Grid Foto Prewedding (Staggered Wave dengan Scroll-Back)
+      if (photos.length > 0) {
+        gsap.from('.gallery-photo-item', {
+          scrollTrigger: {
+            trigger: '.gallery-photos-grid',
+            start: 'top 85%',
+            toggleActions: 'play reverse play reverse',
+          },
+          scale: 0.9,
+          y: 28,
+          opacity: 0,
+          stagger: 0.08,
+          duration: 0.8,
+          ease: 'power2.out',
+        });
+      }
+    },
+    {
+      dependencies: [isOpened, photos.length, embedVideoUrl],
+      scope: galleryRef,
+    },
+  );
 
   // Keyboard navigation untuk lightbox
   useEffect(() => {
@@ -70,7 +119,10 @@ export const GallerySection = () => {
   }
 
   return (
-    <section className="relative pt-4 sm:pt-6 pb-8 sm:pb-12 px-3 sm:px-6 max-w-3xl mx-auto overflow-hidden">
+    <section
+      ref={galleryRef}
+      className="relative pt-4 sm:pt-6 pb-8 sm:pb-12 px-3 sm:px-6 max-w-3xl mx-auto overflow-hidden"
+    >
       {/* JUDUL SEKSI */}
       <ScrollReveal animation="fade-up" duration={750} repeat={true}>
         <div className="text-center mb-6 sm:mb-8">
@@ -83,12 +135,7 @@ export const GallerySection = () => {
 
       {/* 1. PEMUTAR VIDEO PREWEDDING (JIKA AKTIF) */}
       {video.enabled !== false && embedVideoUrl && (
-        <ScrollReveal
-          animation="zoom-in"
-          duration={850}
-          repeat={true}
-          className="mb-8"
-        >
+        <div className="gallery-video-card will-change-transform mb-8">
           <div className="relative p-3.5 sm:p-5 rounded-3xl luxury-pearl-card shadow-luxury border border-gold/45 overflow-hidden">
             {/* Watermark Flora Halus */}
             <CardBotanicalWatermark className="w-32 sm:w-44 opacity-[0.16] -top-2 -right-2" />
@@ -120,19 +167,16 @@ export const GallerySection = () => {
               </div>
             </div>
           </div>
-        </ScrollReveal>
+        </div>
       )}
 
       {/* 2. GRID FOTO PREWEDDING */}
       {photos.length > 0 && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4.5">
+        <div className="gallery-photos-grid grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4.5">
           {photos.map((item, idx) => (
-            <ScrollReveal
+            <div
               key={item.id || idx}
-              animation="fade-up"
-              delay={idx * 80}
-              duration={700}
-              repeat={true}
+              className="gallery-photo-item will-change-transform"
             >
               <div
                 onClick={() => setActivePhotoIdx(idx)}
@@ -161,7 +205,7 @@ export const GallerySection = () => {
                   </div>
                 </div>
               </div>
-            </ScrollReveal>
+            </div>
           ))}
         </div>
       )}

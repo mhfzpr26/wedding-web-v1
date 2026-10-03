@@ -1,4 +1,7 @@
+import { useGSAP } from '@gsap/react';
 import confetti from 'canvas-confetti';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
   CheckCircle2,
   HeartHandshake,
@@ -7,11 +10,13 @@ import {
   Quote,
   Send,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ScrollReveal } from '../../../components/common/ScrollReveal';
 import { useWedding } from '../../../context/WeddingContext';
 import { CardBotanicalWatermark } from '../assets/VectorOrnaments';
 import { OrganicTitleBadge } from './OrganicTitleBadge';
+
+gsap.registerPlugin(ScrollTrigger);
 
 // Helper inisial avatar tamu
 const getInitial = (name) => {
@@ -27,6 +32,7 @@ export const RSVPSection = () => {
     isLoadingWishes,
     existingConfirmation,
     submitRSVP,
+    isOpened,
   } = useWedding();
 
   const [attendance, setAttendance] = useState('hadir');
@@ -34,6 +40,44 @@ export const RSVPSection = () => {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
+  const rsvpContainerRef = useRef(null);
+
+  useGSAP(
+    () => {
+      if (!isOpened) return;
+
+      // 1. Form RSVP Card Entrance (Two-Way Scroll)
+      gsap.from('.rsvp-card-box', {
+        scrollTrigger: {
+          trigger: '.rsvp-card-box',
+          start: 'top 85%',
+          toggleActions: 'play reverse play reverse',
+        },
+        y: 28,
+        scale: 0.96,
+        opacity: 0,
+        duration: 0.85,
+        ease: 'power2.out',
+      });
+
+      // 2. Wishes Wall Header & Stream (Two-Way Scroll)
+      gsap.from('.rsvp-wishes-wall', {
+        scrollTrigger: {
+          trigger: '.rsvp-wishes-wall',
+          start: 'top 85%',
+          toggleActions: 'play reverse play reverse',
+        },
+        y: 28,
+        opacity: 0,
+        duration: 0.85,
+        ease: 'power2.out',
+      });
+    },
+    {
+      dependencies: [isOpened, showEditForm, existingConfirmation],
+      scope: rsvpContainerRef,
+    },
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -67,7 +111,10 @@ export const RSVPSection = () => {
   };
 
   return (
-    <section className="relative py-8 sm:py-10 px-4 max-w-2xl mx-auto overflow-hidden">
+    <section
+      ref={rsvpContainerRef}
+      className="relative py-8 sm:py-10 px-4 max-w-2xl mx-auto overflow-hidden"
+    >
       <ScrollReveal animation="fade-up" duration={750} repeat={true}>
         <div className="text-center mb-4 sm:mb-6">
           <OrganicTitleBadge
@@ -82,12 +129,7 @@ export const RSVPSection = () => {
       </ScrollReveal>
 
       {/* Jika Tamu Sudah Pernah Konfirmasi & Tidak Sedang Mode Edit */}
-      <ScrollReveal
-        animation="fade-up"
-        delay={150}
-        duration={800}
-        repeat={true}
-      >
+      <div className="rsvp-card-box will-change-transform">
         {existingConfirmation && !showEditForm ? (
           <div className="p-6 sm:p-8 rounded-3xl luxury-pearl-card border border-emerald-500/40 text-center mb-10 relative overflow-hidden">
             {/* Garis Border Ganda Bagian Dalam */}
@@ -252,81 +294,74 @@ export const RSVPSection = () => {
             </div>
           </form>
         )}
-      </ScrollReveal>
+      </div>
 
-      {/* FEED UCAPAN & DOA (GUESTBOOK WALL ELEGAN) */}
-      <ScrollReveal
-        animation="fade-up"
-        delay={200}
-        duration={800}
-        repeat={true}
-      >
-        <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-gold/20 pb-3">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4 text-secondary" />
-              <h4 className="font-serif text-base font-bold text-primary">
-                Doa & Ucapan ({wishes.length})
-              </h4>
-            </div>
-          </div>
-
-          {/* List Ucapan Bergaya Kartu Hangat */}
-          <div className="max-h-96 overflow-y-auto space-y-3.5 pr-1">
-            {isLoadingWishes ? (
-              <p className="text-center text-xs text-muted py-6">
-                Memuat ucapan...
-              </p>
-            ) : wishes.length === 0 ? (
-              <p className="text-center text-xs text-muted py-6">
-                Belum ada ucapan. Jadilah yang pertama memberikan doa!
-              </p>
-            ) : (
-              wishes.map((item, idx) => (
-                <div
-                  key={item.id || idx}
-                  className="relative p-4 sm:p-5 rounded-2xl luxury-pearl-card border border-gold/35 flex items-start gap-3.5 transition-all hover:-translate-y-0.5 overflow-hidden"
-                >
-                  {/* Watermark Flora Halus */}
-                  <CardBotanicalWatermark className="w-24 sm:w-32 opacity-[0.15]" />
-
-                  {/* Avatar Inisial Nama */}
-                  <div className="relative z-10 shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-white to-gold/20 border-2 border-gold/40 flex items-center justify-center text-primary font-bold text-scale-small font-serif shadow-xs">
-                    {getInitial(item.name)}
-                  </div>
-
-                  {/* Konten Doa */}
-                  <div className="relative z-10 flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <span className="font-serif text-scale-small font-bold text-primary truncate">
-                        {item.name}
-                      </span>
-                      <span
-                        className={`text-[9px] px-2.5 py-0.5 rounded-full font-semibold shrink-0 ${
-                          item.attendance === 'hadir'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-rose-100 text-rose-700'
-                        }`}
-                      >
-                        {item.attendance === 'hadir' ? 'Hadir' : 'Berhalangan'}
-                      </span>
-                    </div>
-
-                    <p className="text-scale-small text-muted leading-relaxed relative pr-6">
-                      {item.message}
-                      <Quote className="absolute right-0 top-0 w-3.5 h-3.5 text-gold/35 pointer-events-none" />
-                    </p>
-
-                    <p className="text-scale-xs text-secondary/70 pt-2 font-medium">
-                      {item.timestamp}
-                    </p>
-                  </div>
-                </div>
-              ))
-            )}
+      {/* FEED UCAPAN & DOA (GUESTBOOK WALL ELEGAN DENGAN SCROLL-BACK) */}
+      <div className="rsvp-wishes-wall will-change-transform space-y-4">
+        <div className="flex items-center justify-between border-b border-gold/20 pb-3">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-secondary" />
+            <h4 className="font-serif text-base font-bold text-primary">
+              Doa & Ucapan ({wishes.length})
+            </h4>
           </div>
         </div>
-      </ScrollReveal>
+
+        {/* List Ucapan Bergaya Kartu Hangat */}
+        <div className="max-h-96 overflow-y-auto space-y-3.5 pr-1">
+          {isLoadingWishes ? (
+            <p className="text-center text-xs text-muted py-6">
+              Memuat ucapan...
+            </p>
+          ) : wishes.length === 0 ? (
+            <p className="text-center text-xs text-muted py-6">
+              Belum ada ucapan. Jadilah yang pertama memberikan doa!
+            </p>
+          ) : (
+            wishes.map((item, idx) => (
+              <div
+                key={item.id || idx}
+                className="relative p-4 sm:p-5 rounded-2xl luxury-pearl-card border border-gold/35 flex items-start gap-3.5 transition-all hover:-translate-y-0.5 overflow-hidden"
+              >
+                {/* Watermark Flora Halus */}
+                <CardBotanicalWatermark className="w-24 sm:w-32 opacity-[0.15]" />
+
+                {/* Avatar Inisial Nama */}
+                <div className="relative z-10 shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-white to-gold/20 border-2 border-gold/40 flex items-center justify-center text-primary font-bold text-scale-small font-serif shadow-xs">
+                  {getInitial(item.name)}
+                </div>
+
+                {/* Konten Doa */}
+                <div className="relative z-10 flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="font-serif text-scale-small font-bold text-primary truncate">
+                      {item.name}
+                    </span>
+                    <span
+                      className={`text-[9px] px-2.5 py-0.5 rounded-full font-semibold shrink-0 ${
+                        item.attendance === 'hadir'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-rose-100 text-rose-700'
+                      }`}
+                    >
+                      {item.attendance === 'hadir' ? 'Hadir' : 'Berhalangan'}
+                    </span>
+                  </div>
+
+                  <p className="text-scale-small text-muted leading-relaxed relative pr-6">
+                    {item.message}
+                    <Quote className="absolute right-0 top-0 w-3.5 h-3.5 text-gold/35 pointer-events-none" />
+                  </p>
+
+                  <p className="text-scale-xs text-secondary/70 pt-2 font-medium">
+                    {item.timestamp}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
     </section>
   );
 };
