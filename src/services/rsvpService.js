@@ -27,6 +27,61 @@ function formatTimestamp(isoString) {
   }
 }
 
+/**
+ * Deteksi apakah nama tamu tergolong undangan grup, keluarga besar, atau komunitas
+ */
+export function isGroupGuest(name) {
+  if (!name || name === 'Tamu Undangan') return false;
+  const lower = name.toLowerCase();
+  const groupKeywords = [
+    'keluarga',
+    'sahabat',
+    'teman',
+    'rekan',
+    'divisi',
+    'alumni',
+    'grup',
+    'group',
+    'angkatan',
+    'komunitas',
+    'tim ',
+    'team',
+    'bani ',
+    'trah ',
+    'all ',
+    'warga ',
+    'rt ',
+    'rw ',
+    'partner',
+  ];
+  return groupKeywords.some((kw) => lower.includes(kw));
+}
+
+/**
+ * Pisahkan nama personal dan nama grup jika tersimpan dalam format 'Nama (Grup)'
+ */
+export function parseDisplayName(fullName) {
+  if (!fullName) return { personName: 'Tamu Undangan', groupBadge: null };
+  const match = fullName.match(/^(.*?)\s*\((.*?)\)$/);
+  if (match) {
+    return {
+      personName: match[1].trim(),
+      groupBadge: match[2].trim(),
+    };
+  }
+  const dotMatch = fullName.match(/^(.*?)\s*•\s*(.*?)$/);
+  if (dotMatch) {
+    return {
+      personName: dotMatch[1].trim(),
+      groupBadge: dotMatch[2].trim(),
+    };
+  }
+  return {
+    personName: fullName,
+    groupBadge: null,
+  };
+}
+
 export const rsvpService = {
   /**
    * Cek apakah tamu tertentu sudah pernah mengirim RSVP di browser ini

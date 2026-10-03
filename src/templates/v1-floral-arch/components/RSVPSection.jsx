@@ -4,11 +4,14 @@ import {
   HeartHandshake,
   Lock,
   MessageSquare,
+  Plus,
   Quote,
   Send,
+  Users,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useWedding } from '../../../context/WeddingContext';
+import { isGroupGuest, parseDisplayName } from '../../../services/rsvpService';
 import { CardBotanicalWatermark } from '../assets/VectorOrnaments';
 import { OrganicTitleBadge } from './OrganicTitleBadge';
 
@@ -22,12 +25,17 @@ const getInitial = (name) => {
 export const RSVPSection = () => {
   const {
     guestName,
+    hasCustomGuest,
     wishes,
     isLoadingWishes,
     existingConfirmation,
     submitRSVP,
   } = useWedding();
 
+  const isGroup = isGroupGuest(guestName);
+  const isGeneric = !hasCustomGuest || guestName === 'Tamu Undangan';
+
+  const [individualName, setIndividualName] = useState('');
   const [attendance, setAttendance] = useState('hadir');
   const [guestsCount, setGuestsCount] = useState(2);
   const [message, setMessage] = useState('');
@@ -38,9 +46,26 @@ export const RSVPSection = () => {
     e.preventDefault();
     if (!message.trim()) return;
 
+    if (isGroup && !individualName.trim()) {
+      alert('Mohon tuliskan nama Anda atau anggota keluarga yang menghadiri.');
+      return;
+    }
+    if (isGeneric && !individualName.trim()) {
+      alert('Mohon tuliskan nama Anda.');
+      return;
+    }
+
+    let finalName = guestName;
+    if (isGroup) {
+      finalName = `${individualName.trim()} (${guestName})`;
+    } else if (isGeneric) {
+      finalName = individualName.trim() || 'Tamu Undangan';
+    }
+
     setIsSubmitting(true);
     try {
       await submitRSVP({
+        name: finalName,
         attendance,
         guestsCount: attendance === 'hadir' ? guestsCount : 0,
         message,
@@ -57,6 +82,7 @@ export const RSVPSection = () => {
       });
 
       setMessage('');
+      setIndividualName('');
       setShowEditForm(false);
     } catch (err) {
       console.error('Error submitting RSVP:', err);
@@ -98,8 +124,10 @@ export const RSVPSection = () => {
               </h3>
               <p className="text-xs text-muted mb-4">
                 Terima kasih{' '}
-                <span className="font-semibold text-primary">{guestName}</span>,
-                kehadiran dan doa restu Anda sangat berarti bagi kami.
+                <span className="font-semibold text-primary">
+                  {existingConfirmation.name || guestName}
+                </span>
+                , kehadiran dan doa restu Anda sangat berarti bagi kami.
               </p>
 
               <div className="inline-block px-4 py-2 rounded-xl bg-white/80 border border-gold/30 text-xs mb-4">
@@ -111,13 +139,31 @@ export const RSVPSection = () => {
                 </span>
               </div>
 
-              <div>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
+                  type="button"
                   onClick={() => setShowEditForm(true)}
-                  className="text-xs text-secondary hover:text-primary underline font-medium"
+                  className="text-xs text-secondary hover:text-primary underline font-medium cursor-pointer"
                 >
                   Perbarui Konfirmasi Kehadiran
                 </button>
+
+                {isGroup && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEditForm(true);
+                      setIndividualName('');
+                      setMessage('');
+                      setAttendance('hadir');
+                      setGuestsCount(2);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary-light shadow-xs cursor-pointer transition-all"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-gold" />
+                    <span>Konfirmasi Anggota Lain</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -134,24 +180,84 @@ export const RSVPSection = () => {
             <CardBotanicalWatermark className="w-44 sm:w-56 opacity-[0.20]" />
 
             <div className="relative z-10 space-y-5">
-              {/* NAMA TAMU (TERKUNCI / READ ONLY) */}
-              <div>
-                <label className="flex items-center justify-between text-xs font-semibold text-primary mb-1.5">
-                  <span>Nama Tamu Undangan</span>
-                  <span className="inline-flex items-center gap-1 text-[10px] text-secondary font-medium">
-                    <Lock className="w-3 h-3 text-gold" />
-                    <span>Terkunci sesuai tautan</span>
-                  </span>
-                </label>
-                <div className="relative">
+              {/* NAMA TAMU: CABANG UNTUK GRUP / GENERIC / PERORANGAN TERKUNCI */}
+              {isGroup ? (
+                <div className="space-y-2.5">
+                  {/* Badge Identitas Rombongan / Keluarga */}
+                  <div className="p-3.5 rounded-2xl bg-gold/10 border border-gold/35 flex items-start gap-3">
+                    <div className="p-2 rounded-xl bg-gold/25 text-gold-dark shrink-0 mt-0.5">
+                      <Users className="w-4 h-4 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-secondary">
+                          Undangan Rombongan / Keluarga
+                        </span>
+                      </div>
+                      <p className="font-serif text-sm font-bold text-primary truncate">
+                        {guestName}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Input Nama Anggota yang Menghadiri */}
+                  <div>
+                    <label className="flex items-center justify-between text-xs font-semibold text-primary mb-1.5">
+                      <span>Nama Anda / Anggota yang Menghadiri</span>
+                      <span className="text-[10px] text-amber-700 font-medium">
+                        *Wajib diisi
+                      </span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={individualName}
+                      onChange={(e) => setIndividualName(e.target.value)}
+                      placeholder="Contoh: Budi Santoso / Rina & Suami"
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/95 border border-gold/40 text-primary font-medium text-xs focus:ring-1 focus:ring-gold focus:border-gold outline-none transition-all placeholder:text-muted/60"
+                    />
+                    <p className="text-[10px] text-muted mt-1">
+                      Tuliskan nama Anda agar kedua mempelai dapat mengenali
+                      anggota keluarga yang hadir.
+                    </p>
+                  </div>
+                </div>
+              ) : isGeneric ? (
+                <div>
+                  <label className="flex items-center justify-between text-xs font-semibold text-primary mb-1.5">
+                    <span>Nama Tamu Undangan</span>
+                    <span className="text-[10px] text-amber-700 font-medium">
+                      *Wajib diisi
+                    </span>
+                  </label>
                   <input
                     type="text"
-                    readOnly
-                    value={guestName}
-                    className="w-full px-4 py-2.5 rounded-xl bg-white/85 border border-gold/30 text-primary font-medium text-sm cursor-not-allowed select-none focus:outline-none"
+                    required
+                    value={individualName}
+                    onChange={(e) => setIndividualName(e.target.value)}
+                    placeholder="Tuliskan nama lengkap Anda..."
+                    className="w-full px-4 py-2.5 rounded-xl bg-white/95 border border-gold/40 text-primary font-medium text-xs focus:ring-1 focus:ring-gold focus:border-gold outline-none transition-all placeholder:text-muted/60"
                   />
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <label className="flex items-center justify-between text-xs font-semibold text-primary mb-1.5">
+                    <span>Nama Tamu Undangan</span>
+                    <span className="inline-flex items-center gap-1 text-[10px] text-secondary font-medium">
+                      <Lock className="w-3 h-3 text-gold" />
+                      <span>Terkunci sesuai tautan</span>
+                    </span>
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      readOnly
+                      value={guestName}
+                      className="w-full px-4 py-2.5 rounded-xl bg-white/85 border border-gold/30 text-primary font-medium text-sm cursor-not-allowed select-none focus:outline-none"
+                    />
+                  </div>
+                </div>
+              )}
 
               {/* PILIHAN KEHADIRAN */}
               <div>
@@ -268,47 +374,63 @@ export const RSVPSection = () => {
               Belum ada ucapan. Jadilah yang pertama memberikan doa!
             </p>
           ) : (
-            wishes.map((item, idx) => (
-              <div
-                key={item.id || idx}
-                className="relative p-4 sm:p-5 rounded-2xl luxury-pearl-card border border-gold/35 flex items-start gap-3.5 transition-all hover:-translate-y-0.5 overflow-hidden"
-              >
-                {/* Watermark Flora Halus */}
-                <CardBotanicalWatermark className="w-24 sm:w-32 opacity-[0.15]" />
+            wishes.map((item, idx) => {
+              const { personName, groupBadge } = parseDisplayName(item.name);
+              return (
+                <div
+                  key={item.id || idx}
+                  className="relative p-4 sm:p-5 rounded-2xl luxury-pearl-card border border-gold/35 flex items-start gap-3.5 transition-all hover:-translate-y-0.5 overflow-hidden"
+                >
+                  {/* Watermark Flora Halus */}
+                  <CardBotanicalWatermark className="w-24 sm:w-32 opacity-[0.15]" />
 
-                {/* Avatar Inisial Nama */}
-                <div className="relative z-10 shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-white to-gold/20 border-2 border-gold/40 flex items-center justify-center text-primary font-bold text-scale-small font-serif shadow-xs">
-                  {getInitial(item.name)}
-                </div>
-
-                {/* Konten Doa */}
-                <div className="relative z-10 flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2 mb-1.5">
-                    <span className="font-serif text-scale-small font-bold text-primary truncate">
-                      {item.name}
-                    </span>
-                    <span
-                      className={`text-[9px] px-2.5 py-0.5 rounded-full font-semibold shrink-0 ${
-                        item.attendance === 'hadir'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-rose-100 text-rose-700'
-                      }`}
-                    >
-                      {item.attendance === 'hadir' ? 'Hadir' : 'Berhalangan'}
-                    </span>
+                  {/* Avatar Inisial Nama */}
+                  <div className="relative z-10 shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-white to-gold/20 border-2 border-gold/40 flex items-center justify-center text-primary font-bold text-scale-small font-serif shadow-xs">
+                    {getInitial(personName)}
                   </div>
 
-                  <p className="text-scale-small text-muted leading-relaxed relative pr-6">
-                    {item.message}
-                    <Quote className="absolute right-0 top-0 w-3.5 h-3.5 text-gold/35 pointer-events-none" />
-                  </p>
+                  {/* Konten Doa */}
+                  <div className="relative z-10 flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <div className="min-w-0 pr-2">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="font-serif text-scale-small font-bold text-primary truncate">
+                            {personName}
+                          </span>
+                          {groupBadge && (
+                            <span className="inline-flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-gold/15 text-primary border border-gold/30 font-medium">
+                              <Users className="w-2.5 h-2.5 text-gold-dark" />
+                              <span className="truncate max-w-[140px] sm:max-w-[200px]">
+                                {groupBadge}
+                              </span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
 
-                  <p className="text-scale-xs text-secondary/70 pt-2 font-medium">
-                    {item.timestamp}
-                  </p>
+                      <span
+                        className={`text-[9px] px-2.5 py-0.5 rounded-full font-semibold shrink-0 ${
+                          item.attendance === 'hadir'
+                            ? 'bg-emerald-100 text-emerald-700'
+                            : 'bg-rose-100 text-rose-700'
+                        }`}
+                      >
+                        {item.attendance === 'hadir' ? 'Hadir' : 'Berhalangan'}
+                      </span>
+                    </div>
+
+                    <p className="text-scale-small text-muted leading-relaxed relative pr-6">
+                      {item.message}
+                      <Quote className="absolute right-0 top-0 w-3.5 h-3.5 text-gold/35 pointer-events-none" />
+                    </p>
+
+                    <p className="text-scale-xs text-secondary/70 pt-2 font-medium">
+                      {item.timestamp}
+                    </p>
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>

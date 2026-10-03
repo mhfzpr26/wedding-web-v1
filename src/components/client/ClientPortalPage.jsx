@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useWedding } from '../../context/WeddingContext';
+import { parseDisplayName } from '../../services/rsvpService';
 
 // Normalisasi nomor telepon ke format internasional WhatsApp (628...)
 function normalizePhone(rawPhone) {
@@ -1686,41 +1687,50 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                   </p>
                 </div>
               ) : (
-                wishes.map((w, idx) => (
-                  <div
-                    key={w.id || idx}
-                    className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1.5"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-800">
-                          {w.name}
-                        </span>
-                        <span
-                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            w.attendance === 'hadir' || w.attendance === 'yes'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : 'bg-rose-50 text-rose-700 border border-rose-200'
-                          }`}
-                        >
-                          {w.attendance === 'hadir' || w.attendance === 'yes'
-                            ? `Hadir (${w.guestsCount || 1} Pax)`
-                            : 'Tidak Hadir'}
+                wishes.map((w, idx) => {
+                  const { personName, groupBadge } = parseDisplayName(w.name);
+                  return (
+                    <div
+                      key={w.id || idx}
+                      className="p-4 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-1.5"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-slate-800">
+                            {personName}
+                          </span>
+                          {groupBadge && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+                              <Users className="w-2.5 h-2.5 text-amber-600" />
+                              <span>{groupBadge}</span>
+                            </span>
+                          )}
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              w.attendance === 'hadir' || w.attendance === 'yes'
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-rose-50 text-rose-700 border border-rose-200'
+                            }`}
+                          >
+                            {w.attendance === 'hadir' || w.attendance === 'yes'
+                              ? `Hadir (${w.guestsCount || 1} Pax)`
+                              : 'Tidak Hadir'}
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-slate-400" />
+                          {w.timestamp || 'Baru saja'}
                         </span>
                       </div>
-                      <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                        <Clock className="w-3 h-3 text-slate-400" />
-                        {w.timestamp || 'Baru saja'}
-                      </span>
-                    </div>
 
-                    {w.message && (
-                      <p className="text-xs text-slate-600 italic whitespace-pre-wrap leading-relaxed pt-1">
-                        "{w.message}"
-                      </p>
-                    )}
-                  </div>
-                ))
+                      {w.message && (
+                        <p className="text-xs text-slate-600 italic whitespace-pre-wrap leading-relaxed pt-1">
+                          "{w.message}"
+                        </p>
+                      )}
+                    </div>
+                  );
+                })
               )}
             </div>
           </div>

@@ -7,7 +7,7 @@ import {
   useState,
 } from 'react';
 import { weddingConfig } from '../config/weddingConfig';
-import { rsvpService } from '../services/rsvpService';
+import { isGroupGuest, rsvpService } from '../services/rsvpService';
 import { supabase } from '../services/supabase';
 
 const WeddingContext = createContext();
@@ -257,20 +257,23 @@ export const WeddingProvider = ({ children }) => {
       setHasCustomGuest(true);
 
       // 1. Cek apakah tamu ini sudah konfirmasi sebelumnya di browser lokal
-      const confirmed = rsvpService.hasGuestConfirmed(decoded);
-      if (confirmed) {
-        setExistingConfirmation(confirmed);
-      }
+      // Untuk undangan grup/keluarga, jangan auto-lock link agar anggota lain tetap bisa mengisi
+      if (!isGroupGuest(decoded)) {
+        const confirmed = rsvpService.hasGuestConfirmed(decoded);
+        if (confirmed) {
+          setExistingConfirmation(confirmed);
+        }
 
-      // 2. Cek juga ke cloud Supabase agar status RSVP sinkron di HP & Laptop mana pun
-      rsvpService
-        .checkGuestConfirmedCloud(decoded, 'destia-raka')
-        .then((cloudConf) => {
-          if (cloudConf) {
-            setExistingConfirmation(cloudConf);
-            rsvpService.saveGuestConfirmedLocally(decoded, cloudConf);
-          }
-        });
+        // 2. Cek juga ke cloud Supabase agar status RSVP perorangan sinkron di HP & Laptop mana pun
+        rsvpService
+          .checkGuestConfirmedCloud(decoded, 'destia-raka')
+          .then((cloudConf) => {
+            if (cloudConf) {
+              setExistingConfirmation(cloudConf);
+              rsvpService.saveGuestConfirmedLocally(decoded, cloudConf);
+            }
+          });
+      }
     }
 
     // Deteksi route /admin murni (Canonical: selalu di /admin tanpa slug pasangan)
@@ -482,9 +485,10 @@ export const WeddingProvider = ({ children }) => {
 
   // Submit RSVP
   const submitRSVP = async (data) => {
+    const finalName = data.name?.trim() || guestName;
     const result = await rsvpService.submitRSVP(
       {
-        name: guestName,
+        name: finalName,
         attendance: data.attendance,
         guestsCount: data.guestsCount,
         message: data.message,
@@ -493,7 +497,7 @@ export const WeddingProvider = ({ children }) => {
     );
 
     setExistingConfirmation({
-      name: guestName,
+      name: finalName,
       attendance: data.attendance,
       guestsCount: data.guestsCount,
       message: data.message,
