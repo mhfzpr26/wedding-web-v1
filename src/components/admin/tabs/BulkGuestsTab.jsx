@@ -3,19 +3,59 @@ import {
   Copy,
   Download,
   MessageSquare,
+  RotateCcw,
   Search,
   Send,
   Share2,
+  Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-export const BulkGuestsTab = ({ config }) => {
-  const [rawNames, setRawNames] = useState(
-    'Bapak Dr. H. Joko Widodo & Keluarga\nIbu Hj. Aminah\nKevin Pratama & Partner\nKeluarga Besar Bpk. Hendra\nSahabat Kuliah Angkatan 2018',
-  );
+const DEFAULT_SAMPLE_GUESTS =
+  'Bapak Dr. H. Joko Widodo & Keluarga\nIbu Hj. Aminah\nKevin Pratama & Partner\nKeluarga Besar Bpk. Hendra\nSahabat Kuliah Angkatan 2018';
+
+export const BulkGuestsTab = ({ config, updateWeddingData }) => {
+  const [rawNames, setRawNames] = useState(() => {
+    if (config?.guestNamesRaw && config.guestNamesRaw.trim() !== '') {
+      return config.guestNamesRaw;
+    }
+    try {
+      const stored = localStorage.getItem('invatera_admin_guest_names');
+      if (stored && stored.trim() !== '') return stored;
+    } catch (_e) {}
+    return DEFAULT_SAMPLE_GUESTS;
+  });
+
   const [templateType, setTemplateType] = useState('formal');
   const [searchTerm, setSearchTerm] = useState('');
   const [copiedType, setCopiedType] = useState(null); // { index, type: 'link' | 'msg' }
+
+  // Sinkronisasi data jika config diperbarui dari cloud
+  useEffect(() => {
+    if (config?.guestNamesRaw && config.guestNamesRaw !== rawNames) {
+      setRawNames(config.guestNamesRaw);
+    }
+  }, [config?.guestNamesRaw, rawNames]);
+
+  const handleNamesChange = (val) => {
+    setRawNames(val);
+    try {
+      localStorage.setItem('invatera_admin_guest_names', val);
+    } catch (_e) {}
+    if (updateWeddingData) {
+      updateWeddingData({ guestNamesRaw: val });
+    }
+  };
+
+  const handleLoadSample = () => {
+    handleNamesChange(DEFAULT_SAMPLE_GUESTS);
+  };
+
+  const handleClearNames = () => {
+    if (window.confirm('Yakin ingin mengosongkan seluruh daftar nama tamu?')) {
+      handleNamesChange('');
+    }
+  };
 
   const bride = config.bride?.shortName || 'Destia';
   const groom = config.groom?.shortName || 'Raka';
@@ -145,22 +185,56 @@ export const BulkGuestsTab = ({ config }) => {
 
       {/* INPUT DAFTAR NAMA TAMU */}
       <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
-        <div className="flex items-center justify-between">
-          <label className="block text-xs font-bold text-slate-700">
-            Daftar Nama Tamu ({guestList.length} Tamu Terdeteksi):
-          </label>
-          <span className="text-[11px] text-slate-400">
-            *Paste nama tamu di sini (1 baris per tamu)
-          </span>
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white">
+              {guestList.length} Tamu
+            </span>
+            <label className="text-xs font-bold text-slate-800">
+              Daftar Nama Tamu Undangan
+            </label>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleLoadSample}
+              className="text-[11px] font-semibold text-slate-500 hover:text-amber-600 flex items-center gap-1 transition-colors cursor-pointer"
+              title="Isi dengan contoh format"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Contoh Format</span>
+            </button>
+            <span className="text-slate-300">•</span>
+            <button
+              type="button"
+              onClick={handleClearNames}
+              className="text-[11px] font-semibold text-slate-500 hover:text-rose-600 flex items-center gap-1 transition-colors cursor-pointer"
+              title="Kosongkan seluruh teks"
+            >
+              <Trash2 className="w-3 h-3" />
+              <span>Kosongkan</span>
+            </button>
+          </div>
         </div>
 
         <textarea
-          rows={5}
+          rows={6}
           value={rawNames}
-          onChange={(e) => setRawNames(e.target.value)}
-          placeholder="Ketik atau paste nama tamu di sini. Contoh:&#10;Bapak Budi & Keluarga&#10;Kak Siska&#10;Teman-teman Kantor"
-          className="w-full px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-mono text-slate-800 focus:outline-none focus:border-gold resize-y leading-relaxed"
+          onChange={(e) => handleNamesChange(e.target.value)}
+          placeholder="Ketik atau paste nama tamu di sini (1 baris per tamu). Contoh:&#10;Bapak Budi & Keluarga&#10;Kak Siska&#10;Teman-teman Kantor"
+          className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono text-slate-800 focus:outline-none focus:border-amber-500 resize-y leading-relaxed shadow-2xs"
         />
+
+        <div className="flex items-center justify-between text-[10px] text-slate-400">
+          <span>
+            *Tiap baris otomatis dibuatkan tautan undangan unik{' '}
+            <code>?to=...</code>
+          </span>
+          <span className="text-emerald-600 font-medium">
+            ✓ Tersinkronisasi ke Cloud Database
+          </span>
+        </div>
 
         {/* Pilihan Gaya Salam WhatsApp */}
         <div className="flex flex-wrap items-center gap-3 pt-1">

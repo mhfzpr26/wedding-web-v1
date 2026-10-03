@@ -12,11 +12,14 @@ import {
   RotateCcw,
   Save,
   Share2,
+  Smartphone,
   Sparkles,
+  UploadCloud,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useWedding } from '../../context/WeddingContext';
 import { AdminLogin } from './AdminLogin';
+import { LivePreviewModal } from './LivePreviewModal';
 import { AudioThemeTab } from './tabs/AudioThemeTab';
 import { BulkGuestsTab } from './tabs/BulkGuestsTab';
 import { CoupleTab } from './tabs/CoupleTab';
@@ -48,6 +51,8 @@ export const AdminPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isLivePreviewOpen, setIsLivePreviewOpen] = useState(false);
+  const importFileRef = useRef(null);
 
   if (!isAuthenticated) {
     return <AdminLogin onLoginSuccess={() => setIsAuthenticated(true)} />;
@@ -76,6 +81,49 @@ export const AdminPage = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleImportConfigFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result;
+        if (typeof text !== 'string') return;
+
+        let parsed;
+        if (file.name.endsWith('.json')) {
+          parsed = JSON.parse(text);
+        } else {
+          // Format .js: ambil bagian objek konfigurasi setelah "weddingConfig ="
+          const jsonMatch = text.match(
+            /weddingConfig\s*=\s*(\{[\s\S]*\});?\s*$/,
+          );
+          if (jsonMatch?.[1]) {
+            parsed = JSON.parse(jsonMatch[1]);
+          } else {
+            parsed = JSON.parse(text);
+          }
+        }
+
+        if (parsed && typeof parsed === 'object') {
+          updateWeddingData(parsed);
+          setToastMessage(
+            '✓ Konfigurasi berhasil dipulihkan dari file cadangan!',
+          );
+          setTimeout(() => setToastMessage(null), 3500);
+        }
+      } catch (err) {
+        console.error('Gagal membaca file cadangan:', err);
+        setToastMessage('Format file tidak valid atau rusak.');
+        setTimeout(() => setToastMessage(null), 3000);
+      } finally {
+        if (importFileRef.current) importFileRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
   };
 
   const handleOpenPreview = () => {
@@ -184,6 +232,34 @@ export const AdminPage = () => {
             <Download className="w-4 h-4" />
           </button>
 
+          {/* Tombol Pulihkan Config dari File Cadangan */}
+          <input
+            ref={importFileRef}
+            type="file"
+            accept=".js,.json"
+            onChange={handleImportConfigFile}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => importFileRef.current?.click()}
+            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors cursor-pointer"
+            title="Pulihkan konfigurasi dari file cadangan (.js / .json)"
+          >
+            <UploadCloud className="w-4 h-4" />
+          </button>
+
+          {/* Tombol Simulator Layar HP (Live Preview) */}
+          <button
+            type="button"
+            onClick={() => setIsLivePreviewOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+            title="Buka Simulator Layar Ponsel Langsung"
+          >
+            <Smartphone className="w-3.5 h-3.5 text-amber-400" />
+            <span className="hidden md:inline">Pratinjau HP</span>
+          </button>
+
           {/* Tombol Buka Undangan di Tab Baru */}
           <button
             type="button"
@@ -192,7 +268,7 @@ export const AdminPage = () => {
             title="Buka Halaman Undangan di Tab Baru"
           >
             <ExternalLink className="w-3.5 h-3.5 text-gold" />
-            <span>Buka Undangan (Preview)</span>
+            <span className="hidden sm:inline">Buka Undangan</span>
           </button>
 
           {/* Tombol Logout */}
@@ -322,7 +398,12 @@ export const AdminPage = () => {
                 updateWeddingData={updateWeddingData}
               />
             )}
-            {activeTab === 'whatsapp' && <BulkGuestsTab config={config} />}
+            {activeTab === 'whatsapp' && (
+              <BulkGuestsTab
+                config={config}
+                updateWeddingData={updateWeddingData}
+              />
+            )}
             {activeTab === 'wishes' && <WishesTab />}
             {activeTab === 'theme' && (
               <AudioThemeTab
@@ -335,6 +416,12 @@ export const AdminPage = () => {
           </div>
         </main>
       </div>
+
+      {/* MODAL SIMULATOR LAYAR HP (LIVE PREVIEW) */}
+      <LivePreviewModal
+        isOpen={isLivePreviewOpen}
+        onClose={() => setIsLivePreviewOpen(false)}
+      />
     </div>
   );
 };
