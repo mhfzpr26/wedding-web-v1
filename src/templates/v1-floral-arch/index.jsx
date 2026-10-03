@@ -9,6 +9,7 @@ import { CoverModal } from './components/CoverModal';
 import { DigitalGift } from './components/DigitalGift';
 import { EventSection } from './components/EventSection';
 import { FooterSection } from './components/FooterSection';
+import { GallerySection } from './components/GallerySection';
 import { RSVPSection } from './components/RSVPSection';
 import { StorySection } from './components/StorySection';
 import { TopMonogram } from './components/TopMonogram';
@@ -136,7 +137,12 @@ const TemplateV1FloralArch = () => {
             <StorySection />
           </div>
 
-          {/* Section 4: Hadiah Digital & Buku Tamu / RSVP */}
+          {/* Section 4: Galeri Foto & Video Prewedding */}
+          <div className="relative z-10 w-full">
+            <GallerySection />
+          </div>
+
+          {/* Section 5: Hadiah Digital & Buku Tamu / RSVP */}
           <div className="relative z-10 w-full">
             <DigitalGift />
             <RSVPSection />

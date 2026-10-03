@@ -145,5 +145,47 @@ export const weddingConfig = {
       "notes": "Mohon konfirmasi via WhatsApp setelah pengiriman kado fisik."
     }
   },
+  "gallery": {
+    "enabled": true,
+    "subtitle": "Momen Bahagia",
+    "title": "Galeri & Video Kami",
+    "video": {
+      "enabled": true,
+      "title": "Prewedding Teaser Destia & Raka",
+      "url": "https://www.youtube.com/watch?v=kJQP7kiw5Fk"
+    },
+    "photos": [
+      {
+        "id": "photo-1",
+        "url": "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=80",
+        "caption": "Momen Bahagia Bersama"
+      },
+      {
+        "id": "photo-2",
+        "url": "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1000&q=80",
+        "caption": "Langkah Menuju Hari Bahagia"
+      },
+      {
+        "id": "photo-3",
+        "url": "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1000&q=80",
+        "caption": "Janji Suci Selamanya"
+      },
+      {
+        "id": "photo-4",
+        "url": "https://images.unsplash.com/photo-1532712938310-34cb3982ef74?auto=format&fit=crop&w=1000&q=80",
+        "caption": "Dua Hati Satu Tujuan"
+      },
+      {
+        "id": "photo-5",
+        "url": "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=1000&q=80",
+        "caption": "Kasih & Sayang Abadi"
+      },
+      {
+        "id": "photo-6",
+        "url": "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=1000&q=80",
+        "caption": "Menatap Masa Depan"
+      }
+    ]
+  },
   "initialWishes": []
 };

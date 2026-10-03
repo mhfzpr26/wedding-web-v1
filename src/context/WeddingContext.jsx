@@ -97,6 +97,16 @@ export const WeddingProvider = ({ children }) => {
           },
           events: parsed.events || weddingConfig.events,
           stories: parsed.stories || weddingConfig.stories,
+          gallery: {
+            ...weddingConfig.gallery,
+            ...(parsed.gallery || {}),
+            video: {
+              ...weddingConfig.gallery?.video,
+              ...(parsed.gallery?.video || {}),
+            },
+            photos:
+              parsed.gallery?.photos || weddingConfig.gallery?.photos || [],
+          },
         };
       }
     } catch (e) {

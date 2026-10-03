@@ -6,6 +6,7 @@ import {
   ExternalLink,
   Gift,
   Heart,
+  Image as ImageIcon,
   LogOut,
   MessageSquare,
   Palette,
@@ -24,6 +25,7 @@ import { AudioThemeTab } from './tabs/AudioThemeTab';
 import { BulkGuestsTab } from './tabs/BulkGuestsTab';
 import { CoupleTab } from './tabs/CoupleTab';
 import { EventsTab } from './tabs/EventsTab';
+import { GalleryTab } from './tabs/GalleryTab';
 import { GiftsTab } from './tabs/GiftsTab';
 import { GreetingsTab } from './tabs/GreetingsTab';
 import { StoriesTab } from './tabs/StoriesTab';
@@ -162,6 +164,12 @@ export const AdminPage = () => {
       label: 'Doa & Ucapan',
       icon: MessageSquare,
       badge: wishes?.length > 0 ? wishes.length : null,
+    },
+    {
+      id: 'gallery',
+      label: 'Galeri & Video',
+      icon: ImageIcon,
+      badge: config.gallery?.enabled !== false ? 'Aktif' : 'Off',
     },
     { id: 'theme', label: 'Tema & Musik', icon: Palette, badge: null },
   ];
@@ -405,6 +413,9 @@ export const AdminPage = () => {
               />
             )}
             {activeTab === 'wishes' && <WishesTab />}
+            {activeTab === 'gallery' && (
+              <GalleryTab config={config} updateSection={updateSection} />
+            )}
             {activeTab === 'theme' && (
               <AudioThemeTab
                 config={config}
