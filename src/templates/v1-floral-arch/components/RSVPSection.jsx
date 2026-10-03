@@ -1,7 +1,4 @@
-import { useGSAP } from '@gsap/react';
 import confetti from 'canvas-confetti';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import {
   CheckCircle2,
   HeartHandshake,
@@ -10,13 +7,10 @@ import {
   Quote,
   Send,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
-import { ScrollReveal } from '../../../components/common/ScrollReveal';
+import { useState } from 'react';
 import { useWedding } from '../../../context/WeddingContext';
 import { CardBotanicalWatermark } from '../assets/VectorOrnaments';
 import { OrganicTitleBadge } from './OrganicTitleBadge';
-
-gsap.registerPlugin(ScrollTrigger);
 
 // Helper inisial avatar tamu
 const getInitial = (name) => {
@@ -32,7 +26,6 @@ export const RSVPSection = () => {
     isLoadingWishes,
     existingConfirmation,
     submitRSVP,
-    isOpened,
   } = useWedding();
 
   const [attendance, setAttendance] = useState('hadir');
@@ -40,44 +33,6 @@ export const RSVPSection = () => {
   const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
-  const rsvpContainerRef = useRef(null);
-
-  useGSAP(
-    () => {
-      if (!isOpened) return;
-
-      // 1. Form RSVP Card Entrance (Two-Way Scroll)
-      gsap.from('.rsvp-card-box', {
-        scrollTrigger: {
-          trigger: '.rsvp-card-box',
-          start: 'top 85%',
-          toggleActions: 'play reverse play reverse',
-        },
-        y: 28,
-        scale: 0.96,
-        opacity: 0,
-        duration: 0.85,
-        ease: 'power2.out',
-      });
-
-      // 2. Wishes Wall Header & Stream (Two-Way Scroll)
-      gsap.from('.rsvp-wishes-wall', {
-        scrollTrigger: {
-          trigger: '.rsvp-wishes-wall',
-          start: 'top 85%',
-          toggleActions: 'play reverse play reverse',
-        },
-        y: 28,
-        opacity: 0,
-        duration: 0.85,
-        ease: 'power2.out',
-      });
-    },
-    {
-      dependencies: [isOpened, showEditForm, existingConfirmation],
-      scope: rsvpContainerRef,
-    },
-  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -111,25 +66,20 @@ export const RSVPSection = () => {
   };
 
   return (
-    <section
-      ref={rsvpContainerRef}
-      className="relative py-8 sm:py-10 px-4 max-w-2xl mx-auto overflow-hidden"
-    >
-      <ScrollReveal animation="fade-up" duration={750} repeat={true}>
-        <div className="text-center mb-4 sm:mb-6">
-          <OrganicTitleBadge
-            subtitle="Konfirmasi & Doa Restu"
-            title="Buku Tamu & RSVP"
-          />
-          <p className="text-scale-small text-muted max-w-md mx-auto mt-1 leading-relaxed">
-            Mohon kesediaan Bapak/Ibu/Saudara/i untuk mengonfirmasi kehadiran
-            dan memberikan doa restu.
-          </p>
-        </div>
-      </ScrollReveal>
+    <section className="relative py-8 sm:py-10 px-4 max-w-2xl mx-auto overflow-hidden">
+      <div className="text-center mb-4 sm:mb-6">
+        <OrganicTitleBadge
+          subtitle="Konfirmasi & Doa Restu"
+          title="Buku Tamu & RSVP"
+        />
+        <p className="text-scale-small text-muted max-w-md mx-auto mt-1 leading-relaxed">
+          Mohon kesediaan Bapak/Ibu/Saudara/i untuk mengonfirmasi kehadiran dan
+          memberikan doa restu.
+        </p>
+      </div>
 
       {/* Jika Tamu Sudah Pernah Konfirmasi & Tidak Sedang Mode Edit */}
-      <div className="rsvp-card-box will-change-transform">
+      <div>
         {existingConfirmation && !showEditForm ? (
           <div className="p-6 sm:p-8 rounded-3xl luxury-pearl-card border border-emerald-500/40 text-center mb-10 relative overflow-hidden">
             {/* Garis Border Ganda Bagian Dalam */}
@@ -296,8 +246,8 @@ export const RSVPSection = () => {
         )}
       </div>
 
-      {/* FEED UCAPAN & DOA (GUESTBOOK WALL ELEGAN DENGAN SCROLL-BACK) */}
-      <div className="rsvp-wishes-wall will-change-transform space-y-4">
+      {/* FEED UCAPAN & DOA (GUESTBOOK WALL ELEGAN) */}
+      <div className="space-y-4">
         <div className="flex items-center justify-between border-b border-gold/20 pb-3">
           <div className="flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-secondary" />
