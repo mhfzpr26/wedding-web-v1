@@ -3,9 +3,12 @@ import {
   Calendar,
   Check,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Clock,
   Copy,
   Download,
+  Edit3,
   ExternalLink,
   KeyRound,
   Lock,
@@ -14,6 +17,7 @@ import {
   Phone,
   Plus,
   RefreshCw,
+  RotateCcw,
   Search,
   Send,
   Share2,
@@ -61,6 +65,48 @@ function getCategoryBadgeClass(category) {
     return 'bg-amber-100 text-amber-800 border-amber-300 font-bold';
   }
   return 'bg-slate-100 text-slate-700 border-slate-200';
+}
+
+// Template Pesan Bawaan WhatsApp
+function getTemplateDefaultText(type) {
+  if (type === 'islami') {
+    return (
+      `Assalamu’alaikum Warahmatullahi Wabarakatuh.\n\n` +
+      `Yth. *{nama}*,\n\n` +
+      `Dengan memohon rahmat dan ridho Allah SWT, kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri syukuran pernikahan kami:\n\n` +
+      `*The Wedding of {pengantin}*\n` +
+      `📅 {tanggal}\n\n` +
+      `Untuk melihat rincian acara, lokasi, dan konfirmasi kehadiran (RSVP), silakan buka tautan undangan digital berikut:\n` +
+      `{link}\n\n` +
+      `Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.\n\n` +
+      `Wassalamu’alaikum Warahmatullahi Wabarakatuh.\n\n` +
+      `Salam hangat,\n*{pengantin}*`
+    );
+  }
+  if (type === 'santai') {
+    return (
+      `Halo *{nama}*! ✨\n\n` +
+      `Kabar bahagia untuk kita semua! Kami mengundang kamu untuk hadir dan merayakan momen bahagia pernikahan kami:\n\n` +
+      `*{pengantin} Wedding Celebration*\n` +
+      `📅 {tanggal}\n\n` +
+      `Yuk buka detail acara & konfirmasi kehadiran kamu lewat tautan undangan ini:\n` +
+      `{link}\n\n` +
+      `Kehadiranmu sangat berarti bagi kami! Sampai jumpa di hari bahagia kami! 🎉\n\n` +
+      `With love,\n*{pengantin}*`
+    );
+  }
+  // Default Formal
+  return (
+    `Kepada Yth. Bapak/Ibu/Saudara/i\n` +
+    `*{nama}*\n\n` +
+    `Tanpa mengurangi rasa hormat, perkenankan kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri acara pernikahan kami:\n\n` +
+    `*The Wedding of {pengantin}*\n` +
+    `📅 {tanggal}\n\n` +
+    `Detail lengkap acara dan konfirmasi kehadiran (RSVP) dapat diakses melalui tautan resmi berikut:\n` +
+    `{link}\n\n` +
+    `Terima kasih banyak atas perhatian dan doa restunya.\n\n` +
+    `Hormat kami yang berbahagia,\n*{pengantin}*`
+  );
 }
 
 export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
@@ -135,6 +181,15 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
   });
 
   const [templateType, setTemplateType] = useState('formal');
+  const [customMessage, setCustomMessage] = useState(() => {
+    try {
+      const stored = localStorage.getItem(`invatera_custom_msg_${slug}`);
+      if (stored && stored.trim() !== '') return stored;
+    } catch (_e) {}
+    return getTemplateDefaultText('formal');
+  });
+  const [showPreview, setShowPreview] = useState(true);
+  const [isEditingTemplate, setIsEditingTemplate] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'unsent' | 'sent'
   const [categoryFilter, setCategoryFilter] = useState('Semua');
@@ -421,48 +476,24 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
   // Template pesan WhatsApp
   const generateMessage = (guestName) => {
     const url = getGuestUrl(guestName);
+    const coupleName = `${bride} & ${groom}`;
 
-    if (templateType === 'islami') {
-      return (
-        `Assalamu’alaikum Warahmatullahi Wabarakatuh.\n\n` +
-        `Yth. *${guestName}*,\n\n` +
-        `Dengan memohon rahmat dan ridho Allah SWT, kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri syukuran pernikahan kami:\n\n` +
-        `*The Wedding of ${bride} & ${groom}*\n` +
-        `📅 ${eventDate}\n\n` +
-        `Untuk melihat rincian acara, lokasi, dan konfirmasi kehadiran (RSVP), silakan buka tautan undangan digital berikut:\n` +
-        `${url}\n\n` +
-        `Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu.\n\n` +
-        `Wassalamu’alaikum Warahmatullahi Wabarakatuh.\n\n` +
-        `Salam hangat,\n*${bride} & ${groom}*`
-      );
-    }
+    const rawTemplate =
+      templateType === 'custom'
+        ? customMessage
+        : getTemplateDefaultText(templateType);
 
-    if (templateType === 'santai') {
-      return (
-        `Halo *${guestName}*! ✨\n\n` +
-        `Kabar bahagia untuk kita semua! Kami mengundang kamu untuk hadir dan merayakan momen bahagia pernikahan kami:\n\n` +
-        `*${bride} & ${groom} Wedding Celebration*\n` +
-        `📅 ${eventDate}\n\n` +
-        `Yuk buka detail acara & konfirmasi kehadiran kamu lewat tautan undangan ini:\n` +
-        `${url}\n\n` +
-        `Kehadiranmu sangat berarti bagi kami! Sampai jumpa di hari bahagia kami! 🎉\n\n` +
-        `With love,\n*${bride} & ${groom}*`
-      );
-    }
-
-    // Default Formal
-    return (
-      `Kepada Yth. Bapak/Ibu/Saudara/i\n` +
-      `*${guestName}*\n\n` +
-      `Tanpa mengurangi rasa hormat, perkenankan kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri acara pernikahan kami:\n\n` +
-      `*The Wedding of ${bride} & ${groom}*\n` +
-      `📅 ${eventDate}\n\n` +
-      `Detail lengkap acara dan konfirmasi kehadiran (RSVP) dapat diakses melalui tautan resmi berikut:\n` +
-      `${url}\n\n` +
-      `Terima kasih banyak atas perhatian dan doa restunya.\n\n` +
-      `Hormat kami yang berbahagia,\n*${bride} & ${groom}*`
-    );
+    return rawTemplate
+      .replace(/{nama}/g, guestName)
+      .replace(/{link}/g, url)
+      .replace(/{pengantin}/g, coupleName)
+      .replace(/{tanggal}/g, eventDate);
   };
+
+  // Contoh nama dan pesan untuk kartu pratinjau live
+  const sampleGuestName =
+    parsedGuests?.[0]?.name || 'Bapak Dr. H. Joko Widodo & Keluarga';
+  const sampleMessageText = generateMessage(sampleGuestName);
 
   const handleCopy = (text, id, type) => {
     navigator.clipboard.writeText(text);
@@ -845,28 +876,37 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
               />
 
               {/* Template Style Selector */}
-              <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-slate-100">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-semibold text-slate-600">
                     Gaya Bahasa Pesan:
                   </span>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     {[
                       { id: 'formal', label: 'Formal / Resmi' },
                       { id: 'islami', label: 'Islami' },
                       { id: 'santai', label: 'Santai' },
+                      { id: 'custom', label: 'Kustom / Edit Sendiri' },
                     ].map((tmpl) => (
                       <button
                         key={tmpl.id}
                         type="button"
-                        onClick={() => setTemplateType(tmpl.id)}
-                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                        onClick={() => {
+                          setTemplateType(tmpl.id);
+                          if (tmpl.id === 'custom') {
+                            setIsEditingTemplate(true);
+                          }
+                        }}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1 ${
                           templateType === tmpl.id
                             ? 'bg-slate-900 text-white shadow-2xs'
                             : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                         }`}
                       >
-                        {tmpl.label}
+                        {tmpl.id === 'custom' && (
+                          <Edit3 className="w-3 h-3 text-amber-400" />
+                        )}
+                        <span>{tmpl.label}</span>
                       </button>
                     ))}
                   </div>
@@ -891,6 +931,193 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                     <span>Ekspor TXT</span>
                   </button>
                 </div>
+              </div>
+
+              {/* KARTU PRATINJAU GELEMBUNG CHAT WHATSAPP */}
+              <div className="mt-3 rounded-2xl border border-emerald-300/80 bg-gradient-to-b from-emerald-50/50 via-white to-slate-50 overflow-hidden shadow-2xs">
+                {/* Header Toggle Pratinjau */}
+                <div
+                  onClick={() => setShowPreview((prev) => !prev)}
+                  className="px-4 py-2.5 bg-[#075E54] text-white flex items-center justify-between cursor-pointer select-none transition-colors hover:bg-[#064e46]"
+                >
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-emerald-300" />
+                    <span className="text-xs font-bold">
+                      Pratinjau Pesan WhatsApp (Sesuai yang Diterima Tamu)
+                    </span>
+                    <span className="px-2 py-0.2 rounded-full text-[9px] font-bold bg-emerald-400 text-slate-950 uppercase tracking-wider">
+                      {templateType === 'formal'
+                        ? 'Formal'
+                        : templateType === 'islami'
+                          ? 'Islami'
+                          : templateType === 'santai'
+                            ? 'Santai'
+                            : 'Kustom'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-100 font-semibold">
+                    <span className="text-[11px] hidden sm:inline">
+                      {showPreview ? 'Sembunyikan' : 'Lihat Teks'}
+                    </span>
+                    {showPreview ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </div>
+                </div>
+
+                {showPreview && (
+                  <div className="p-4 sm:p-5 space-y-4">
+                    {/* Gelembung WhatsApp Asli */}
+                    <div className="bg-[#EFEAE2] p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-inner flex justify-center">
+                      <div className="max-w-xl w-full bg-[#DCF8C6] text-slate-900 p-4 rounded-2xl rounded-tr-xs shadow-md border border-emerald-200/80 space-y-2.5">
+                        <div className="text-[10px] text-emerald-900/70 font-mono flex items-center justify-between pb-1 border-b border-emerald-300/60">
+                          <span>
+                            Kepada: <strong>{sampleGuestName}</strong>
+                          </span>
+                          <span>WhatsApp Messenger</span>
+                        </div>
+
+                        {/* Isi Teks */}
+                        <div className="whitespace-pre-wrap text-xs text-slate-800 leading-relaxed font-sans select-text">
+                          {sampleMessageText}
+                        </div>
+
+                        {/* WhatsApp Timestamp & Blue Double Checkmarks */}
+                        <div className="flex items-center justify-end gap-1 text-[10px] text-slate-500 pt-1">
+                          <span>10:45</span>
+                          <span className="text-sky-600 font-bold">✓✓</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Mode Editor Teks Kustom */}
+                    {isEditingTemplate ? (
+                      <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-300 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                            <Edit3 className="w-3.5 h-3.5 text-amber-600" />
+                            <span>Edit Kata-kata Pesan Undangan:</span>
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (
+                                window.confirm(
+                                  'Reset pesan ke teks formal standar?',
+                                )
+                              ) {
+                                const def = getTemplateDefaultText('formal');
+                                setCustomMessage(def);
+                                try {
+                                  localStorage.setItem(
+                                    `invatera_custom_msg_${slug}`,
+                                    def,
+                                  );
+                                } catch (_e) {}
+                              }
+                            }}
+                            className="text-[11px] font-semibold text-slate-600 hover:text-rose-600 flex items-center gap-1 cursor-pointer"
+                          >
+                            <RotateCcw className="w-3 h-3" />
+                            <span>Reset ke Format Standar</span>
+                          </button>
+                        </div>
+
+                        <p className="text-[11px] text-slate-600">
+                          Klik tag di bawah ini untuk menyisipkan data otomatis
+                          (nama tamu, tautan link, dll):
+                        </p>
+
+                        <div className="flex flex-wrap items-center gap-1.5 text-xs">
+                          {[
+                            { tag: '{nama}', desc: 'Nama Tamu' },
+                            { tag: '{link}', desc: 'Link Undangan' },
+                            { tag: '{pengantin}', desc: 'Nama Pasangan' },
+                            { tag: '{tanggal}', desc: 'Tanggal Acara' },
+                          ].map((item) => (
+                            <button
+                              key={item.tag}
+                              type="button"
+                              onClick={() => {
+                                setCustomMessage(
+                                  (prev) => `${prev} ${item.tag}`,
+                                );
+                              }}
+                              className="px-2.5 py-1 rounded-lg bg-white hover:bg-amber-100 border border-amber-200 text-amber-950 font-mono font-bold text-[11px] cursor-pointer shadow-2xs"
+                              title={`Sisipkan ${item.desc}`}
+                            >
+                              + {item.tag}{' '}
+                              <span className="font-sans font-normal text-slate-500">
+                                ({item.desc})
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+
+                        <textarea
+                          rows={6}
+                          value={customMessage}
+                          onChange={(e) => {
+                            setCustomMessage(e.target.value);
+                            try {
+                              localStorage.setItem(
+                                `invatera_custom_msg_${slug}`,
+                                e.target.value,
+                              );
+                            } catch (_err) {}
+                          }}
+                          placeholder="Ketik format pesan WhatsApp kustom Anda..."
+                          className="w-full p-3 rounded-xl border border-amber-200 bg-white text-xs font-mono text-slate-800 focus:outline-none focus:border-amber-500 leading-relaxed shadow-inner"
+                        />
+
+                        <div className="flex items-center justify-between gap-2 pt-1">
+                          <p className="text-[10px] text-slate-500 italic">
+                            💡 Format teks tebal dapat menggunakan tanda
+                            bintang: *tebal*
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setIsEditingTemplate(false)}
+                            className="px-4 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
+                          >
+                            Simpan & Selesai Mengedit
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-slate-100">
+                        <p className="text-xs text-slate-500">
+                          Ingin menambahkan catatan khusus seperti{' '}
+                          <strong>Dresscode</strong>,{' '}
+                          <strong>Jam Akad/Resepsi</strong>, atau{' '}
+                          <strong>Lokasi</strong>?
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (templateType !== 'custom') {
+                                const currentText =
+                                  getTemplateDefaultText(templateType);
+                                setCustomMessage(currentText);
+                                setTemplateType('custom');
+                              }
+                              setIsEditingTemplate(true);
+                            }}
+                            className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-semibold text-xs shadow-2xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <Edit3 className="w-3.5 h-3.5 text-amber-500" />
+                            <span>Kustomisasi / Edit Teks Pesan</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -1037,7 +1264,27 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                     <button
                       key={cat}
                       type="button"
-                      onClick={() => setCategoryFilter(cat)}
+                      onClick={() => {
+                        setCategoryFilter(cat);
+                        if (templateType !== 'custom') {
+                          const lower = cat.toLowerCase();
+                          if (
+                            lower.includes('sahabat') ||
+                            lower.includes('teman dekat') ||
+                            lower.includes('circle')
+                          ) {
+                            setTemplateType('santai');
+                          } else if (lower.includes('keluarga')) {
+                            setTemplateType('islami');
+                          } else if (
+                            lower.includes('vip') ||
+                            lower.includes('kantor') ||
+                            lower.includes('rekan')
+                          ) {
+                            setTemplateType('formal');
+                          }
+                        }
+                      }}
                       className={`px-2.5 py-1 rounded-lg text-xs font-semibold shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
                         isSelected
                           ? 'bg-slate-900 text-white shadow-2xs'
