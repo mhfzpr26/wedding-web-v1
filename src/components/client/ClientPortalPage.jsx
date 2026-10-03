@@ -10,6 +10,7 @@ import {
   Download,
   Edit3,
   ExternalLink,
+  FileText,
   KeyRound,
   Lock,
   LogOut,
@@ -32,6 +33,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useWedding } from '../../context/WeddingContext';
 import { isGroupGuest, parseDisplayName } from '../../services/rsvpService';
+import { ClientInfoForm } from './ClientInfoForm';
 
 // Normalisasi nomor telepon ke format internasional WhatsApp (628...)
 function normalizePhone(rawPhone) {
@@ -764,11 +766,26 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
 
       {/* SUB-HEADER / TAB SWITCHER */}
       <div className="bg-white border-b border-slate-200 px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4 sticky top-[61px] z-30 shadow-2xs">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+          {/* Tab 1: Data & Informasi Acara */}
+          <button
+            type="button"
+            onClick={() => setActiveTab('info')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
+              activeTab === 'info'
+                ? 'bg-amber-500 text-slate-950 shadow-xs'
+                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Data Undangan</span>
+          </button>
+
+          {/* Tab 2: Kirim Undangan WhatsApp */}
           <button
             type="button"
             onClick={() => setActiveTab('whatsapp')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
               activeTab === 'whatsapp'
                 ? 'bg-amber-500 text-slate-950 shadow-xs'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -781,10 +798,11 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
             </span>
           </button>
 
+          {/* Tab 3: Buku Tamu & RSVP */}
           <button
             type="button"
             onClick={() => setActiveTab('rsvp')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0 ${
               activeTab === 'rsvp'
                 ? 'bg-amber-500 text-slate-950 shadow-xs'
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -801,7 +819,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
         </div>
 
         {activeTab === 'whatsapp' && totalGuests > 0 && (
-          <div className="hidden md:flex items-center gap-2 text-xs font-semibold text-slate-500">
+          <div className="hidden md:flex items-center gap-2 text-xs font-semibold text-slate-500 shrink-0">
             <span>Progress Pengiriman:</span>
             <span className="text-emerald-600 font-bold">
               {sentCount} dari {totalGuests} Terkirim
@@ -813,7 +831,12 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
       {/* KONTEN UTAMA */}
       <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-5xl mx-auto w-full">
         {/* ======================================================== */}
-        {/* TAB 1: KIRIM UNDANGAN WHATSAPP MASSAL                    */}
+        {/* TAB 1: FORMULIR DATA & INFORMASI ACARA PENGANTIN         */}
+        {/* ======================================================== */}
+        {activeTab === 'info' && <ClientInfoForm slug={slug} />}
+
+        {/* ======================================================== */}
+        {/* TAB 2: KIRIM UNDANGAN WHATSAPP MASSAL                    */}
         {/* ======================================================== */}
         {activeTab === 'whatsapp' && (
           <div className="space-y-6">
