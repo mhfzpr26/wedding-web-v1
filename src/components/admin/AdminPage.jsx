@@ -410,6 +410,7 @@ export const AdminPage = () => {
               <BulkGuestsTab
                 config={config}
                 updateWeddingData={updateWeddingData}
+                saveWeddingConfig={saveWeddingConfig}
               />
             )}
             {activeTab === 'wishes' && <WishesTab />}

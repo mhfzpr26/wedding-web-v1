@@ -16,8 +16,14 @@ import { useEffect, useState } from 'react';
 const DEFAULT_SAMPLE_GUESTS =
   'Bapak Dr. H. Joko Widodo & Keluarga\nIbu Hj. Aminah\nKevin Pratama & Partner\nKeluarga Besar Bpk. Hendra\nSahabat Kuliah Angkatan 2018';
 
-export const BulkGuestsTab = ({ config, updateWeddingData }) => {
+export const BulkGuestsTab = ({
+  config,
+  updateWeddingData,
+  saveWeddingConfig,
+}) => {
   const [copiedPortal, setCopiedPortal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [rawNames, setRawNames] = useState(() => {
     if (config?.guestNamesRaw && config.guestNamesRaw.trim() !== '') {
       if (!config.guestNamesRaw.includes('Joko Widodo')) {
@@ -54,6 +60,20 @@ export const BulkGuestsTab = ({ config, updateWeddingData }) => {
     } catch (_e) {}
     if (updateWeddingData) {
       updateWeddingData({ guestNamesRaw: val });
+    }
+  };
+
+  const handleSaveToCloud = async () => {
+    if (!saveWeddingConfig) return;
+    setIsSaving(true);
+    try {
+      await saveWeddingConfig({ ...config, guestNamesRaw: rawNames });
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2500);
+    } catch (_err) {
+      alert('Gagal menyimpan daftar tamu ke cloud.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -117,6 +137,15 @@ export const BulkGuestsTab = ({ config, updateWeddingData }) => {
   const handleSendWA = (name) => {
     const text = encodeURIComponent(generateMessage(name));
     window.open(`https://wa.me/?text=${text}`, '_blank');
+
+    const cleanId = `guest-${name.toLowerCase().trim()}`;
+    const prevSent = Array.isArray(config?.sentGuests) ? config.sentGuests : [];
+    if (!prevSent.includes(cleanId) && !prevSent.includes(name)) {
+      const nextSent = [...prevSent, cleanId, name];
+      if (updateWeddingData) updateWeddingData({ sentGuests: nextSent });
+      if (saveWeddingConfig)
+        saveWeddingConfig({ ...config, sentGuests: nextSent });
+    }
   };
 
   // Unduh daftar tamu dalam format TXT
@@ -325,14 +354,33 @@ export const BulkGuestsTab = ({ config, updateWeddingData }) => {
           className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono text-slate-800 focus:outline-none focus:border-amber-500 resize-y leading-relaxed shadow-2xs"
         />
 
-        <div className="flex items-center justify-between text-[10px] text-slate-400">
-          <span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-100">
+          <div className="text-[11px] text-slate-500">
             *Tiap baris otomatis dibuatkan tautan undangan unik{' '}
-            <code>?to=...</code>
-          </span>
-          <span className="text-emerald-600 font-medium">
-            ✓ Tersinkronisasi ke Cloud Database
-          </span>
+            <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-700 font-mono">
+              ?to=...
+            </code>
+          </div>
+          <button
+            type="button"
+            onClick={handleSaveToCloud}
+            disabled={isSaving}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-all cursor-pointer disabled:opacity-50 self-start sm:self-auto"
+          >
+            {saveSuccess ? (
+              <>
+                <Check className="w-3.5 h-3.5" />
+                <span>Tersimpan ke Cloud!</span>
+              </>
+            ) : (
+              <>
+                <Send className="w-3.5 h-3.5" />
+                <span>
+                  {isSaving ? 'Menyimpan...' : 'Simpan Daftar Tamu ke Cloud'}
+                </span>
+              </>
+            )}
+          </button>
         </div>
 
         {/* Pilihan Gaya Salam WhatsApp */}

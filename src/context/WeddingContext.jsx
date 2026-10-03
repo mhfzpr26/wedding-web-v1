@@ -256,11 +256,21 @@ export const WeddingProvider = ({ children }) => {
       setGuestName(decoded);
       setHasCustomGuest(true);
 
-      // Cek apakah tamu ini sudah konfirmasi sebelumnya
+      // 1. Cek apakah tamu ini sudah konfirmasi sebelumnya di browser lokal
       const confirmed = rsvpService.hasGuestConfirmed(decoded);
       if (confirmed) {
         setExistingConfirmation(confirmed);
       }
+
+      // 2. Cek juga ke cloud Supabase agar status RSVP sinkron di HP & Laptop mana pun
+      rsvpService
+        .checkGuestConfirmedCloud(decoded, 'destia-raka')
+        .then((cloudConf) => {
+          if (cloudConf) {
+            setExistingConfirmation(cloudConf);
+            rsvpService.saveGuestConfirmedLocally(decoded, cloudConf);
+          }
+        });
     }
 
     // Deteksi route /admin murni (Canonical: selalu di /admin tanpa slug pasangan)
@@ -295,15 +305,17 @@ export const WeddingProvider = ({ children }) => {
     }
   }, []);
 
-  // Sinkronisasi data dari Supabase Cloud saat pertama kali dimuat
+  // Sinkronisasi data dari Supabase Cloud saat pertama kali dimuat & Realtime Listener
   useEffect(() => {
     let isMounted = true;
+    const targetSlug = clientSlug || 'destia-raka';
+
     const loadCloudConfig = async () => {
       try {
         const { data } = await supabase
           .from('wedding_configs')
           .select('config')
-          .eq('slug', 'destia-raka')
+          .eq('slug', targetSlug)
           .single();
 
         if (isMounted && data?.config) {
@@ -324,10 +336,37 @@ export const WeddingProvider = ({ children }) => {
     };
 
     loadCloudConfig();
+
+    // Supabase Realtime Listener untuk sinkronisasi live antar HP Pria, HP Wanita & Admin Laptop
+    const configChannel = supabase
+      .channel(`realtime-config-${targetSlug}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'wedding_configs',
+          filter: `slug=eq.${targetSlug}`,
+        },
+        (payload) => {
+          if (payload.new?.config && isMounted) {
+            setWeddingData((prev) => ({
+              ...prev,
+              ...payload.new.config,
+            }));
+            if (payload.new.config.theme?.colorPreset) {
+              setActiveColorPreset(payload.new.config.theme.colorPreset);
+            }
+          }
+        },
+      )
+      .subscribe();
+
     return () => {
       isMounted = false;
+      supabase.removeChannel(configChannel);
     };
-  }, []);
+  }, [clientSlug]);
 
   // Sinkronisasi navigasi history browser (tombol back/forward)
   useEffect(() => {
@@ -376,6 +415,7 @@ export const WeddingProvider = ({ children }) => {
     try {
       const data = await rsvpService.getWishes(
         weddingData.integration?.googleAppsScriptUrl,
+        clientSlug || 'destia-raka',
       );
       setWishes(data);
     } catch (err) {
@@ -383,11 +423,33 @@ export const WeddingProvider = ({ children }) => {
     } finally {
       setIsLoadingWishes(false);
     }
-  }, [weddingData.integration?.googleAppsScriptUrl]);
+  }, [weddingData.integration?.googleAppsScriptUrl, clientSlug]);
 
   useEffect(() => {
     loadWishes();
-  }, [loadWishes]);
+
+    // Supabase Realtime Listener: Buku Tamu & Ucapan Langsung Muncul Live di Semua HP
+    const targetSlug = clientSlug || 'destia-raka';
+    const wishesChannel = supabase
+      .channel(`realtime-wishes-${targetSlug}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'wedding_wishes',
+          filter: `wedding_slug=eq.${targetSlug}`,
+        },
+        () => {
+          loadWishes();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(wishesChannel);
+    };
+  }, [loadWishes, clientSlug]);
 
   // Handler Buka Undangan & Autoplay Audio
   const openInvitation = () => {

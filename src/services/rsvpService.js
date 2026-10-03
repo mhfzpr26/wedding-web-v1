@@ -50,6 +50,35 @@ export const rsvpService = {
   },
 
   /**
+   * Cek ke Supabase Cloud apakah tamu ini sudah pernah RSVP di perangkat mana pun
+   */
+  async checkGuestConfirmedCloud(guestName, slug = 'destia-raka') {
+    if (!guestName || guestName === 'Tamu Undangan') return null;
+    try {
+      const { data, error } = await supabase
+        .from('wedding_wishes')
+        .select('*')
+        .eq('wedding_slug', slug)
+        .ilike('name', guestName.trim())
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const found = data[0];
+        return {
+          name: found.name,
+          attendance: found.attendance,
+          guestsCount: found.guests_count || 1,
+          message: found.message,
+        };
+      }
+    } catch (err) {
+      console.warn('Gagal cek konfirmasi cloud:', err);
+    }
+    return null;
+  },
+
+  /**
    * Dapatkan daftar ucapan (dari Supabase PostgreSQL, Google Sheets, atau LocalStorage)
    */
   async getWishes(customScriptUrl, slug = 'destia-raka') {

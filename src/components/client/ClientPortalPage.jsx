@@ -171,14 +171,36 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
   // File Upload Ref
   const fileInputRef = useRef(null);
 
-  // Status Tamu yang Sudah Terkirim (Disimpan di localStorage)
+  // Status Tamu yang Sudah Terkirim (Tersinkronisasi Cloud & LocalStorage)
   const [sentGuests, setSentGuests] = useState(() => {
+    if (Array.isArray(config?.sentGuests)) {
+      return config.sentGuests;
+    }
     try {
       const stored = localStorage.getItem(`invatera_sent_guests_${slug}`);
       if (stored) return JSON.parse(stored);
     } catch (_e) {}
     return [];
   });
+
+  // Sinkronisasi data daftar tamu dari config cloud saat ada pembaruan dari device lain
+  useEffect(() => {
+    if (
+      config?.guestNamesRaw !== undefined &&
+      config.guestNamesRaw !== rawNames
+    ) {
+      if (!config.guestNamesRaw.includes('Joko Widodo')) {
+        setRawNames(config.guestNamesRaw);
+      }
+    }
+  }, [config?.guestNamesRaw]);
+
+  // Sinkronisasi live status terkirim dari config cloud (misal saat pasangan kirim dari HP lain)
+  useEffect(() => {
+    if (Array.isArray(config?.sentGuests)) {
+      setSentGuests(config.sentGuests);
+    }
+  }, [config?.sentGuests]);
 
   const [templateType, setTemplateType] = useState('formal');
   const [customMessage, setCustomMessage] = useState(() => {
@@ -200,7 +222,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
   const eventDate =
     config.events?.[0]?.dateFormatted || 'Sabtu, 7 November 2026';
 
-  // Simpan daftar tamu yang sudah dikirim ke localStorage
+  // Simpan daftar tamu yang sudah dikirim ke Cloud & LocalStorage
   const toggleSentStatus = (guestId) => {
     setSentGuests((prev) => {
       const next = prev.includes(guestId)
@@ -212,6 +234,14 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
           JSON.stringify(next),
         );
       } catch (_e) {}
+
+      // Simpan langsung ke Supabase Cloud agar instan tersinkron di HP pasangan & Admin
+      if (updateWeddingData) {
+        updateWeddingData({ sentGuests: next });
+      }
+      if (saveWeddingConfig) {
+        saveWeddingConfig({ ...config, sentGuests: next });
+      }
       return next;
     });
   };
@@ -388,6 +418,9 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
     if (updateWeddingData) {
       updateWeddingData({ guestNamesRaw: updated });
     }
+    if (saveWeddingConfig) {
+      saveWeddingConfig({ ...config, guestNamesRaw: updated });
+    }
 
     setQuickName('');
     setQuickPhone('');
@@ -407,6 +440,9 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
       } catch (_e) {}
       if (updateWeddingData) {
         updateWeddingData({ guestNamesRaw: updated });
+      }
+      if (saveWeddingConfig) {
+        saveWeddingConfig({ ...config, guestNamesRaw: updated });
       }
     }
   };
