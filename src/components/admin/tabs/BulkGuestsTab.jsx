@@ -2,6 +2,8 @@ import {
   Check,
   Copy,
   Download,
+  ExternalLink,
+  KeyRound,
   MessageSquare,
   RotateCcw,
   Search,
@@ -15,6 +17,7 @@ const DEFAULT_SAMPLE_GUESTS =
   'Bapak Dr. H. Joko Widodo & Keluarga\nIbu Hj. Aminah\nKevin Pratama & Partner\nKeluarga Besar Bpk. Hendra\nSahabat Kuliah Angkatan 2018';
 
 export const BulkGuestsTab = ({ config, updateWeddingData }) => {
+  const [copiedPortal, setCopiedPortal] = useState(false);
   const [rawNames, setRawNames] = useState(() => {
     if (config?.guestNamesRaw && config.guestNamesRaw.trim() !== '') {
       return config.guestNamesRaw;
@@ -181,6 +184,95 @@ export const BulkGuestsTab = ({ config, updateWeddingData }) => {
             </button>
           </div>
         )}
+      </div>
+
+      {/* KARTU MAGIC LINK PORTAL KHUSUS KLIEN */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-slate-50 border border-amber-300/80 shadow-xs space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-xs shrink-0">
+              <KeyRound className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900">
+                  Portal Khusus Pengantin (Client Magic Link)
+                </h4>
+                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500 text-slate-950 uppercase tracking-wider">
+                  Khusus Klien
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-600 mt-0.5">
+                Berikan tautan rahasia ini ke pasangan pengantin & panitia
+                keluarga. Mereka bisa kirim undangan WhatsApp langsung & pantau
+                buku tamu tanpa bisa merusak pengaturan teknis admin.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                const clientKey = (
+                  config.clientAccessKey || 'destiaraka'
+                ).trim();
+                const url = `${window.location.origin}/destia-raka/tamu?key=${encodeURIComponent(clientKey)}`;
+                navigator.clipboard.writeText(url);
+                setCopiedPortal(true);
+                setTimeout(() => setCopiedPortal(false), 2000);
+              }}
+              className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            >
+              {copiedPortal ? (
+                <Check className="w-3.5 h-3.5" />
+              ) : (
+                <Copy className="w-3.5 h-3.5" />
+              )}
+              <span>
+                {copiedPortal ? 'Link Tersalin!' : 'Salin Link Pengantin'}
+              </span>
+            </button>
+
+            <a
+              href={`/destia-raka/tamu?key=${encodeURIComponent((config.clientAccessKey || 'destiaraka').trim())}`}
+              target="_blank"
+              rel="noreferrer"
+              className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs shadow-xs transition-colors flex items-center gap-1.5"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-amber-400" />
+              <span>Buka Portal</span>
+            </a>
+          </div>
+        </div>
+
+        <div className="pt-2 border-t border-amber-200/60 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2 flex-1 min-w-[260px]">
+            <span className="text-slate-500 font-medium shrink-0">
+              URL Klien:
+            </span>
+            <code className="px-2.5 py-1 rounded-lg bg-white border border-amber-200 text-slate-700 font-mono text-[11px] truncate flex-1 select-all">
+              {`${typeof window !== 'undefined' ? window.location.origin : ''}/destia-raka/tamu?key=${(config.clientAccessKey || 'destiaraka').trim()}`}
+            </code>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-slate-600 font-medium">Kunci Akses:</span>
+            <input
+              type="text"
+              value={config.clientAccessKey || 'destiaraka'}
+              onChange={(e) => {
+                if (updateWeddingData) {
+                  updateWeddingData({
+                    clientAccessKey: e.target.value.toLowerCase().trim(),
+                  });
+                }
+              }}
+              placeholder="destiaraka"
+              className="w-28 px-2.5 py-1 rounded-lg bg-white border border-slate-300 text-xs font-mono font-bold text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
+            />
+          </div>
+        </div>
       </div>
 
       {/* INPUT DAFTAR NAMA TAMU */}

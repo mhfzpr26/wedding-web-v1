@@ -17,6 +17,8 @@ export const WeddingProvider = ({ children }) => {
   const [guestName, setGuestName] = useState('Tamu Undangan');
   const [hasCustomGuest, setHasCustomGuest] = useState(false);
   const [isAdminMode, setIsAdminMode] = useState(false);
+  const [isClientPortalMode, setIsClientPortalMode] = useState(false);
+  const [clientSlug, setClientSlug] = useState('destia-raka');
 
   // Status Undangan & Audio
   const [isOpened, setIsOpened] = useState(false);
@@ -271,10 +273,25 @@ export const WeddingProvider = ({ children }) => {
 
     if (isAdminSlug) {
       setIsAdminMode(true);
-      setIsAdminPanelOpen(true); // Otomatis langsung buka Admin Drawer saat buka /admin
+      setIsAdminPanelOpen(true);
+      setIsClientPortalMode(false);
     } else {
       setIsAdminMode(false);
       setIsAdminPanelOpen(false);
+
+      // Deteksi route portal pengantin: misal /destia-raka/tamu atau /tamu
+      const isPortal = path.endsWith('/tamu') || path === '/tamu';
+      if (isPortal) {
+        setIsClientPortalMode(true);
+        const parts = path.replace(/^\/+/, '').split('/');
+        if (parts[0] && parts[0] !== 'tamu') {
+          setClientSlug(parts[0]);
+        } else {
+          setClientSlug('destia-raka');
+        }
+      } else {
+        setIsClientPortalMode(false);
+      }
     }
   }, []);
 
@@ -324,9 +341,23 @@ export const WeddingProvider = ({ children }) => {
       if (isAdminSlug) {
         setIsAdminMode(true);
         setIsAdminPanelOpen(true);
+        setIsClientPortalMode(false);
       } else {
         setIsAdminMode(false);
         setIsAdminPanelOpen(false);
+
+        const isPortal = path.endsWith('/tamu') || path === '/tamu';
+        if (isPortal) {
+          setIsClientPortalMode(true);
+          const parts = path.replace(/^\/+/, '').split('/');
+          if (parts[0] && parts[0] !== 'tamu') {
+            setClientSlug(parts[0]);
+          } else {
+            setClientSlug('destia-raka');
+          }
+        } else {
+          setIsClientPortalMode(false);
+        }
       }
     };
 
@@ -473,11 +504,14 @@ export const WeddingProvider = ({ children }) => {
         submitRSVP,
         deleteWish,
         clearAllWishes,
+        isClientPortalMode,
+        clientSlug,
+        setIsClientPortalMode,
       }}
     >
       {children}
-      {/* Hidden Global Audio Element (Hanya aktif di luar Admin Mode) */}
-      {!isAdminMode && (
+      {/* Hidden Global Audio Element (Hanya aktif di luar Admin & Portal Mode) */}
+      {!isAdminMode && !isClientPortalMode && (
         <audio
           ref={audioRef}
           src={
