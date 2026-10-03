@@ -149,8 +149,8 @@ const TemplateV1FloralArch = () => {
           </div>
         </div>
 
-        {/* Section 6: Penutup & Ucapan Terima Kasih (Footer) */}
-        <div className="relative z-10">
+        {/* Layer Belakang: Sticky Curtain Reveal Footer (tersingkap dari belakang saat scroll) */}
+        <div className="sticky bottom-0 z-0">
           <FooterSection />
         </div>
       </main>
