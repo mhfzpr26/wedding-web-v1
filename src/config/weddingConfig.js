@@ -145,30 +145,5 @@ export const weddingConfig = {
       "notes": "Mohon konfirmasi via WhatsApp setelah pengiriman kado fisik."
     }
   },
-  "initialWishes": [
-    {
-      "id": "wish-1",
-      "name": "Bapak H. Sukardi & Keluarga",
-      "attendance": "hadir",
-      "guestsCount": 2,
-      "message": "Barakallahu lakuma wa baraka 'alaikuma wa jama'a bainakuma fii khoir. Selamat menempuh hidup baru Destia & Raka, semoga menjadi keluarga sakinah mawaddah warahmah.",
-      "timestamp": "Kemarin, 14:20 WIB"
-    },
-    {
-      "id": "wish-2",
-      "name": "Dinda Kirana & Partner",
-      "attendance": "hadir",
-      "guestsCount": 2,
-      "message": "Happy wedding Destia & Raka! Cantik dan ganteng banget, semoga pernikahannya selalu dipenuhi kebahagiaan dan cinta sampai kakek nenek aamiin!",
-      "timestamp": "Kemarin, 16:45 WIB"
-    },
-    {
-      "id": "wish-3",
-      "name": "Rian Anggara",
-      "attendance": "tidak_hadir",
-      "guestsCount": 0,
-      "message": "Selamat ya bro Raka! Mohon maaf belum bisa hadir langsung karena masih di luar kota, tapi doa terbaik selalu mengiringi langkah kalian berdua.",
-      "timestamp": "Hari ini, 09:12 WIB"
-    }
-  ]
+  "initialWishes": []
 };

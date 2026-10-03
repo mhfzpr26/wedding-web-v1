@@ -61,8 +61,8 @@ export const rsvpService = {
         .eq('wedding_slug', slug)
         .order('created_at', { ascending: false });
 
-      if (!error && Array.isArray(data) && data.length > 0) {
-        const formatted = data.map((w) => ({
+      if (!error && Array.isArray(data)) {
+        return data.map((w) => ({
           id: w.id,
           name: w.name,
           attendance: w.attendance,
@@ -70,13 +70,12 @@ export const rsvpService = {
           message: w.message,
           timestamp: formatTimestamp(w.created_at),
         }));
-        return formatted;
       }
     } catch (err) {
       console.warn('Supabase wishes load fallback:', err);
     }
 
-    // 2. Jika Supabase kosong/belum ada tabel, coba Google Apps Script jika terpasang
+    // 2. Jika Supabase offline/error, coba Google Apps Script jika terpasang
     const scriptUrl =
       customScriptUrl !== undefined
         ? customScriptUrl
@@ -98,13 +97,67 @@ export const rsvpService = {
       }
     }
 
-    // 3. Fallback: ambil dari LocalStorage + initialWishes
+    // 3. Fallback jika offline: ambil dari LocalStorage (bersihkan mock data)
     try {
       const localData = localStorage.getItem(LOCAL_STORAGE_WISHES_KEY);
       const parsedLocal = localData ? JSON.parse(localData) : [];
-      return [...parsedLocal, ...weddingConfig.initialWishes];
+      return parsedLocal.filter((w) => !w.id?.toString().startsWith('wish-'));
     } catch {
-      return weddingConfig.initialWishes;
+      return [];
+    }
+  },
+
+  /**
+   * Bersihkan semua ucapan dari Supabase dan LocalStorage
+   */
+  async clearAllWishes(slug = 'destia-raka') {
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_WISHES_KEY);
+    } catch (err) {
+      console.warn('Gagal menghapus wishes lokal:', err);
+    }
+
+    try {
+      const { error } = await supabase
+        .from('wedding_wishes')
+        .delete()
+        .eq('wedding_slug', slug);
+      if (error) {
+        console.warn('Gagal menghapus wishes Supabase:', error.message);
+      }
+    } catch (cloudErr) {
+      console.warn('Gagal koneksi hapus Supabase:', cloudErr);
+    }
+  },
+
+  /**
+   * Hapus satu ucapan spesifik berdasarkan id
+   */
+  async deleteWish(wishId, slug = 'destia-raka') {
+    try {
+      const existing = localStorage.getItem(LOCAL_STORAGE_WISHES_KEY);
+      if (existing) {
+        const list = JSON.parse(existing);
+        const filtered = list.filter((w) => w.id !== wishId);
+        localStorage.setItem(
+          LOCAL_STORAGE_WISHES_KEY,
+          JSON.stringify(filtered),
+        );
+      }
+    } catch (err) {
+      console.warn('Gagal menghapus wish lokal:', err);
+    }
+
+    try {
+      if (typeof wishId === 'number' || !Number.isNaN(Number(wishId))) {
+        await supabase
+          .from('wedding_wishes')
+          .delete()
+          .eq('id', Number(wishId))
+          .eq('wedding_slug', slug);
+      }
+    } catch (cloudErr) {
+      console.warn('Gagal hapus dari Supabase:', cloudErr);
     }
   },
 

@@ -401,6 +401,37 @@ export const WeddingProvider = ({ children }) => {
     return result;
   };
 
+  const deleteWish = async (wishId) => {
+    await rsvpService.deleteWish(wishId);
+    await loadWishes();
+  };
+
+  const clearAllWishes = async () => {
+    await rsvpService.clearAllWishes();
+    await loadWishes();
+  };
+
+  // Bersihkan data dummy ucapan lawas di browser jika tersisa
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('invatera_wedding_wishes_v1');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const filtered = parsed.filter(
+          (w) => !w.id?.toString().startsWith('wish-'),
+        );
+        if (filtered.length !== parsed.length) {
+          localStorage.setItem(
+            'invatera_wedding_wishes_v1',
+            JSON.stringify(filtered),
+          );
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   return (
     <WeddingContext.Provider
       value={{
@@ -430,6 +461,8 @@ export const WeddingProvider = ({ children }) => {
         loadWishes,
         existingConfirmation,
         submitRSVP,
+        deleteWish,
+        clearAllWishes,
       }}
     >
       {children}

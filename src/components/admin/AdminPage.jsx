@@ -7,6 +7,7 @@ import {
   Gift,
   Heart,
   LogOut,
+  MessageSquare,
   Palette,
   RotateCcw,
   Save,
@@ -23,6 +24,7 @@ import { EventsTab } from './tabs/EventsTab';
 import { GiftsTab } from './tabs/GiftsTab';
 import { GreetingsTab } from './tabs/GreetingsTab';
 import { StoriesTab } from './tabs/StoriesTab';
+import { WishesTab } from './tabs/WishesTab';
 
 export const AdminPage = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -39,6 +41,7 @@ export const AdminPage = () => {
     isDirty,
     activeColorPreset,
     setActiveColorPreset,
+    wishes,
   } = useWedding();
 
   const [activeTab, setActiveTab] = useState('couple');
@@ -106,6 +109,12 @@ export const AdminPage = () => {
       badge: config.storiesEnabled ? 'Aktif' : 'Off',
     },
     { id: 'whatsapp', label: 'Kirim WA Tamu', icon: Share2, badge: 'Massal' },
+    {
+      id: 'wishes',
+      label: 'Doa & Ucapan',
+      icon: MessageSquare,
+      badge: wishes?.length > 0 ? wishes.length : null,
+    },
     { id: 'theme', label: 'Tema & Musik', icon: Palette, badge: null },
   ];
 
@@ -314,6 +323,7 @@ export const AdminPage = () => {
               />
             )}
             {activeTab === 'whatsapp' && <BulkGuestsTab config={config} />}
+            {activeTab === 'wishes' && <WishesTab />}
             {activeTab === 'theme' && (
               <AudioThemeTab
                 config={config}
