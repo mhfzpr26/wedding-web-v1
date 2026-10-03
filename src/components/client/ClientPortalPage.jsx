@@ -1,4 +1,5 @@
 import {
+  AlertCircle,
   Calendar,
   Check,
   CheckCircle2,
@@ -11,15 +12,19 @@ import {
   LogOut,
   MessageSquare,
   Phone,
+  Plus,
   RefreshCw,
   Search,
   Send,
   Share2,
+  Tag,
+  Trash2,
+  Upload,
   UserCheck,
   Users,
   UserX,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useWedding } from '../../context/WeddingContext';
 
 // Normalisasi nomor telepon ke format internasional WhatsApp (628...)
@@ -34,6 +39,28 @@ function normalizePhone(rawPhone) {
     cleaned = `62${cleaned}`;
   }
   return cleaned;
+}
+
+// Styling badge kategori
+function getCategoryBadgeClass(category) {
+  const lower = (category || '').toLowerCase();
+  if (lower.includes('keluarga')) {
+    return 'bg-purple-100 text-purple-700 border-purple-200';
+  }
+  if (lower.includes('sahabat') || lower.includes('teman dekat')) {
+    return 'bg-pink-100 text-pink-700 border-pink-200';
+  }
+  if (
+    lower.includes('kantor') ||
+    lower.includes('rekan') ||
+    lower.includes('kerja')
+  ) {
+    return 'bg-sky-100 text-sky-700 border-sky-200';
+  }
+  if (lower.includes('vip') || lower.includes('tokoh')) {
+    return 'bg-amber-100 text-amber-800 border-amber-300 font-bold';
+  }
+  return 'bg-slate-100 text-slate-700 border-slate-200';
 }
 
 export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
@@ -77,16 +104,26 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
       if (stored && stored.trim() !== '') return stored;
     } catch (_e) {}
     return (
-      'Bapak Dr. H. Joko Widodo & Keluarga, 08123456789\n' +
-      'Ibu Hj. Aminah, 085712345678\n' +
-      'Kevin Pratama & Partner, 087812345678\n' +
-      'Keluarga Besar Bpk. Hendra\n' +
-      'Sahabat Kuliah Angkatan 2018'
+      'Bapak Dr. H. Joko Widodo & Keluarga, 08123456789, VIP\n' +
+      'Ibu Hj. Aminah, 085712345678, Keluarga\n' +
+      'Kevin Pratama & Partner, 087812345678, Sahabat\n' +
+      'Keluarga Besar Bpk. Hendra, , Keluarga\n' +
+      'Rekan Kerja Divisi IT, 081398765432, Teman Kantor\n' +
+      'Sahabat Kuliah Angkatan 2018, , Sahabat'
     );
   });
 
   const [isSavingGuests, setIsSavingGuests] = useState(false);
   const [saveSuccessFeedback, setSaveSuccessFeedback] = useState(false);
+
+  // Quick Add State (Input Tamu Cepat Satuan)
+  const [quickName, setQuickName] = useState('');
+  const [quickPhone, setQuickPhone] = useState('');
+  const [quickCategory, setQuickCategory] = useState('Keluarga');
+  const [quickFeedback, setQuickFeedback] = useState(false);
+
+  // File Upload Ref
+  const fileInputRef = useRef(null);
 
   // Status Tamu yang Sudah Terkirim (Disimpan di localStorage)
   const [sentGuests, setSentGuests] = useState(() => {
@@ -100,6 +137,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
   const [templateType, setTemplateType] = useState('formal');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'unsent' | 'sent'
+  const [categoryFilter, setCategoryFilter] = useState('Semua');
   const [copiedType, setCopiedType] = useState(null);
 
   const bride = config.bride?.shortName || 'Destia';
@@ -123,7 +161,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
     });
   };
 
-  // Parsing baris teks tamu cerdas (Mendukung Nama saja atau Nama, Nomor HP)
+  // Parsing baris teks tamu cerdas (Mendukung Tab Excel \t, Koma ,, Garis |, Titik Koma ;)
   const parsedGuests = useMemo(() => {
     const lines = rawNames.split('\n');
     return lines
@@ -131,47 +169,117 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
         const trimmed = line.trim();
         if (!trimmed) return null;
 
-        // Pemisah bisa berupa koma atau garis tegak '|'
+        // Abaikan baris pertama jika itu adalah nama header file CSV/Excel
+        if (
+          idx === 0 &&
+          (trimmed.toLowerCase().startsWith('nama') ||
+            trimmed.toLowerCase().startsWith('name') ||
+            trimmed.toLowerCase().startsWith('no,') ||
+            trimmed.toLowerCase().startsWith('no\t'))
+        ) {
+          return null;
+        }
+
+        let delimiter = ',';
+        if (trimmed.includes('\t')) delimiter = '\t';
+        else if (trimmed.includes(';')) delimiter = ';';
+        else if (trimmed.includes('|')) delimiter = '|';
+        else if (trimmed.includes(',')) delimiter = ',';
+
         let name = trimmed;
         let phone = '';
+        let category = 'Umum';
 
-        if (trimmed.includes(',')) {
-          const parts = trimmed.split(',');
-          name = parts[0].trim();
-          phone = normalizePhone(parts.slice(1).join(',').trim());
-        } else if (trimmed.includes('|')) {
-          const parts = trimmed.split('|');
-          name = parts[0].trim();
-          phone = normalizePhone(parts.slice(1).join('|').trim());
+        if (trimmed.includes(delimiter)) {
+          const parts = trimmed.split(delimiter).map((p) => p.trim());
+          name = parts[0] || '';
+
+          if (parts.length > 1) {
+            const p1Digits = parts[1].replace(/[^0-9+]/g, '');
+            if (p1Digits.length >= 7) {
+              phone = normalizePhone(parts[1]);
+              if (parts[2]) category = parts[2].trim() || 'Umum';
+            } else {
+              category = parts[1] || 'Umum';
+              if (parts[2]) phone = normalizePhone(parts[2]);
+            }
+          }
         }
+
+        if (!name) return null;
 
         const id = `guest-${idx}-${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
         return {
           id,
           name,
           phone,
+          category: category || 'Umum',
           raw: trimmed,
+          lineIndex: idx,
         };
       })
       .filter(Boolean);
   }, [rawNames]);
 
-  // Filter tamu
+  // Daftar Kategori Unik yang Tersedia
+  const availableCategories = useMemo(() => {
+    const set = new Set([
+      'Semua',
+      'Keluarga',
+      'Sahabat',
+      'Teman Kantor',
+      'VIP',
+      'Umum',
+    ]);
+    parsedGuests.forEach((g) => {
+      if (g.category?.trim()) set.add(g.category.trim());
+    });
+    return Array.from(set);
+  }, [parsedGuests]);
+
+  // Deteksi Tamu Duplikat
+  const duplicateGuests = useMemo(() => {
+    const nameMap = new Map();
+    parsedGuests.forEach((g) => {
+      const key = g.name.toLowerCase().trim();
+      const list = nameMap.get(key) || [];
+      list.push(g);
+      nameMap.set(key, list);
+    });
+    const dupes = [];
+    nameMap.forEach((list) => {
+      if (list.length > 1) {
+        dupes.push({ name: list[0].name, count: list.length });
+      }
+    });
+    return dupes;
+  }, [parsedGuests]);
+
+  // Filter tamu berdasarkan status, kategori, dan pencarian teks
   const filteredGuests = useMemo(() => {
     return parsedGuests.filter((guest) => {
       const isSent = sentGuests.includes(guest.id);
       if (statusFilter === 'sent' && !isSent) return false;
       if (statusFilter === 'unsent' && isSent) return false;
+      if (
+        categoryFilter !== 'Semua' &&
+        guest.category.toLowerCase() !== categoryFilter.toLowerCase()
+      ) {
+        return false;
+      }
       if (searchTerm.trim()) {
         const matchName = guest.name
           .toLowerCase()
           .includes(searchTerm.toLowerCase());
         const matchPhone = guest.phone.includes(searchTerm);
-        return matchName || matchPhone;
+        const matchCat = guest.category
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase());
+        return matchName || matchPhone || matchCat;
       }
       return true;
     });
-  }, [parsedGuests, sentGuests, statusFilter, searchTerm]);
+  }, [parsedGuests, sentGuests, statusFilter, categoryFilter, searchTerm]);
 
   // Statistik Kirim
   const totalGuests = parsedGuests.length;
@@ -197,6 +305,111 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
     } finally {
       setIsSavingGuests(false);
     }
+  };
+
+  // Handler Quick Add Tamu Cepat 1-per-1
+  const handleQuickAdd = (e) => {
+    e?.preventDefault();
+    const trimmedName = quickName.trim();
+    if (!trimmedName) return;
+
+    let newLine = trimmedName;
+    if (quickPhone.trim()) {
+      newLine += `, ${quickPhone.trim()}`;
+      if (quickCategory.trim() && quickCategory !== 'Umum') {
+        newLine += `, ${quickCategory.trim()}`;
+      }
+    } else if (quickCategory.trim() && quickCategory !== 'Umum') {
+      newLine += `, , ${quickCategory.trim()}`;
+    }
+
+    const updated = rawNames.trim()
+      ? `${rawNames.trim()}\n${newLine}`
+      : newLine;
+    setRawNames(updated);
+    try {
+      localStorage.setItem(`invatera_guest_names_${slug}`, updated);
+    } catch (_e) {}
+    if (updateWeddingData) {
+      updateWeddingData({ guestNamesRaw: updated });
+    }
+
+    setQuickName('');
+    setQuickPhone('');
+    setQuickFeedback(true);
+    setTimeout(() => setQuickFeedback(false), 2000);
+  };
+
+  // Handler Hapus Tamu Satuan dari Daftar
+  const handleDeleteGuest = (guest) => {
+    if (window.confirm(`Hapus "${guest.name}" dari daftar tamu?`)) {
+      const lines = rawNames.split('\n');
+      const filtered = lines.filter((_, idx) => idx !== guest.lineIndex);
+      const updated = filtered.join('\n');
+      setRawNames(updated);
+      try {
+        localStorage.setItem(`invatera_guest_names_${slug}`, updated);
+      } catch (_e) {}
+      if (updateWeddingData) {
+        updateWeddingData({ guestNamesRaw: updated });
+      }
+    }
+  };
+
+  // Download Template CSV/Excel
+  const handleDownloadTemplate = () => {
+    const csvContent =
+      'Nama Tamu,Nomor WhatsApp,Kategori\n' +
+      'Bapak Dr. H. Joko Widodo & Keluarga,081234567890,VIP\n' +
+      'Keluarga Besar Bpk. Hendra,085712345678,Keluarga\n' +
+      'Kevin Pratama & Partner,087812345678,Sahabat\n' +
+      'Rekan Kerja Divisi IT,081398765432,Teman Kantor\n' +
+      'Ibu Hj. Aminah,081298765432,Keluarga\n';
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Template_Excel_Tamu_${bride}_${groom}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Handler Unggah File (.csv, .tsv, .txt)
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result;
+      if (typeof content !== 'string') return;
+
+      const trimmedContent = content.trim();
+      if (!trimmedContent) return;
+
+      const shouldAppend =
+        rawNames.trim().length > 0 &&
+        window.confirm(
+          'Gabungkan dengan daftar tamu yang sudah ada?\n\n- Klik "OK" untuk Menggabungkan\n- Klik "Batal" untuk Mengganti semua daftar',
+        );
+
+      let newRaw = trimmedContent;
+      if (shouldAppend) {
+        newRaw = `${rawNames.trim()}\n${trimmedContent}`;
+      }
+
+      setRawNames(newRaw);
+      try {
+        localStorage.setItem(`invatera_guest_names_${slug}`, newRaw);
+      } catch (_e) {}
+      if (updateWeddingData) {
+        updateWeddingData({ guestNamesRaw: newRaw });
+      }
+
+      alert('Berhasil mengimpor daftar tamu dari file!');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+    reader.readAsText(file);
   };
 
   // Buat link unik per tamu
@@ -555,20 +768,52 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                 <div>
                   <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
                     <Users className="w-4 h-4 text-amber-500" />
-                    <span>Daftar Nama & Nomor HP Tamu</span>
+                    <span>Daftar Nama, No. HP & Kategori Tamu</span>
                   </h3>
                   <p className="text-[11px] text-slate-500 mt-0.5">
-                    Format: <code>Nama Tamu, Nomor HP</code> (Nomor HP
-                    opsional). Satu baris per tamu.
+                    Format per baris: <code>Nama Tamu, Nomor HP, Kategori</code>{' '}
+                    (No. HP & Kategori opsional). Mendukung langsung{' '}
+                    <strong>Copy-Paste tabel dari Excel / Google Sheets</strong>
+                    !
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Unduh Template Excel */}
+                  <button
+                    type="button"
+                    onClick={handleDownloadTemplate}
+                    className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+                    title="Unduh file template Excel (.csv)"
+                  >
+                    <Download className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Template Excel</span>
+                  </button>
+
+                  {/* Unggah File CSV/Excel */}
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    accept=".csv,.txt,.tsv"
+                    className="hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
+                    title="Unggah file data tamu (.csv / .txt)"
+                  >
+                    <Upload className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Unggah File</span>
+                  </button>
+
+                  {/* Simpan ke Database */}
                   <button
                     type="button"
                     onClick={handleSaveGuests}
                     disabled={isSavingGuests}
-                    className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1"
+                    className="px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-xs transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                   >
                     {isSavingGuests ? (
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -595,7 +840,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                 rows={5}
                 value={rawNames}
                 onChange={(e) => setRawNames(e.target.value)}
-                placeholder="Contoh format:&#10;Bapak Hendra & Keluarga, 081234567890&#10;Kak Siska, 085712345678&#10;Teman-teman Kantor"
+                placeholder="Contoh format:&#10;Bapak Dr. H. Joko Widodo & Keluarga, 08123456789, VIP&#10;Ibu Hj. Aminah, 085712345678, Keluarga&#10;Kevin Pratama & Partner, 087812345678, Sahabat&#10;Rekan Kerja Divisi IT, 081398765432, Teman Kantor"
                 className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-mono text-slate-800 focus:outline-none focus:border-amber-500 resize-y leading-relaxed shadow-2xs"
               />
 
@@ -649,6 +894,108 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
               </div>
             </div>
 
+            {/* QUICK ADD BAR (INPUT TAMU SATUAN CEPAT) */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                    <Plus className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Tambah Tamu Cepat (Satuan)
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      Ketik nama & nomor HP baru secara instan tanpa perlu
+                      mencari baris di textarea
+                    </p>
+                  </div>
+                </div>
+
+                {quickFeedback && (
+                  <span className="text-[11px] font-bold text-emerald-600 flex items-center gap-1 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                    <Check className="w-3 h-3" />
+                    Tamu Ditambahkan!
+                  </span>
+                )}
+              </div>
+
+              <form
+                onSubmit={handleQuickAdd}
+                className="grid grid-cols-1 sm:grid-cols-12 gap-2.5"
+              >
+                <div className="sm:col-span-5">
+                  <input
+                    type="text"
+                    value={quickName}
+                    onChange={(e) => setQuickName(e.target.value)}
+                    placeholder="Nama Tamu (misal: Bpk. Hendra & Istri)"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-500 shadow-2xs"
+                    required
+                  />
+                </div>
+
+                <div className="sm:col-span-4">
+                  <div className="relative">
+                    <Phone className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+                    <input
+                      type="text"
+                      value={quickPhone}
+                      onChange={(e) => setQuickPhone(e.target.value)}
+                      placeholder="No. WhatsApp (misal: 0812...)"
+                      className="w-full pl-8 pr-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-500 shadow-2xs font-mono"
+                    />
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <select
+                    value={quickCategory}
+                    onChange={(e) => setQuickCategory(e.target.value)}
+                    className="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs bg-white"
+                  >
+                    <option value="Keluarga">Keluarga</option>
+                    <option value="Teman Kantor">Teman Kantor</option>
+                    <option value="Sahabat">Sahabat</option>
+                    <option value="VIP">VIP</option>
+                    <option value="Umum">Umum</option>
+                  </select>
+                </div>
+
+                <div className="sm:col-span-1">
+                  <button
+                    type="submit"
+                    className="w-full h-full min-h-[34px] px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer active:scale-95"
+                    title="Tambahkan ke daftar"
+                  >
+                    <Plus className="w-4 h-4 text-amber-400" />
+                    <span className="sm:hidden">Tambah</span>
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* PERINGATAN TAMU GANDA / DUPLIKAT JIKA ADA */}
+            {duplicateGuests.length > 0 && (
+              <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-amber-900 text-xs flex items-start gap-2.5 shadow-2xs">
+                <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+                <div>
+                  <span className="font-bold">
+                    Perhatian: Terdeteksi {duplicateGuests.length} Nama Tamu
+                    Ganda!
+                  </span>
+                  <p className="text-[11px] text-amber-800 mt-0.5">
+                    {duplicateGuests
+                      .slice(0, 4)
+                      .map((d) => `"${d.name}" (${d.count}x)`)
+                      .join(', ')}
+                    {duplicateGuests.length > 4 ? '...' : ''}. Anda dapat
+                    menghapus salah satu agar tidak terkirim dobel.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* DAFTAR TAMU & AKSI KIRIM LANGSUNG */}
             <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
@@ -665,15 +1012,56 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                     type="text"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Cari nama atau nomor HP..."
+                    placeholder="Cari nama, no HP, kategori..."
                     className="w-full pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
                   />
                 </div>
               </div>
 
+              {/* FILTER KATEGORI TAMU */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-0.5 no-scrollbar text-xs">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 mr-1 shrink-0">
+                  <Tag className="w-3 h-3 text-slate-400" />
+                  Kategori:
+                </span>
+                {availableCategories.map((cat) => {
+                  const count =
+                    cat === 'Semua'
+                      ? parsedGuests.length
+                      : parsedGuests.filter(
+                          (g) => g.category.toLowerCase() === cat.toLowerCase(),
+                        ).length;
+                  const isSelected =
+                    categoryFilter.toLowerCase() === cat.toLowerCase();
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      onClick={() => setCategoryFilter(cat)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold shrink-0 transition-all cursor-pointer flex items-center gap-1.5 ${
+                        isSelected
+                          ? 'bg-slate-900 text-white shadow-2xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      <span>{cat}</span>
+                      <span
+                        className={`px-1.5 py-0.2 rounded-full text-[10px] ${
+                          isSelected
+                            ? 'bg-amber-400 text-slate-950 font-bold'
+                            : 'bg-slate-200 text-slate-700'
+                        }`}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
               {filteredGuests.length === 0 ? (
                 <div className="p-8 text-center text-slate-400 text-xs">
-                  Tidak ada tamu yang cocok dengan filter.
+                  Tidak ada tamu yang cocok dengan filter atau pencarian.
                 </div>
               ) : (
                 <div className="space-y-2.5">
@@ -711,10 +1099,21 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                           </button>
 
                           <div className="truncate">
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
                               <h5 className="text-xs font-bold text-slate-800 truncate">
                                 {guest.name}
                               </h5>
+
+                              {/* Badge Kategori */}
+                              <span
+                                className={`px-2 py-0.2 rounded-full text-[9px] font-semibold border ${getCategoryBadgeClass(
+                                  guest.category,
+                                )}`}
+                              >
+                                {guest.category || 'Umum'}
+                              </span>
+
+                              {/* Badge Status Kirim */}
                               {isSent ? (
                                 <span className="px-2 py-0.2 rounded-full text-[9px] font-bold bg-emerald-100 text-emerald-700">
                                   Sudah Terkirim
@@ -788,6 +1187,16 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                           >
                             <Send className="w-3 h-3" />
                             <span>Kirim WA</span>
+                          </button>
+
+                          {/* Tombol Hapus Tamu Satuan */}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteGuest(guest)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Hapus tamu ini dari daftar"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>
