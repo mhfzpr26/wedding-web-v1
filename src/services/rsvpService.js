@@ -1,7 +1,31 @@
 import { weddingConfig } from '../config/weddingConfig';
+import { supabase } from './supabase';
 
 const LOCAL_STORAGE_WISHES_KEY = 'invatera_wedding_wishes_v1';
 const LOCAL_STORAGE_CONFIRMED_PREFIX = 'invatera_guest_confirmed_';
+
+function formatTimestamp(isoString) {
+  if (!isoString) return 'Baru saja';
+  try {
+    const d = new Date(isoString);
+    const now = new Date();
+    const diffMin = Math.floor((now - d) / 60000);
+    if (diffMin < 1) return 'Baru saja';
+    if (diffMin < 60) return `${diffMin} menit yang lalu`;
+    const diffHours = Math.floor(diffMin / 60);
+    if (diffHours < 24) return `${diffHours} jam yang lalu`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays === 1) return 'Kemarin';
+    if (diffDays < 7) return `${diffDays} hari yang lalu`;
+    return d.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  } catch {
+    return 'Baru saja';
+  }
+}
 
 export const rsvpService = {
   /**
@@ -26,15 +50,38 @@ export const rsvpService = {
   },
 
   /**
-   * Dapatkan daftar ucapan (dari Google Sheets atau LocalStorage fallback)
+   * Dapatkan daftar ucapan (dari Supabase PostgreSQL, Google Sheets, atau LocalStorage)
    */
-  async getWishes(customScriptUrl) {
+  async getWishes(customScriptUrl, slug = 'destia-raka') {
+    // 1. Coba ambil dari Supabase PostgreSQL
+    try {
+      const { data, error } = await supabase
+        .from('wedding_wishes')
+        .select('*')
+        .eq('wedding_slug', slug)
+        .order('created_at', { ascending: false });
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const formatted = data.map((w) => ({
+          id: w.id,
+          name: w.name,
+          attendance: w.attendance,
+          guestsCount: w.guests_count || 1,
+          message: w.message,
+          timestamp: formatTimestamp(w.created_at),
+        }));
+        return formatted;
+      }
+    } catch (err) {
+      console.warn('Supabase wishes load fallback:', err);
+    }
+
+    // 2. Jika Supabase kosong/belum ada tabel, coba Google Apps Script jika terpasang
     const scriptUrl =
       customScriptUrl !== undefined
         ? customScriptUrl
         : weddingConfig.integration?.googleAppsScriptUrl;
 
-    // Jika ada URL Google Apps Script yang valid
     if (scriptUrl?.startsWith('http')) {
       try {
         const response = await fetch(scriptUrl, {
@@ -51,7 +98,7 @@ export const rsvpService = {
       }
     }
 
-    // Fallback: ambil dari LocalStorage + initialWishes
+    // 3. Fallback: ambil dari LocalStorage + initialWishes
     try {
       const localData = localStorage.getItem(LOCAL_STORAGE_WISHES_KEY);
       const parsedLocal = localData ? JSON.parse(localData) : [];
@@ -62,13 +109,9 @@ export const rsvpService = {
   },
 
   /**
-   * Kirim konfirmasi kehadiran & ucapan
+   * Kirim konfirmasi kehadiran & ucapan ke Supabase Cloud
    */
-  async submitRSVP(payload, customScriptUrl) {
-    const scriptUrl =
-      customScriptUrl !== undefined
-        ? customScriptUrl
-        : weddingConfig.integration?.googleAppsScriptUrl;
+  async submitRSVP(payload, customScriptUrl, slug = 'destia-raka') {
     const newWish = {
       id: `local-${Date.now()}`,
       name: payload.name,
@@ -81,7 +124,7 @@ export const rsvpService = {
     // 1. Simpan tanda konfirmasi tamu ke LocalStorage
     this.saveGuestConfirmedLocally(payload.name, payload);
 
-    // 2. Simpan ucapan ke list lokal agar langsung terlihat di buku tamu (Optimistic UI)
+    // 2. Simpan ucapan ke list lokal (Optimistic UI)
     try {
       const existing = localStorage.getItem(LOCAL_STORAGE_WISHES_KEY);
       const list = existing ? JSON.parse(existing) : [];
@@ -91,13 +134,35 @@ export const rsvpService = {
       console.error('Gagal menyimpan ke LocalStorage:', err);
     }
 
-    // 3. Jika ada endpoint Google Sheets, kirim via HTTP POST
+    // 3. Kirim ke Supabase Cloud PostgreSQL
+    try {
+      await supabase.from('wedding_wishes').insert([
+        {
+          wedding_slug: slug,
+          name: payload.name,
+          attendance: payload.attendance,
+          guests_count: payload.guestsCount,
+          message: payload.message,
+        },
+      ]);
+    } catch (cloudErr) {
+      console.warn(
+        'Gagal kirim ke Supabase, data tetap aman di lokal:',
+        cloudErr,
+      );
+    }
+
+    // 4. Jika ada endpoint Google Sheets opsional
+    const scriptUrl =
+      customScriptUrl !== undefined
+        ? customScriptUrl
+        : weddingConfig.integration?.googleAppsScriptUrl;
+
     if (scriptUrl?.startsWith('http')) {
       try {
-        // Menggunakan mode POST
         await fetch(scriptUrl, {
           method: 'POST',
-          mode: 'no-cors', // Apps Script standard CORS handling
+          mode: 'no-cors',
           headers: {
             'Content-Type': 'application/json',
           },
@@ -105,15 +170,12 @@ export const rsvpService = {
         });
       } catch (networkErr) {
         console.warn(
-          'Pengiriman background ke Google Sheets gagal, data tetap aman di lokal:',
+          'Pengiriman background ke Google Sheets gagal:',
           networkErr,
         );
       }
     }
 
-    return {
-      status: 'success',
-      data: newWish,
-    };
+    return { success: true };
   },
 };

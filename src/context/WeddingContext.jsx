@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { weddingConfig } from '../config/weddingConfig';
 import { rsvpService } from '../services/rsvpService';
+import { supabase } from '../services/supabase';
 
 const WeddingContext = createContext();
 
@@ -140,11 +141,37 @@ export const WeddingProvider = ({ children }) => {
     }));
   };
 
-  // Simpan data permanen (ke LocalStorage & File Fisik src/config/weddingConfig.js via Vite API)
+  // Simpan data permanen (ke Supabase Cloud, LocalStorage & File Fisik)
   const saveWeddingConfig = async (customData) => {
     const dataToSave = customData || weddingData;
 
-    // 1. Simpan ke localStorage
+    // 1. Simpan ke Supabase Cloud (PostgreSQL)
+    let savedToCloud = false;
+    let savedToFile = false;
+    let message = 'Perubahan berhasil disimpan ke browser lokal!';
+
+    try {
+      const { error: cloudErr } = await supabase.from('wedding_configs').upsert(
+        {
+          slug: 'destia-raka',
+          config: dataToSave,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'slug' },
+      );
+
+      if (!cloudErr) {
+        savedToCloud = true;
+        message =
+          '✓ Tersimpan ke Cloud Database (Sinkron di semua HP & Laptop)!';
+      } else {
+        console.warn('Supabase cloud error:', cloudErr.message);
+      }
+    } catch (cloudException) {
+      console.warn('Gagal koneksi ke cloud Supabase:', cloudException);
+    }
+
+    // 2. Simpan ke localStorage sebagai cadangan offline
     try {
       localStorage.setItem(
         'invatera_wedding_config',
@@ -154,10 +181,7 @@ export const WeddingProvider = ({ children }) => {
       console.warn('LocalStorage error:', e);
     }
 
-    // 2. Kirim ke Vite Server untuk menimpa file src/config/weddingConfig.js
-    let savedToFile = false;
-    let message = 'Perubahan berhasil disimpan ke browser lokal!';
-
+    // 3. Kirim ke Vite Server untuk menimpa file src/config/weddingConfig.js jika running dev server
     try {
       const res = await fetch('/api/save-config', {
         method: 'POST',
@@ -168,7 +192,10 @@ export const WeddingProvider = ({ children }) => {
       if (res.ok) {
         const json = await res.json();
         savedToFile = true;
-        message = json.message || 'Berhasil disimpan permanen ke file proyek!';
+        if (!savedToCloud) {
+          message =
+            json.message || 'Berhasil disimpan permanen ke file proyek!';
+        }
       }
     } catch (err) {
       console.info(
@@ -178,7 +205,7 @@ export const WeddingProvider = ({ children }) => {
     }
 
     setIsDirty(false);
-    return { success: true, savedToFile, message };
+    return { success: true, savedToCloud, savedToFile, message };
   };
 
   // Unduh file weddingConfig.js sebagai cadangan
@@ -239,6 +266,40 @@ export const WeddingProvider = ({ children }) => {
       setIsAdminMode(false);
       setIsAdminPanelOpen(false);
     }
+  }, []);
+
+  // Sinkronisasi data dari Supabase Cloud saat pertama kali dimuat
+  useEffect(() => {
+    let isMounted = true;
+    const loadCloudConfig = async () => {
+      try {
+        const { data } = await supabase
+          .from('wedding_configs')
+          .select('config')
+          .eq('slug', 'destia-raka')
+          .single();
+
+        if (isMounted && data?.config) {
+          setWeddingData((prev) => ({
+            ...prev,
+            ...data.config,
+          }));
+          if (data.config.theme?.colorPreset) {
+            setActiveColorPreset(data.config.theme.colorPreset);
+          }
+        }
+      } catch (err) {
+        console.info(
+          'Gagal memuat config cloud (menggunakan data lokal):',
+          err,
+        );
+      }
+    };
+
+    loadCloudConfig();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Sinkronisasi navigasi history browser (tombol back/forward)

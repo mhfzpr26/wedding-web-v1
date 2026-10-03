@@ -60,11 +60,13 @@ export const AdminPage = () => {
     try {
       const result = await saveWeddingConfig();
       setToastMessage(
-        result.savedToFile
-          ? '✓ Tersimpan permanen ke file fisik weddingConfig.js!'
-          : '✓ Tersimpan aman di browser lokal!',
+        result.savedToCloud
+          ? '✓ Tersimpan ke Cloud Database (Sinkron di semua HP & Laptop)!'
+          : result.savedToFile
+            ? '✓ Tersimpan permanen ke file fisik weddingConfig.js!'
+            : '✓ Tersimpan aman di browser lokal!',
       );
-      setTimeout(() => setToastMessage(null), 3500);
+      setTimeout(() => setToastMessage(null), 4000);
     } catch {
       setToastMessage('Gagal menyimpan data.');
       setTimeout(() => setToastMessage(null), 3000);
