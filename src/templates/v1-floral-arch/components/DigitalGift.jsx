@@ -1,5 +1,7 @@
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
 import { ChevronDown, ChevronUp, Gift, Home, Wifi } from 'lucide-react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { CopyButton } from '../../../components/common/CopyButton';
 import { ScrollReveal } from '../../../components/common/ScrollReveal';
 import { useWedding } from '../../../context/WeddingContext';
@@ -43,6 +45,30 @@ const CardChipIcon = () => (
 export const DigitalGift = () => {
   const { config } = useWedding();
   const [isOpen, setIsOpen] = useState(false);
+  const giftCardsRef = useRef(null);
+
+  useGSAP(
+    () => {
+      if (!isOpen) return;
+
+      gsap.from('.bank-card-item', {
+        y: 24,
+        scale: 0.95,
+        opacity: 0,
+        stagger: 0.12,
+        duration: 0.7,
+        ease: 'power3.out',
+      });
+
+      // Refleksi kilau melintas saat amplop dibuka
+      gsap.fromTo(
+        '.card-shimmer',
+        { xPercent: -120 },
+        { xPercent: 220, duration: 1.1, delay: 0.2, ease: 'power2.inOut' },
+      );
+    },
+    { dependencies: [isOpen], scope: giftCardsRef },
+  );
 
   if (!config.gift?.enabled) return null;
 
@@ -79,19 +105,16 @@ export const DigitalGift = () => {
 
       {/* Konten Amplop Digital (Desain Kartu ATM Mewah) */}
       {isOpen && (
-        <div className="space-y-6 transition-all duration-700 animate-in fade-in slide-in-from-top-4">
+        <div ref={giftCardsRef} className="space-y-6 pt-2">
           {/* Daftar Kartu Bank Bertema ATM Eksklusif */}
           {config.gift.accounts?.map((account, idx) => (
-            <ScrollReveal
+            <div
               key={account.id || idx}
-              animation="fade-up"
-              delay={idx * 100}
-              duration={700}
-              repeat={true}
+              className="bank-card-item will-change-transform"
             >
               <div className="relative p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-[#1C2B4E] via-[#28365F] to-[#122347] text-white shadow-luxury border border-gold/45 flex flex-col justify-between overflow-hidden text-left">
                 {/* Efek Kilau Hologram Kartu ATM */}
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-metallic-sweep pointer-events-none" />
+                <div className="card-shimmer absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent pointer-events-none" />
 
                 {/* Ornamen Lingkaran Refleksi Kartu */}
                 <div className="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-white/5 pointer-events-none" />
@@ -134,17 +157,12 @@ export const DigitalGift = () => {
                   />
                 </div>
               </div>
-            </ScrollReveal>
+            </div>
           ))}
 
           {/* Kado Fisik (Paket Pengiriman) */}
           {config.gift.physicalGift?.enabled && (
-            <ScrollReveal
-              animation="fade-up"
-              delay={150}
-              duration={750}
-              repeat={true}
-            >
+            <div className="bank-card-item will-change-transform">
               <div className="p-6 sm:p-7 rounded-3xl luxury-pearl-card border-2 border-dashed border-gold/45 shadow-soft flex flex-col items-center text-center relative overflow-hidden">
                 {/* Garis Border Ganda Bagian Dalam */}
                 <div className="absolute inset-2 rounded-[22px] border border-gold/20 pointer-events-none" />
@@ -176,7 +194,7 @@ export const DigitalGift = () => {
                   />
                 </div>
               </div>
-            </ScrollReveal>
+            </div>
           )}
         </div>
       )}

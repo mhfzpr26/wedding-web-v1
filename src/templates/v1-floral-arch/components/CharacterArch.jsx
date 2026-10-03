@@ -30,11 +30,36 @@ const InstagramIcon = ({ className = 'w-3.5 h-3.5' }) => (
 );
 
 export const CharacterArch = () => {
-  const { config } = useWedding();
+  const { config, isOpened } = useWedding();
+  const archRef = useRef(null);
   const coupleGridRef = useRef(null);
 
   useGSAP(
     () => {
+      if (!isOpened) return;
+
+      // 1. Animasi Entrance & Breathing Melayang Lembut untuk Ilustrasi Mempelai
+      gsap.from('.couple-avatar-wrap', {
+        scrollTrigger: {
+          trigger: '.couple-avatar-wrap',
+          start: 'top 85%',
+          toggleActions: 'play none none none',
+        },
+        scale: 0.93,
+        opacity: 0,
+        y: 18,
+        duration: 0.95,
+        ease: 'power3.out',
+      });
+
+      gsap.to('.couple-avatar-wrap', {
+        y: -5,
+        duration: 2.8,
+        ease: 'sine.inOut',
+        repeat: -1,
+        yoyo: true,
+      });
+
       const mm = gsap.matchMedia();
 
       // Mobile (< 768px): Vertical Stagger Cascade (mengalir alami mengikuti scroll vertikal)
@@ -119,11 +144,14 @@ export const CharacterArch = () => {
         });
       });
     },
-    { scope: coupleGridRef },
+    { dependencies: [isOpened], scope: archRef },
   );
 
   return (
-    <section className="relative pt-2 sm:pt-4 pb-4 sm:pb-6 px-3 sm:px-6 max-w-2xl sm:max-w-3xl mx-auto my-1 overflow-visible">
+    <section
+      ref={archRef}
+      className="relative pt-2 sm:pt-4 pb-4 sm:pb-6 px-3 sm:px-6 max-w-2xl sm:max-w-3xl mx-auto my-1 overflow-visible"
+    >
       <ScrollReveal animation="fade-up" duration={850} repeat={true}>
         {/* KARTU TUNGGAL GERBANG KUBAH LENGKUNG PENUH (Continuous Cathedral Arch Portal) */}
         <div className="relative p-5 sm:p-8 md:p-10 pt-12 sm:pt-16 md:pt-20 pb-20 sm:pb-24 md:pb-28 cathedral-arch-portal luxury-pearl-card shadow-luxury border border-gold/45 flex flex-col items-center text-center overflow-hidden">
@@ -203,7 +231,7 @@ export const CharacterArch = () => {
           </div>
 
           {/* 5. ILUSTRASI PASANGAN "TOGETHER IN LOVE" */}
-          <div className="relative z-10 my-3 sm:my-4">
+          <div className="couple-avatar-wrap will-change-transform relative z-10 my-3 sm:my-4">
             <CoupleAvatar />
           </div>
 

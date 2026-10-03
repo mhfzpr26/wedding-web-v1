@@ -1,12 +1,39 @@
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { CalendarPlus, Clock, ExternalLink, MapPin } from 'lucide-react';
+import { useRef } from 'react';
 import { CountdownTimer } from '../../../components/common/CountdownTimer';
 import { ScrollReveal } from '../../../components/common/ScrollReveal';
 import { useWedding } from '../../../context/WeddingContext';
 import { CardBotanicalWatermark } from '../assets/VectorOrnaments';
 import { OrganicTitleBadge } from './OrganicTitleBadge';
 
+gsap.registerPlugin(ScrollTrigger);
+
 export const EventSection = () => {
-  const { config } = useWedding();
+  const { config, isOpened } = useWedding();
+  const eventsGridRef = useRef(null);
+
+  useGSAP(
+    () => {
+      if (!isOpened || !config.events || config.events.length === 0) return;
+
+      gsap.from('.event-card-item', {
+        scrollTrigger: {
+          trigger: eventsGridRef.current,
+          start: 'top 82%',
+          toggleActions: 'play none none none',
+        },
+        y: 35,
+        opacity: 0,
+        stagger: 0.16,
+        duration: 0.85,
+        ease: 'power3.out',
+      });
+    },
+    { dependencies: [isOpened, config.events], scope: eventsGridRef },
+  );
 
   const createGoogleCalendarUrl = (event) => {
     const title = encodeURIComponent(event.calendarTitle || event.title);
@@ -23,10 +50,8 @@ export const EventSection = () => {
 
   return (
     <section className="relative pt-4 sm:pt-6 pb-8 sm:pb-12 px-4 max-w-3xl mx-auto overflow-hidden">
-      {/* Countdown Timer */}
-      <ScrollReveal animation="zoom-in" duration={800} repeat={true}>
-        <CountdownTimer />
-      </ScrollReveal>
+      {/* Countdown Timer with built-in GSAP entrance */}
+      <CountdownTimer />
 
       <ScrollReveal
         animation="fade-up"
@@ -43,15 +68,14 @@ export const EventSection = () => {
       </ScrollReveal>
 
       {/* Daftar Kartu Acara (Desain Papan Acara / Regal Calendar Plaque) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 my-4 sm:my-6">
+      <div
+        ref={eventsGridRef}
+        className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 my-4 sm:my-6"
+      >
         {config.events.map((event, idx) => (
-          <ScrollReveal
+          <div
             key={event.id || idx}
-            animation="fade-up"
-            delay={idx * 150}
-            duration={800}
-            repeat={true}
-            className="h-full"
+            className="event-card-item will-change-transform h-full"
           >
             <div className="group relative rounded-3xl luxury-pearl-card flex flex-col justify-between overflow-hidden transition-all duration-300 hover:-translate-y-1 h-full">
               {/* Garis Border Ganda Bagian Dalam Kartu */}
@@ -112,7 +136,7 @@ export const EventSection = () => {
                 </a>
               </div>
             </div>
-          </ScrollReveal>
+          </div>
         ))}
       </div>
     </section>

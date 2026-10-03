@@ -1,9 +1,12 @@
 import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { MailOpen } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useWedding } from '../../../context/WeddingContext';
 import { FloralCornerBunch, FloralDivider } from '../assets/VectorOrnaments';
 import { FallingLeaves } from './FallingLeaves';
+
+gsap.registerPlugin(ScrollTrigger);
 
 export const CoverModal = () => {
   const { config, guestName, isOpened, openInvitation } = useWedding();
@@ -46,6 +49,9 @@ export const CoverModal = () => {
     const tl = gsap.timeline({
       onComplete: () => {
         setIsFullyExited(true);
+        setTimeout(() => {
+          ScrollTrigger.refresh();
+        }, 60);
       },
     });
 

@@ -1,9 +1,48 @@
-import { useEffect, useState } from 'react';
+import { useGSAP } from '@gsap/react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { useEffect, useRef, useState } from 'react';
 import { useWedding } from '../../context/WeddingContext';
 
+gsap.registerPlugin(ScrollTrigger);
+
 export const CountdownTimer = () => {
-  const { config } = useWedding();
+  const { config, isOpened } = useWedding();
   const targetDate = new Date(config.countdownTarget).getTime();
+  const containerRef = useRef(null);
+
+  useGSAP(
+    () => {
+      if (!isOpened) return;
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: containerRef.current,
+          start: 'top 85%',
+          toggleActions: 'play none none none',
+        },
+      });
+
+      tl.fromTo(
+        '.countdown-glass-plaque',
+        { scale: 0.92, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' },
+      ).fromTo(
+        '.countdown-unit-pod',
+        { scale: 0.5, opacity: 0, y: 14 },
+        {
+          scale: 1,
+          opacity: 1,
+          y: 0,
+          stagger: 0.08,
+          duration: 0.6,
+          ease: 'back.out(2)',
+        },
+        '-=0.4',
+      );
+    },
+    { dependencies: [isOpened], scope: containerRef },
+  );
 
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -53,7 +92,10 @@ export const CountdownTimer = () => {
   ];
 
   return (
-    <div className="relative w-full max-w-sm sm:max-w-md mx-auto my-7 select-none">
+    <div
+      ref={containerRef}
+      className="relative w-full max-w-sm sm:max-w-md mx-auto my-7 select-none"
+    >
       {/* 1a. Ranting Sulur Eucalyptus Kiri Atas: Turun sedikit & tetap bergerak berayun lembut */}
       <div className="absolute -top-3 -left-5 sm:-top-4 sm:-left-6 w-16 sm:w-20 h-auto pointer-events-none z-20 animate-botanical-sway-left">
         <img
@@ -85,7 +127,7 @@ export const CountdownTimer = () => {
       <div className="absolute inset-0 rounded-3xl bg-secondary/25 blur-xl pointer-events-none -z-10" />
 
       {/* 3. Plakat Berwarna Soft Azure Mist (Jelas Terlihat & Berkontras Tinggi) */}
-      <div className="relative w-full p-4 sm:p-5 rounded-3xl overflow-hidden bg-gradient-to-br from-[#d4e8f7]/95 via-[#e5f2fc]/90 to-[#c8e2f5]/95 backdrop-blur-md border-[1.5px] border-gold/55 shadow-[0_18px_40px_-8px_rgba(40,54,95,0.18),0_2px_8px_rgba(168,127,1,0.15),inset_0_1px_2px_rgba(255,255,255,0.95)] transition-all duration-300">
+      <div className="countdown-glass-plaque will-change-transform relative w-full p-4 sm:p-5 rounded-3xl overflow-hidden bg-gradient-to-br from-[#d4e8f7]/95 via-[#e5f2fc]/90 to-[#c8e2f5]/95 backdrop-blur-md border-[1.5px] border-gold/55 shadow-[0_18px_40px_-8px_rgba(40,54,95,0.18),0_2px_8px_rgba(168,127,1,0.15),inset_0_1px_2px_rgba(255,255,255,0.95)] transition-all duration-300">
         {/* Bias Refraksi Cahaya Kaca Kristal */}
         <div className="absolute -top-16 -left-16 w-48 h-48 bg-white/70 rounded-full blur-2xl pointer-events-none" />
         <div className="absolute -bottom-16 -right-16 w-48 h-48 bg-gold/20 rounded-full blur-2xl pointer-events-none" />
@@ -105,7 +147,7 @@ export const CountdownTimer = () => {
           {units.map((unit, index) => (
             <div
               key={index}
-              className="group relative flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white border border-gold/35 shadow-[0_6px_16px_rgba(40,54,95,0.08),inset_0_1px_0_rgba(255,255,255,1)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md overflow-hidden"
+              className="countdown-unit-pod will-change-transform group relative flex flex-col items-center justify-center p-2.5 sm:p-3 rounded-2xl bg-white border border-gold/35 shadow-[0_6px_16px_rgba(40,54,95,0.08),inset_0_1px_0_rgba(255,255,255,1)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md overflow-hidden"
             >
               {/* Garis Border Ganda Halus Bagian Dalam Kotak */}
               <div className="absolute inset-1 rounded-xl border border-gold/20 pointer-events-none" />
