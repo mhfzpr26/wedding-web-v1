@@ -28,7 +28,7 @@ import {
   Users,
   UserX,
 } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useWedding } from '../../context/WeddingContext';
 
 // Normalisasi nomor telepon ke format internasional WhatsApp (628...)
@@ -193,7 +193,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
         setRawNames(config.guestNamesRaw);
       }
     }
-  }, [config?.guestNamesRaw]);
+  }, [config?.guestNamesRaw, rawNames]);
 
   // Sinkronisasi live status terkirim dari config cloud (misal saat pasangan kirim dari HP lain)
   useEffect(() => {
