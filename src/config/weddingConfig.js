@@ -188,5 +188,6 @@ export const weddingConfig = {
     ]
   },
   "clientAccessKey": "destiaraka",
+  "guestNamesRaw": "",
   "initialWishes": []
 };

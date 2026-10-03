@@ -140,23 +140,23 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
   // Tab Navigasi Klien: 'whatsapp' atau 'rsvp'
   const [activeTab, setActiveTab] = useState('whatsapp');
 
-  // State Daftar Tamu
+  // State Daftar Tamu (Bersih secara default untuk pengantin baru)
   const [rawNames, setRawNames] = useState(() => {
     if (config?.guestNamesRaw && config.guestNamesRaw.trim() !== '') {
-      return config.guestNamesRaw;
+      if (!config.guestNamesRaw.includes('Joko Widodo')) {
+        return config.guestNamesRaw;
+      }
     }
     try {
       const stored = localStorage.getItem(`invatera_guest_names_${slug}`);
-      if (stored && stored.trim() !== '') return stored;
+      if (stored && stored.trim() !== '' && !stored.includes('Joko Widodo')) {
+        return stored;
+      }
+      if (stored?.includes('Joko Widodo')) {
+        localStorage.removeItem(`invatera_guest_names_${slug}`);
+      }
     } catch (_e) {}
-    return (
-      'Bapak Dr. H. Joko Widodo & Keluarga, 08123456789, VIP\n' +
-      'Ibu Hj. Aminah, 085712345678, Keluarga\n' +
-      'Kevin Pratama & Partner, 087812345678, Sahabat\n' +
-      'Keluarga Besar Bpk. Hendra, , Keluarga\n' +
-      'Rekan Kerja Divisi IT, 081398765432, Teman Kantor\n' +
-      'Sahabat Kuliah Angkatan 2018, , Sahabat'
-    );
+    return '';
   });
 
   const [isSavingGuests, setIsSavingGuests] = useState(false);
@@ -491,8 +491,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
   };
 
   // Contoh nama dan pesan untuk kartu pratinjau live
-  const sampleGuestName =
-    parsedGuests?.[0]?.name || 'Bapak Dr. H. Joko Widodo & Keluarga';
+  const sampleGuestName = parsedGuests?.[0]?.name || 'Nama Tamu Undangan';
   const sampleMessageText = generateMessage(sampleGuestName);
 
   const handleCopy = (text, id, type) => {
@@ -838,6 +837,35 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                     <Upload className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Unggah File</span>
                   </button>
+
+                  {/* Kosongkan Daftar */}
+                  {rawNames.trim().length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            'Yakin ingin mengosongkan seluruh daftar tamu?',
+                          )
+                        ) {
+                          setRawNames('');
+                          try {
+                            localStorage.removeItem(
+                              `invatera_guest_names_${slug}`,
+                            );
+                          } catch (_e) {}
+                          if (updateWeddingData) {
+                            updateWeddingData({ guestNamesRaw: '' });
+                          }
+                        }
+                      }}
+                      className="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-xs border border-rose-200 transition-colors cursor-pointer flex items-center gap-1"
+                      title="Kosongkan seluruh teks daftar tamu"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Kosongkan</span>
+                    </button>
+                  )}
 
                   {/* Simpan ke Database */}
                   <button
@@ -1306,7 +1334,45 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                 })}
               </div>
 
-              {filteredGuests.length === 0 ? (
+              {totalGuests === 0 ? (
+                <div className="p-10 rounded-2xl bg-slate-50/80 border-2 border-dashed border-slate-200 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto">
+                    <Users className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h5 className="text-sm font-bold text-slate-800">
+                      Daftar Tamu Masih Kosong
+                    </h5>
+                    <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 leading-relaxed">
+                      Mulai tambahkan tamu menggunakan form{' '}
+                      <strong>Tambah Tamu Cepat</strong> di atas, tombol{' '}
+                      <strong>Unggah File Excel/CSV</strong>, atau ketik
+                      langsung di kotak teks daftar tamu.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const sample =
+                          'Bapak & Ibu Hendra, 08123456789, Keluarga\n' +
+                          'Sahabat Kuliah, 085712345678, Sahabat\n' +
+                          'Rekan Kantor, 087812345678, Teman Kantor';
+                        setRawNames(sample);
+                        try {
+                          localStorage.setItem(
+                            `invatera_guest_names_${slug}`,
+                            sample,
+                          );
+                        } catch (_e) {}
+                      }}
+                      className="px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
+                    >
+                      Muat Contoh Format
+                    </button>
+                  </div>
+                </div>
+              ) : filteredGuests.length === 0 ? (
                 <div className="p-8 text-center text-slate-400 text-xs">
                   Tidak ada tamu yang cocok dengan filter atau pencarian.
                 </div>

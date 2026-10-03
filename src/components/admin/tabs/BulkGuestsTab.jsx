@@ -20,13 +20,20 @@ export const BulkGuestsTab = ({ config, updateWeddingData }) => {
   const [copiedPortal, setCopiedPortal] = useState(false);
   const [rawNames, setRawNames] = useState(() => {
     if (config?.guestNamesRaw && config.guestNamesRaw.trim() !== '') {
-      return config.guestNamesRaw;
+      if (!config.guestNamesRaw.includes('Joko Widodo')) {
+        return config.guestNamesRaw;
+      }
     }
     try {
       const stored = localStorage.getItem('invatera_admin_guest_names');
-      if (stored && stored.trim() !== '') return stored;
+      if (stored && stored.trim() !== '' && !stored.includes('Joko Widodo')) {
+        return stored;
+      }
+      if (stored?.includes('Joko Widodo')) {
+        localStorage.removeItem('invatera_admin_guest_names');
+      }
     } catch (_e) {}
-    return DEFAULT_SAMPLE_GUESTS;
+    return '';
   });
 
   const [templateType, setTemplateType] = useState('formal');
