@@ -29,8 +29,8 @@ const TemplateV1FloralArch = () => {
         {
           y: 0,
           opacity: 1,
-          duration: 1.15,
-          ease: 'power3.out',
+          duration: 1.65,
+          ease: 'power2.out',
           onComplete: () => {
             // Segarkan posisi ScrollTrigger agar kalkulasi titik scroll akurat
             ScrollTrigger.refresh();

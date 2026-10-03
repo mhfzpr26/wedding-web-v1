@@ -40,7 +40,7 @@ export const CharacterArch = () => {
       // 1. Pembukaan Megah & Khidmat (Sacred Opening Sequence)
       // Diberi jeda waktu yang tenang dan luas agar tamu di mobile bisa menikmati setiap baris tanpa terburu-buru
       const sacredTl = gsap.timeline({
-        delay: 1.8,
+        delay: 2.1,
       });
 
       // Momen 1: Kubah Portal & Bismillah

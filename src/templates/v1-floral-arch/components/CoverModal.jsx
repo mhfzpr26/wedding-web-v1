@@ -45,7 +45,7 @@ export const CoverModal = () => {
     openInvitation();
 
     // 2. Animasi Transisi Sinematik Curtain Glide-Up (Tirai Meluncur Anggun ke Atas)
-    // Seluruh elemen cover, bunga sudut, teks, dan kartu bergerak utuh tanpa ada yang lenyap mendadak
+    // Dibuat lebih tenang dan anggun (durasi 1.65s, power2.inOut) layaknya tirai panggung mewah
     const tl = gsap.timeline({
       onComplete: () => {
         setIsFullyExited(true);
@@ -59,9 +59,10 @@ export const CoverModal = () => {
     tl.to(
       contentRef.current,
       {
-        y: -35,
-        duration: 1.15,
-        ease: 'power3.inOut',
+        y: -45,
+        opacity: 0.85,
+        duration: 1.65,
+        ease: 'power2.inOut',
       },
       0,
     )
@@ -70,8 +71,8 @@ export const CoverModal = () => {
         coverRef.current,
         {
           yPercent: -100,
-          duration: 1.15,
-          ease: 'power3.inOut',
+          duration: 1.65,
+          ease: 'power2.inOut',
         },
         0,
       );

@@ -23,7 +23,7 @@ export const TopMonogram = () => {
 
       // Animasi masuk satu kali yang tenang, anggun, dan kokoh (tanpa bergerak-gerak terus)
       const tl = gsap.timeline({
-        delay: 0.9,
+        delay: 1.15,
       });
 
       // 1. Pendar ambient emas membesar lembut
