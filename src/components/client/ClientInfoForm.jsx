@@ -428,7 +428,7 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
                   />
                 </div>
 
-                <div>
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Akun Instagram (Opsional)
                   </label>
@@ -441,23 +441,6 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
                     placeholder="Contoh: drdestia atau https://instagram.com/..."
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Karakter Ilustrasi Avatar
-                  </label>
-                  <select
-                    value={formData.bride?.avatarType || 'hijab'}
-                    onChange={(e) =>
-                      handleNestedChange('bride', 'avatarType', e.target.value)
-                    }
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
-                  >
-                    <option value="hijab">Pengantin Berhijab</option>
-                    <option value="dress">Gaun / Rambut Terurai</option>
-                    <option value="traditional">Busana Adat</option>
-                  </select>
                 </div>
               </div>
             </div>
@@ -523,7 +506,7 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
                   />
                 </div>
 
-                <div>
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Akun Instagram (Opsional)
                   </label>
@@ -536,23 +519,6 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
                     placeholder="Contoh: rakafansa_ atau https://instagram.com/..."
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Karakter Ilustrasi Avatar
-                  </label>
-                  <select
-                    value={formData.groom?.avatarType || 'suit'}
-                    onChange={(e) =>
-                      handleNestedChange('groom', 'avatarType', e.target.value)
-                    }
-                    className="w-full px-3 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
-                  >
-                    <option value="suit">Setelan Jas Formal</option>
-                    <option value="peci">Kemeja & Peci</option>
-                    <option value="traditional">Busana Adat</option>
-                  </select>
                 </div>
               </div>
             </div>
