@@ -23,7 +23,7 @@ export const EventSection = () => {
         scrollTrigger: {
           trigger: eventsGridRef.current,
           start: 'top 82%',
-          toggleActions: 'play none none none',
+          toggleActions: 'play reverse play reverse',
         },
         y: 35,
         opacity: 0,

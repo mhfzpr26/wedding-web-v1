@@ -120,7 +120,7 @@ export const CharacterArch = () => {
         scrollTrigger: {
           trigger: '.couple-avatar-wrap',
           start: 'top 85%',
-          toggleActions: 'play none none none',
+          toggleActions: 'play reverse play reverse',
         },
         scale: 0.93,
         opacity: 0,
@@ -145,7 +145,7 @@ export const CharacterArch = () => {
           scrollTrigger: {
             trigger: coupleGridRef.current,
             start: 'top 85%',
-            toggleActions: 'play none none none',
+            toggleActions: 'play reverse play reverse',
           },
           y: 28,
           opacity: 0,
@@ -157,7 +157,7 @@ export const CharacterArch = () => {
           scrollTrigger: {
             trigger: coupleGridRef.current,
             start: 'top 80%',
-            toggleActions: 'play none none none',
+            toggleActions: 'play reverse play reverse',
           },
           scale: 0.4,
           opacity: 0,
@@ -170,7 +170,7 @@ export const CharacterArch = () => {
           scrollTrigger: {
             trigger: coupleGridRef.current,
             start: 'top 75%',
-            toggleActions: 'play none none none',
+            toggleActions: 'play reverse play reverse',
           },
           y: 28,
           opacity: 0,
@@ -186,7 +186,7 @@ export const CharacterArch = () => {
           scrollTrigger: {
             trigger: coupleGridRef.current,
             start: 'top 85%',
-            toggleActions: 'play none none none',
+            toggleActions: 'play reverse play reverse',
           },
           x: -36,
           opacity: 0,
@@ -198,7 +198,7 @@ export const CharacterArch = () => {
           scrollTrigger: {
             trigger: coupleGridRef.current,
             start: 'top 85%',
-            toggleActions: 'play none none none',
+            toggleActions: 'play reverse play reverse',
           },
           x: 36,
           opacity: 0,
@@ -210,7 +210,7 @@ export const CharacterArch = () => {
           scrollTrigger: {
             trigger: coupleGridRef.current,
             start: 'top 85%',
-            toggleActions: 'play none none none',
+            toggleActions: 'play reverse play reverse',
           },
           scale: 0,
           rotation: -45,

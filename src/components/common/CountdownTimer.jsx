@@ -19,7 +19,7 @@ export const CountdownTimer = () => {
         scrollTrigger: {
           trigger: containerRef.current,
           start: 'top 85%',
-          toggleActions: 'play none none none',
+          toggleActions: 'play reverse play reverse',
         },
       });
 

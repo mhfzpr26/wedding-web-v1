@@ -48,7 +48,7 @@ export const StorySection = () => {
           scrollTrigger: {
             trigger: item,
             start: 'top 82%',
-            toggleActions: 'play none none none',
+            toggleActions: 'play reverse play reverse',
           },
         });
 
