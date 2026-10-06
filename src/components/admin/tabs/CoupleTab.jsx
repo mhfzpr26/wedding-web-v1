@@ -1,9 +1,24 @@
-import { Heart, User } from 'lucide-react';
+import {
+  Camera,
+  Heart,
+  Image as ImageIcon,
+  Loader2,
+  Trash2,
+  UploadCloud,
+  User,
+} from 'lucide-react';
+import { useRef, useState } from 'react';
+import { uploadWeddingPhoto } from '../../../services/storageService';
 
 export const CoupleTab = ({ config, updateSection }) => {
   const bride = config.bride || {};
   const groom = config.groom || {};
   const monogram = config.monogram || {};
+  const couple = config.couple || {};
+
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState('');
+  const coupleFileRef = useRef(null);
 
   const handleBrideChange = (field, value) => {
     updateSection('bride', { [field]: value });
@@ -17,6 +32,41 @@ export const CoupleTab = ({ config, updateSection }) => {
     updateSection('monogram', { [field]: value });
   };
 
+  const handleCoupleChange = (field, value) => {
+    updateSection('couple', { [field]: value });
+  };
+
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingPhoto(true);
+    setPhotoError('');
+    try {
+      const res = await uploadWeddingPhoto(file, 'couple');
+      if (!res.success) {
+        throw new Error(res.error || 'Gagal mengunggah foto.');
+      }
+      updateSection('couple', {
+        ...couple,
+        photo: res.url,
+        showPhoto: true,
+      });
+    } catch (err) {
+      setPhotoError(err.message || 'Gagal mengunggah foto.');
+    } finally {
+      setIsUploadingPhoto(false);
+      if (coupleFileRef.current) coupleFileRef.current.value = '';
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    updateSection('couple', {
+      ...couple,
+      photo: '',
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -25,9 +75,135 @@ export const CoupleTab = ({ config, updateSection }) => {
           <span>Informasi Mempelai Pengantin</span>
         </h3>
         <p className="text-xs text-slate-500 mt-0.5">
-          Atur nama lengkap, nama panggilan, orang tua, dan akun media sosial
-          kedua mempelai.
+          Atur foto pasangan berdua, nama lengkap, orang tua, dan akun media
+          sosial kedua mempelai.
         </p>
+      </div>
+
+      {/* KARTU FOTO PASANGAN (TAMPIL DI ATAS KARTU MEMPELAI) */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-lg bg-amber-50 text-amber-600">
+              <Camera className="w-4 h-4" />
+            </span>
+            <div>
+              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                Foto Pasangan Berdua (Di Atas Card Mempelai)
+              </h4>
+              <p className="text-[11px] text-slate-400">
+                Tampil di bingkai kubah lengkung sebelum profil mempelai. Jika
+                kosong, akan menggunakan karakter vektor.
+              </p>
+            </div>
+          </div>
+
+          <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-semibold text-slate-600">
+            <input
+              type="checkbox"
+              checked={couple.showPhoto !== false}
+              onChange={(e) =>
+                handleCoupleChange('showPhoto', e.target.checked)
+              }
+              className="rounded text-amber-500 focus:ring-amber-500"
+            />
+            <span>Aktifkan Foto Pasangan</span>
+          </label>
+        </div>
+
+        {photoError && (
+          <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-medium">
+            {photoError}
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5">
+          {/* Thumbnail Preview Bingkai Kubah */}
+          <div className="w-28 h-36 rounded-t-full rounded-b-xl overflow-hidden bg-slate-100 border-2 border-amber-400/50 shadow-sm shrink-0 relative group flex items-center justify-center">
+            {couple.photo ? (
+              <img
+                src={couple.photo}
+                alt="Foto Pasangan"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="text-center p-2 text-slate-400">
+                <ImageIcon className="w-7 h-7 mx-auto mb-1 opacity-50" />
+                <span className="text-[10px] leading-tight block">
+                  Karakter Vektor Aktif
+                </span>
+              </div>
+            )}
+
+            {isUploadingPhoto && (
+              <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white">
+                <Loader2 className="w-5 h-5 animate-spin mb-1 text-amber-400" />
+                <span className="text-[10px] font-bold">Mengunggah...</span>
+              </div>
+            )}
+          </div>
+
+          {/* Tombol Aksi & Opsi URL */}
+          <div className="flex-1 w-full space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                ref={coupleFileRef}
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                className="hidden"
+                id="couple-photo-input"
+                disabled={isUploadingPhoto}
+              />
+              <label
+                htmlFor="couple-photo-input"
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                  isUploadingPhoto
+                    ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                    : 'bg-amber-500 hover:bg-amber-600 text-white'
+                }`}
+              >
+                <UploadCloud className="w-4 h-4" />
+                <span>
+                  {couple.photo
+                    ? 'Ganti Foto dari Perangkat'
+                    : 'Pilih Foto dari Perangkat (HP/Laptop)'}
+                </span>
+              </label>
+
+              {couple.photo && (
+                <button
+                  type="button"
+                  onClick={handleRemovePhoto}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold transition-all cursor-pointer"
+                  title="Hapus foto dan kembali ke ilustrasi kartun"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Hapus Foto (Gunakan Karakter Vektor)</span>
+                </button>
+              )}
+            </div>
+
+            <p className="text-[11px] text-slate-500">
+              Format didukung: JPG, PNG, WebP. Gambar akan otomatis dikompresi
+              agar undangan dimuat super cepat.
+            </p>
+
+            {/* Opsi Tautan URL Manual (Untuk Fleksibilitas) */}
+            <div className="pt-2 border-t border-slate-100">
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                Atau masukkan tautan URL foto langsung:
+              </label>
+              <input
+                type="text"
+                value={couple.photo || ''}
+                onChange={(e) => handleCoupleChange('photo', e.target.value)}
+                placeholder="https://images.unsplash.com/... atau tautan gambar lainnya"
+                className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Grid 2 Kolom: Mempelai Wanita & Mempelai Pria */}

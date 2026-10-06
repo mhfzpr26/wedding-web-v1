@@ -312,9 +312,31 @@ export const CharacterArch = () => {
           </div>
         </div>
 
-        {/* 5. ILUSTRASI PASANGAN "TOGETHER IN LOVE" */}
-        <div className="couple-avatar-wrap will-change-transform relative z-10 my-3 sm:my-4">
-          <CoupleAvatar />
+        {/* 5. FOTO PASANGAN / ILUSTRASI PASANGAN "TOGETHER IN LOVE" */}
+        <div className="couple-avatar-wrap will-change-transform relative z-10 my-4 sm:my-5 flex flex-col items-center">
+          {config.couple?.showPhoto !== false && config.couple?.photo ? (
+            <div className="relative group mx-auto">
+              {/* Bingkai Kubah Lengkung / Cathedral Arch Frame Mewah untuk Foto Pasangan */}
+              <div className="w-48 h-60 sm:w-56 sm:h-72 rounded-t-full rounded-b-3xl overflow-hidden p-1.5 bg-gradient-to-b from-amber-400/50 via-amber-200/30 to-amber-500/50 shadow-luxury border border-gold/45 relative">
+                <div className="w-full h-full rounded-t-full rounded-b-2xl overflow-hidden bg-slate-100 relative">
+                  <img
+                    src={config.couple.photo}
+                    alt={`${config.bride?.shortName || 'Mempelai'} & ${config.groom?.shortName || 'Mempelai'}`}
+                    className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent pointer-events-none" />
+                </div>
+              </div>
+              {/* Label Inisial / Nama di Bawah Bingkai */}
+              <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-white/95 border border-gold/40 shadow-soft text-[11px] font-serif font-bold text-primary tracking-wider whitespace-nowrap backdrop-blur-xs flex items-center gap-1.5">
+                <span>{config.bride?.shortName || 'Destia'}</span>
+                <span className="text-gold font-normal">&</span>
+                <span>{config.groom?.shortName || 'Raka'}</span>
+              </div>
+            </div>
+          ) : (
+            <CoupleAvatar />
+          )}
         </div>
 
         {/* 6. PROFIL MEMPELAI WANITA & MEMPELAI PRIA (Mempelai Wanita Dahulu) */}

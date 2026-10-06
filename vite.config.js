@@ -138,6 +138,58 @@ export const weddingConfig = ${JSON.stringify(data, null, 2)};
           return;
         }
 
+        // 4. Upload File Foto ke Folder public/photos
+        if (req.url === '/api/upload-photo' && req.method === 'POST') {
+          let body = '';
+          req.on('data', (chunk) => {
+            body += chunk;
+          });
+          req.on('end', () => {
+            try {
+              const { filename, content } = JSON.parse(body);
+              if (!filename || !content) {
+                throw new Error('Nama file dan data konten foto wajib ada.');
+              }
+              const photosDir = path.resolve(__dirname, 'public/photos');
+              if (!fs.existsSync(photosDir)) {
+                fs.mkdirSync(photosDir, { recursive: true });
+              }
+              const ext = (path.extname(filename) || '.jpg').toLowerCase();
+              const base = path
+                .basename(filename, ext)
+                .toLowerCase()
+                .replace(/[^a-z0-9_.-]/g, '-')
+                .replace(/-+/g, '-');
+              const cleanName = `${Date.now()}-${base}${ext}`;
+              const targetPath = path.join(photosDir, cleanName);
+
+              const buffer = Buffer.from(content, 'base64');
+              fs.writeFileSync(targetPath, buffer);
+
+              res.setHeader('Content-Type', 'application/json');
+              res.end(
+                JSON.stringify({
+                  success: true,
+                  url: `/photos/${cleanName}`,
+                  filename: cleanName,
+                  sizeBytes: buffer.length,
+                  message: `Foto ${cleanName} berhasil diunggah ke public/photos/`,
+                }),
+              );
+            } catch (err) {
+              res.statusCode = 500;
+              res.setHeader('Content-Type', 'application/json');
+              res.end(
+                JSON.stringify({
+                  success: false,
+                  error: err.message,
+                }),
+              );
+            }
+          });
+          return;
+        }
+
         next();
       });
     },

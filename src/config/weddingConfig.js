@@ -74,6 +74,11 @@ export const weddingConfig = {
     "showInstagram": true,
     "avatarType": "hijab"
   },
+  "couple": {
+    "photo": "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=80",
+    "caption": "Destia & Raka",
+    "showPhoto": true
+  },
   "countdownTarget": "2026-11-07T08:00:00+07:00",
   "events": [
     {

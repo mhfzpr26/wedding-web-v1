@@ -51,6 +51,10 @@ export const WeddingProvider = ({ children }) => {
                 ? parsed.bride.showInstagram
                 : true,
           },
+          couple: {
+            ...weddingConfig.couple,
+            ...(parsed.couple || {}),
+          },
           quote: {
             ...weddingConfig.quote,
             ...(parsed.quote || {}),

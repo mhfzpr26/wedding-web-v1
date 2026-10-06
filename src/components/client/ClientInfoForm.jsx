@@ -2,6 +2,7 @@ import {
   AlertCircle,
   Building,
   Calendar,
+  Camera,
   Check,
   CheckCircle2,
   ChevronLeft,
@@ -12,15 +13,18 @@ import {
   Gift,
   Heart,
   Image,
+  Loader2,
   MapPin,
   Music,
   Plus,
   Save,
   Sparkles,
   Trash2,
+  UploadCloud,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useWedding } from '../../context/WeddingContext';
+import { uploadWeddingPhoto } from '../../services/storageService';
 
 const BANK_OPTIONS = [
   'BCA',
@@ -71,6 +75,7 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
     if (config) {
       setFormData((prev) => ({
         ...config,
+        couple: { ...(config.couple || {}), ...(prev.couple || {}) },
         bride: { ...(config.bride || {}), ...(prev.bride || {}) },
         groom: { ...(config.groom || {}), ...(prev.groom || {}) },
         events: config.events || prev.events || [],
@@ -94,6 +99,126 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
       }));
     }
   }, [config]);
+
+  // State & Handlers Upload Foto
+  const [isUploadingCouplePhoto, setIsUploadingCouplePhoto] = useState(false);
+  const [couplePhotoError, setCouplePhotoError] = useState('');
+  const coupleFileInputRef = useRef(null);
+
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
+  const [galleryUploadProgress, setGalleryUploadProgress] = useState({
+    current: 0,
+    total: 0,
+  });
+  const [galleryError, setGalleryError] = useState('');
+  const galleryFileInputRef = useRef(null);
+
+  const handleCouplePhotoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingCouplePhoto(true);
+    setCouplePhotoError('');
+    try {
+      const res = await uploadWeddingPhoto(file, 'couple');
+      if (res.success && res.url) {
+        setFormData((prev) => ({
+          ...prev,
+          couple: {
+            ...(prev.couple || {}),
+            photo: res.url,
+            showPhoto: true,
+          },
+        }));
+      } else {
+        throw new Error(res.error || 'Gagal mengunggah foto pasangan.');
+      }
+    } catch (err) {
+      setCouplePhotoError(err.message || 'Gagal mengunggah foto pasangan.');
+    } finally {
+      setIsUploadingCouplePhoto(false);
+      if (coupleFileInputRef.current) coupleFileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemoveCouplePhoto = () => {
+    setFormData((prev) => ({
+      ...prev,
+      couple: {
+        ...(prev.couple || {}),
+        photo: '',
+      },
+    }));
+  };
+
+  const handleGalleryUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setIsUploadingGallery(true);
+    setGalleryError('');
+    setGalleryUploadProgress({ current: 0, total: files.length });
+
+    const newPhotos = [];
+    try {
+      for (let i = 0; i < files.length; i++) {
+        setGalleryUploadProgress({ current: i + 1, total: files.length });
+        const res = await uploadWeddingPhoto(files[i], 'gallery');
+        if (res.success && res.url) {
+          newPhotos.push({
+            id: `photo-${Date.now()}-${i}`,
+            url: res.url,
+            caption: 'Momen Indah Bersama',
+          });
+        }
+      }
+
+      if (newPhotos.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          gallery: {
+            ...prev.gallery,
+            photos: [...(prev.gallery?.photos || []), ...newPhotos],
+          },
+        }));
+      }
+    } catch (err) {
+      setGalleryError(err.message || 'Sebagian foto gagal diunggah.');
+    } finally {
+      setIsUploadingGallery(false);
+      setGalleryUploadProgress({ current: 0, total: 0 });
+      if (galleryFileInputRef.current) galleryFileInputRef.current.value = '';
+    }
+  };
+
+  const handleDeleteGalleryPhoto = (index) => {
+    setFormData((prev) => {
+      const currentPhotos = prev.gallery?.photos || [];
+      return {
+        ...prev,
+        gallery: {
+          ...prev.gallery,
+          photos: currentPhotos.filter((_, idx) => idx !== index),
+        },
+      };
+    });
+  };
+
+  const handleGalleryCaptionChange = (index, caption) => {
+    setFormData((prev) => {
+      const currentPhotos = [...(prev.gallery?.photos || [])];
+      if (currentPhotos[index]) {
+        currentPhotos[index] = { ...currentPhotos[index], caption };
+      }
+      return {
+        ...prev,
+        gallery: {
+          ...prev.gallery,
+          photos: currentPhotos,
+        },
+      };
+    });
+  };
 
   // Handler update field bersarang
   const handleNestedChange = (section, field, value) => {
@@ -361,9 +486,112 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
                 <span>Identitas Kedua Mempelai</span>
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Isi nama panggilan, nama lengkap bergelar, serta nama orang tua
-                untuk kedua mempelai.
+                Isi foto pasangan bersama, nama panggilan, nama lengkap
+                bergelar, serta nama orang tua untuk kedua mempelai.
               </p>
+            </div>
+
+            {/* FOTO PASANGAN / BERDUA (TAMPIL DI ATAS KARTU MEMPELAI) */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/50 border border-amber-200/90 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-amber-200/60">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-amber-100 text-amber-800">
+                    <Camera className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Foto Pasangan Berdua (Tampil di Atas Card Mempelai)
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      Foto Anda dan pasangan akan ditampilkan dalam bingkai
+                      kubah lengkung yang elegan. Jika kosong, akan memakai
+                      ilustrasi karakter romantis.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {couplePhotoError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-medium">
+                  {couplePhotoError}
+                </div>
+              )}
+
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                {/* Preview Thumbnail Arch */}
+                <div className="w-28 h-36 rounded-t-full rounded-b-xl overflow-hidden bg-white border-2 border-amber-400/50 shadow-sm shrink-0 relative group flex items-center justify-center">
+                  {formData.couple?.photo ? (
+                    <img
+                      src={formData.couple.photo}
+                      alt="Foto Pasangan"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-center p-2 text-slate-400">
+                      <Image className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                      <span className="text-[10px] leading-tight block">
+                        Karakter Vektor Aktif
+                      </span>
+                    </div>
+                  )}
+
+                  {isUploadingCouplePhoto && (
+                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white">
+                      <Loader2 className="w-5 h-5 animate-spin mb-1 text-amber-400" />
+                      <span className="text-[10px] font-bold">
+                        Mengunggah...
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Tombol Upload */}
+                <div className="flex-1 w-full space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      ref={coupleFileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCouplePhotoUpload}
+                      className="hidden"
+                      id="client-couple-photo-input"
+                      disabled={isUploadingCouplePhoto}
+                    />
+                    <label
+                      htmlFor="client-couple-photo-input"
+                      className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                        isUploadingCouplePhoto
+                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                          : 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                      }`}
+                    >
+                      <UploadCloud className="w-4 h-4" />
+                      <span>
+                        {formData.couple?.photo
+                          ? 'Ganti Foto Pasangan'
+                          : 'Pilih Foto dari Galeri HP / Laptop'}
+                      </span>
+                    </label>
+
+                    {formData.couple?.photo && (
+                      <button
+                        type="button"
+                        onClick={handleRemoveCouplePhoto}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold transition-all cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Hapus Foto (Gunakan Karakter Vektor)</span>
+                      </button>
+                    )}
+                  </div>
+
+                  <p className="text-[11px] text-slate-500 leading-relaxed">
+                    Pilih foto terbaik berdua bersama pasangan. Foto otomatis
+                    dikompresi agar undangan dimuat super cepat oleh seluruh
+                    tamu undangan.
+                  </p>
+                </div>
+              </div>
             </div>
 
             {/* MEMPELAI WANITA */}
@@ -1023,6 +1251,117 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
                   undangan.
                 </p>
               </div>
+            </div>
+
+            {/* GALERI FOTO PREWEDDING */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-amber-50 text-amber-600">
+                    <Image className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                      Galeri Foto Prewedding (
+                      {formData.gallery?.photos?.length || 0} Foto)
+                    </h4>
+                    <p className="text-[11px] text-slate-400">
+                      Foto akan tertata rapi dan bisa diklik oleh tamu undangan
+                      untuk diperbesar (lightbox).
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  <input
+                    ref={galleryFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleGalleryUpload}
+                    className="hidden"
+                    id="client-gallery-photo-input"
+                    disabled={isUploadingGallery}
+                  />
+                  <label
+                    htmlFor="client-gallery-photo-input"
+                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer ${
+                      isUploadingGallery
+                        ? 'bg-amber-300 text-slate-700 cursor-not-allowed'
+                        : 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                    }`}
+                  >
+                    {isUploadingGallery ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>
+                          Mengunggah ({galleryUploadProgress.current}/
+                          {galleryUploadProgress.total})...
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud className="w-3.5 h-3.5" />
+                        <span>+ Upload Foto Prewedding (Bisa Banyak)</span>
+                      </>
+                    )}
+                  </label>
+                </div>
+              </div>
+
+              {galleryError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-medium">
+                  {galleryError}
+                </div>
+              )}
+
+              {!formData.gallery?.photos ||
+              formData.gallery.photos.length === 0 ? (
+                <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
+                  <Image className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-xs font-semibold text-slate-600">
+                    Belum ada foto galeri
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Klik tombol "+ Upload Foto Prewedding" di atas untuk memilih
+                    foto langsung dari galeri HP atau laptop Anda.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {formData.gallery.photos.map((photo, index) => (
+                    <div
+                      key={photo.id || index}
+                      className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 relative group"
+                    >
+                      <div className="w-full h-32 rounded-xl overflow-hidden bg-slate-200 relative">
+                        <img
+                          src={photo.url}
+                          alt="Galeri"
+                          className="w-full h-full object-cover"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteGalleryPhoto(index)}
+                          className="absolute top-1.5 right-1.5 p-1 rounded-lg bg-rose-600/90 hover:bg-rose-700 text-white shadow-sm transition-all cursor-pointer"
+                          title="Hapus foto ini"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        value={photo.caption || ''}
+                        onChange={(e) =>
+                          handleGalleryCaptionChange(index, e.target.value)
+                        }
+                        placeholder="Keterangan foto..."
+                        className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

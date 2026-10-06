@@ -1,11 +1,16 @@
 import {
+  Camera,
   Eye,
   Image as ImageIcon,
+  Loader2,
   Plus,
   RotateCcw,
   Trash2,
+  UploadCloud,
   Video,
 } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { uploadWeddingPhoto } from '../../../services/storageService';
 
 const PRESET_SAMPLE_PHOTOS = [
   {
@@ -50,6 +55,77 @@ export const GalleryTab = ({ config, updateSection }) => {
   const isGalleryEnabled = gallery.enabled !== false;
   const video = gallery.video || { enabled: true, title: '', url: '' };
   const photos = Array.isArray(gallery.photos) ? gallery.photos : [];
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({
+    current: 0,
+    total: 0,
+  });
+  const [swappingIndex, setSwappingIndex] = useState(null);
+  const [galleryError, setGalleryError] = useState('');
+  const batchInputRef = useRef(null);
+
+  const handleBatchUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    setIsUploading(true);
+    setGalleryError('');
+    setUploadProgress({ current: 0, total: files.length });
+
+    const newUploadedPhotos = [];
+    try {
+      for (let i = 0; i < files.length; i++) {
+        setUploadProgress({ current: i + 1, total: files.length });
+        const res = await uploadWeddingPhoto(files[i], 'gallery');
+        if (res.success && res.url) {
+          newUploadedPhotos.push({
+            id: `photo-${Date.now()}-${i}`,
+            url: res.url,
+            caption: 'Momen Indah Bersama',
+          });
+        }
+      }
+
+      if (newUploadedPhotos.length > 0) {
+        updateSection('gallery', {
+          ...gallery,
+          photos: [...photos, ...newUploadedPhotos],
+        });
+      }
+    } catch (err) {
+      setGalleryError(
+        err.message || 'Sebagian atau semua foto gagal diunggah.',
+      );
+    } finally {
+      setIsUploading(false);
+      setUploadProgress({ current: 0, total: 0 });
+      if (batchInputRef.current) batchInputRef.current.value = '';
+    }
+  };
+
+  const handleSwapPhoto = async (index, file) => {
+    if (!file) return;
+    setSwappingIndex(index);
+    setGalleryError('');
+    try {
+      const res = await uploadWeddingPhoto(file, 'gallery');
+      if (res.success && res.url) {
+        const updated = [...photos];
+        updated[index] = { ...updated[index], url: res.url };
+        updateSection('gallery', {
+          ...gallery,
+          photos: updated,
+        });
+      } else {
+        throw new Error(res.error || 'Gagal mengganti foto.');
+      }
+    } catch (err) {
+      setGalleryError(err.message || 'Gagal mengganti foto.');
+    } finally {
+      setSwappingIndex(null);
+    }
+  };
 
   const handleToggleGallery = (enabled) => {
     updateSection('gallery', {
@@ -228,26 +304,68 @@ export const GalleryTab = ({ config, updateSection }) => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  ref={batchInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleBatchUpload}
+                  className="hidden"
+                  id="batch-upload-gallery"
+                  disabled={isUploading}
+                />
+
+                <label
+                  htmlFor="batch-upload-gallery"
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-white text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                    isUploading
+                      ? 'bg-amber-300 cursor-not-allowed'
+                      : 'bg-amber-500 hover:bg-amber-600'
+                  }`}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>
+                        Mengunggah ({uploadProgress.current}/
+                        {uploadProgress.total})...
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="w-3.5 h-3.5" />
+                      <span>Upload Foto (HP/Laptop)</span>
+                    </>
+                  )}
+                </label>
+
                 <button
                   type="button"
                   onClick={handleLoadSamplePhotos}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold transition-all cursor-pointer shadow-2xs"
                 >
                   <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-                  <span>Muat Contoh Foto</span>
+                  <span>Muat Contoh</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={handleAddPhoto}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-all shadow-2xs cursor-pointer"
+                  title="Tambah baris foto dengan link URL manual"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Tambah Foto</span>
+                  <span>Tambah URL</span>
                 </button>
               </div>
             </div>
+
+            {galleryError && (
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-medium">
+                {galleryError}
+              </div>
+            )}
 
             {photos.length === 0 ? (
               <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
@@ -256,7 +374,8 @@ export const GalleryTab = ({ config, updateSection }) => {
                   Belum ada foto yang ditambahkan
                 </p>
                 <p className="text-[11px] text-slate-400 mt-0.5">
-                  Klik tombol "Tambah Foto" atau "Muat Contoh Foto" di atas.
+                  Klik tombol "Upload Foto (HP/Laptop)" di atas untuk memilih
+                  foto langsung dari perangkat Anda.
                 </p>
               </div>
             ) : (
@@ -266,26 +385,48 @@ export const GalleryTab = ({ config, updateSection }) => {
                     key={item.id || index}
                     className="p-3.5 rounded-2xl bg-slate-50/70 border border-slate-200 flex items-start gap-3.5 hover:border-slate-300 transition-all shadow-2xs"
                   >
-                    {/* Thumbnail Preview */}
-                    <div className="w-16 h-20 rounded-xl overflow-hidden bg-slate-200 border border-slate-300 shrink-0 relative group">
-                      <img
-                        src={item.url}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.src =
-                            'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=400&q=80';
-                        }}
-                      />
-                      <a
-                        href={item.url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
-                        title="Buka Foto Asli"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </a>
+                    {/* Thumbnail Preview & Ganti Foto */}
+                    <div className="shrink-0 flex flex-col items-center">
+                      <div className="w-16 h-20 rounded-xl overflow-hidden bg-slate-200 border border-slate-300 relative group">
+                        <img
+                          src={item.url}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.src =
+                              'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=400&q=80';
+                          }}
+                        />
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity"
+                          title="Buka Foto Asli"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </a>
+
+                        {swappingIndex === index && (
+                          <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white">
+                            <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
+                          </div>
+                        )}
+                      </div>
+
+                      <label className="inline-flex items-center gap-1 text-[10px] text-amber-600 hover:text-amber-700 font-semibold mt-1 cursor-pointer">
+                        <Camera className="w-3 h-3" />
+                        <span>Ganti</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) =>
+                            handleSwapPhoto(index, e.target.files?.[0])
+                          }
+                          disabled={swappingIndex !== null}
+                        />
+                      </label>
                     </div>
 
                     {/* Inputs */}
