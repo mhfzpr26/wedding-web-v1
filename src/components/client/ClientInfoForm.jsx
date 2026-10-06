@@ -1,5 +1,6 @@
 import {
   AlertCircle,
+  BookOpen,
   Building,
   Calendar,
   Camera,
@@ -79,6 +80,7 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
         bride: { ...(config.bride || {}), ...(prev.bride || {}) },
         groom: { ...(config.groom || {}), ...(prev.groom || {}) },
         events: config.events || prev.events || [],
+        stories: config.stories || prev.stories || [],
         gift: {
           ...(config.gift || {}),
           accounts: config.gift?.accounts || prev.gift?.accounts || [],
@@ -346,22 +348,100 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
     }
   };
 
-  const steps = [
-    { id: 1, label: 'Kedua Mempelai', icon: Heart, subtitle: 'Pria & Wanita' },
+  // Handler Kisah Cinta
+  const handleStoryChange = (index, field, value) => {
+    setFormData((prev) => {
+      const nextStories = [...(prev.stories || [])];
+      nextStories[index] = {
+        ...nextStories[index],
+        [field]: value,
+      };
+      return { ...prev, stories: nextStories };
+    });
+  };
+
+  const handleAddStory = () => {
+    setFormData((prev) => ({
+      ...prev,
+      stories: [
+        ...(prev.stories || []),
+        {
+          year: new Date().getFullYear().toString(),
+          title: 'Momen Berkesan',
+          description: 'Ceritakan momen indah dan bermakna ini...',
+        },
+      ],
+    }));
+  };
+
+  const handleRemoveStory = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      stories: (prev.stories || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  // Evaluasi mode konten yang diaktifkan oleh Admin di Admin Studio
+  const isCouplePhotoEnabled = config.couple?.showPhoto !== false;
+  const isBrideInstagramEnabled = config.bride?.showInstagram !== false;
+  const isGroomInstagramEnabled = config.groom?.showInstagram !== false;
+  const isGiftEnabled = config.gift?.enabled !== false;
+  const isPhysicalGiftEnabled =
+    isGiftEnabled && config.gift?.physicalGift?.enabled !== false;
+  const isGalleryEnabled = config.gallery?.enabled !== false;
+  const isVideoEnabled = config.gallery?.video?.enabled !== false;
+  const isStoriesEnabled = Boolean(config.storiesEnabled);
+
+  // Bangun daftar langkah dinamis (Smart Wizard)
+  const dynamicSteps = [
     {
-      id: 2,
+      key: 'couple',
+      label: 'Kedua Mempelai',
+      icon: Heart,
+      subtitle: 'Pria & Wanita',
+    },
+    {
+      key: 'events',
       label: 'Jadwal & Lokasi',
       icon: Calendar,
       subtitle: 'Akad & Resepsi',
     },
+    ...(isGiftEnabled
+      ? [
+          {
+            key: 'gift',
+            label: 'Hadiah & Kado',
+            icon: Gift,
+            subtitle: isPhysicalGiftEnabled
+              ? 'Rekening & Alamat'
+              : 'Rekening Bank',
+          },
+        ]
+      : []),
     {
-      id: 3,
-      label: 'Hadiah & Kado',
-      icon: Gift,
-      subtitle: 'Rekening & Alamat',
+      key: 'media',
+      label: isGalleryEnabled ? 'Galeri & Musik' : 'Musik Pengiring',
+      icon: isGalleryEnabled ? Image : Music,
+      subtitle: isGalleryEnabled ? 'Foto & Lagu' : 'Lagu Latar',
     },
-    { id: 4, label: 'Galeri & Musik', icon: Music, subtitle: 'Foto & Lagu' },
+    ...(isStoriesEnabled
+      ? [
+          {
+            key: 'stories',
+            label: 'Kisah Cinta',
+            icon: BookOpen,
+            subtitle: 'Timeline Momen',
+          },
+        ]
+      : []),
   ];
+
+  const currentStepIndex = Math.min(
+    Math.max(1, activeStep),
+    dynamicSteps.length,
+  );
+  const currentStep = dynamicSteps[currentStepIndex - 1] || dynamicSteps[0];
+  const currentStepKey = currentStep.key;
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
@@ -425,18 +505,19 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
         )}
       </div>
 
-      {/* STEP PROGRESS WIZARD */}
+      {/* STEP PROGRESS WIZARD DINAMIS */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-        {steps.map((st) => {
+        {dynamicSteps.map((st, idx) => {
           const Icon = st.icon;
-          const isActive = activeStep === st.id;
-          const isDone = activeStep > st.id;
+          const stepNumber = idx + 1;
+          const isActive = currentStepIndex === stepNumber;
+          const isDone = currentStepIndex > stepNumber;
 
           return (
             <button
-              key={st.id}
+              key={st.key}
               type="button"
-              onClick={() => setActiveStep(st.id)}
+              onClick={() => setActiveStep(stepNumber)}
               className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3 ${
                 isActive
                   ? 'bg-white border-amber-500 shadow-sm ring-2 ring-amber-400/20'
@@ -450,7 +531,7 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
                   isActive
                     ? 'bg-amber-500 text-slate-950 font-bold'
                     : isDone
-                      ? 'bg-emerald-100 text-emerald-700'
+                      ? 'bg-emerald-100 text-emerald-700 font-bold'
                       : 'bg-slate-100 text-slate-400'
                 }`}
               >
@@ -462,7 +543,7 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
               </div>
               <div className="min-w-0">
                 <span className="text-[10px] font-bold uppercase tracking-wider block text-slate-400">
-                  Langkah {st.id}
+                  Langkah {stepNumber}
                 </span>
                 <span className="text-xs font-bold text-slate-800 truncate block">
                   {st.label}
@@ -476,9 +557,9 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
       {/* KONTEN WIZARD STEP */}
       <div className="bg-white rounded-3xl border border-slate-200 shadow-xs p-5 sm:p-7 space-y-6">
         {/* ============================================================== */}
-        {/* LANGKAH 1: KEDUA MEMPELAI */}
+        {/* LANGKAH: KEDUA MEMPELAI                                        */}
         {/* ============================================================== */}
-        {activeStep === 1 && (
+        {currentStepKey === 'couple' && (
           <div className="space-y-6">
             <div className="border-b border-slate-100 pb-3">
               <h3 className="font-serif text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -491,108 +572,110 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
               </p>
             </div>
 
-            {/* FOTO PASANGAN / BERDUA (TAMPIL DI ATAS KARTU MEMPELAI) */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/50 border border-amber-200/90 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-amber-200/60">
-                <div className="flex items-center gap-2">
-                  <span className="p-1.5 rounded-lg bg-amber-100 text-amber-800">
-                    <Camera className="w-4 h-4" />
-                  </span>
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                      Foto Pasangan Berdua (Tampil di Atas Card Mempelai)
-                    </h4>
-                    <p className="text-[11px] text-slate-500">
-                      Foto Anda dan pasangan akan ditampilkan dalam bingkai
-                      kubah lengkung yang elegan. Jika kosong, akan memakai
-                      ilustrasi karakter romantis.
+            {/* FOTO PASANGAN / BERDUA (HANYA MUNCUL JIKA DIAKTIFKAN ADMIN) */}
+            {isCouplePhotoEnabled && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/50 border border-amber-200/90 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-amber-200/60">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1.5 rounded-lg bg-amber-100 text-amber-800">
+                      <Camera className="w-4 h-4" />
+                    </span>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                        Foto Pasangan Berdua (Tampil di Atas Card Mempelai)
+                      </h4>
+                      <p className="text-[11px] text-slate-500">
+                        Foto Anda dan pasangan akan ditampilkan dalam bingkai
+                        kubah lengkung yang elegan. Jika kosong, akan memakai
+                        ilustrasi karakter romantis.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {couplePhotoError && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-medium">
+                    {couplePhotoError}
+                  </div>
+                )}
+
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
+                  {/* Preview Thumbnail Arch */}
+                  <div className="w-28 h-36 rounded-t-full rounded-b-xl overflow-hidden bg-white border-2 border-amber-400/50 shadow-sm shrink-0 relative group flex items-center justify-center">
+                    {formData.couple?.photo ? (
+                      <img
+                        src={formData.couple.photo}
+                        alt="Foto Pasangan"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-center p-2 text-slate-400">
+                        <Image className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                        <span className="text-[10px] leading-tight block">
+                          Karakter Vektor Aktif
+                        </span>
+                      </div>
+                    )}
+
+                    {isUploadingCouplePhoto && (
+                      <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white">
+                        <Loader2 className="w-5 h-5 animate-spin mb-1 text-amber-400" />
+                        <span className="text-[10px] font-bold">
+                          Mengunggah...
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Tombol Upload */}
+                  <div className="flex-1 w-full space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input
+                        ref={coupleFileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleCouplePhotoUpload}
+                        className="hidden"
+                        id="client-couple-photo-input"
+                        disabled={isUploadingCouplePhoto}
+                      />
+                      <label
+                        htmlFor="client-couple-photo-input"
+                        className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
+                          isUploadingCouplePhoto
+                            ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                            : 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                        }`}
+                      >
+                        <UploadCloud className="w-4 h-4" />
+                        <span>
+                          {formData.couple?.photo
+                            ? 'Ganti Foto Pasangan'
+                            : 'Pilih Foto dari Galeri HP / Laptop'}
+                        </span>
+                      </label>
+
+                      {formData.couple?.photo && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveCouplePhoto}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold transition-all cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Hapus Foto (Gunakan Karakter Vektor)</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      Pilih foto terbaik berdua bersama pasangan. Foto otomatis
+                      dikompresi agar undangan dimuat super cepat oleh seluruh
+                      tamu undangan.
                     </p>
                   </div>
                 </div>
               </div>
-
-              {couplePhotoError && (
-                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-medium">
-                  {couplePhotoError}
-                </div>
-              )}
-
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
-                {/* Preview Thumbnail Arch */}
-                <div className="w-28 h-36 rounded-t-full rounded-b-xl overflow-hidden bg-white border-2 border-amber-400/50 shadow-sm shrink-0 relative group flex items-center justify-center">
-                  {formData.couple?.photo ? (
-                    <img
-                      src={formData.couple.photo}
-                      alt="Foto Pasangan"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="text-center p-2 text-slate-400">
-                      <Image className="w-6 h-6 mx-auto mb-1 opacity-50" />
-                      <span className="text-[10px] leading-tight block">
-                        Karakter Vektor Aktif
-                      </span>
-                    </div>
-                  )}
-
-                  {isUploadingCouplePhoto && (
-                    <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white">
-                      <Loader2 className="w-5 h-5 animate-spin mb-1 text-amber-400" />
-                      <span className="text-[10px] font-bold">
-                        Mengunggah...
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Tombol Upload */}
-                <div className="flex-1 w-full space-y-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <input
-                      ref={coupleFileInputRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={handleCouplePhotoUpload}
-                      className="hidden"
-                      id="client-couple-photo-input"
-                      disabled={isUploadingCouplePhoto}
-                    />
-                    <label
-                      htmlFor="client-couple-photo-input"
-                      className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer ${
-                        isUploadingCouplePhoto
-                          ? 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                          : 'bg-amber-500 hover:bg-amber-400 text-slate-950'
-                      }`}
-                    >
-                      <UploadCloud className="w-4 h-4" />
-                      <span>
-                        {formData.couple?.photo
-                          ? 'Ganti Foto Pasangan'
-                          : 'Pilih Foto dari Galeri HP / Laptop'}
-                      </span>
-                    </label>
-
-                    {formData.couple?.photo && (
-                      <button
-                        type="button"
-                        onClick={handleRemoveCouplePhoto}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 text-xs font-semibold transition-all cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Hapus Foto (Gunakan Karakter Vektor)</span>
-                      </button>
-                    )}
-                  </div>
-
-                  <p className="text-[11px] text-slate-500 leading-relaxed">
-                    Pilih foto terbaik berdua bersama pasangan. Foto otomatis
-                    dikompresi agar undangan dimuat super cepat oleh seluruh
-                    tamu undangan.
-                  </p>
-                </div>
-              </div>
-            </div>
+            )}
 
             {/* MEMPELAI WANITA */}
             <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/40 border border-amber-200/80 space-y-4">
@@ -656,20 +739,22 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
                   />
                 </div>
 
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Akun Instagram (Opsional)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.bride?.instagram || ''}
-                    onChange={(e) =>
-                      handleNestedChange('bride', 'instagram', e.target.value)
-                    }
-                    placeholder="Contoh: drdestia atau https://instagram.com/..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
-                  />
-                </div>
+                {isBrideInstagramEnabled && (
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Akun Instagram (Opsional)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.bride?.instagram || ''}
+                      onChange={(e) =>
+                        handleNestedChange('bride', 'instagram', e.target.value)
+                      }
+                      placeholder="Contoh: drdestia atau https://instagram.com/..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -734,29 +819,31 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
                   />
                 </div>
 
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Akun Instagram (Opsional)
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.groom?.instagram || ''}
-                    onChange={(e) =>
-                      handleNestedChange('groom', 'instagram', e.target.value)
-                    }
-                    placeholder="Contoh: rakafansa_ atau https://instagram.com/..."
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
-                  />
-                </div>
+                {isGroomInstagramEnabled && (
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Akun Instagram (Opsional)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.groom?.instagram || ''}
+                      onChange={(e) =>
+                        handleNestedChange('groom', 'instagram', e.target.value)
+                      }
+                      placeholder="Contoh: rakafansa_ atau https://instagram.com/..."
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
         )}
 
         {/* ============================================================== */}
-        {/* LANGKAH 2: RANGKAIAN ACARA & LOKASI */}
+        {/* LANGKAH: RANGKAIAN ACARA & LOKASI                              */}
         {/* ============================================================== */}
-        {activeStep === 2 && (
+        {currentStepKey === 'events' && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
@@ -921,9 +1008,9 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
         )}
 
         {/* ============================================================== */}
-        {/* LANGKAH 3: HADIAH DIGITAL & KADO FISIK */}
+        {/* LANGKAH: HADIAH DIGITAL & KADO FISIK                           */}
         {/* ============================================================== */}
-        {activeStep === 3 && (
+        {currentStepKey === 'gift' && (
           <div className="space-y-6">
             <div className="border-b border-slate-100 pb-3">
               <h3 className="font-serif text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -1033,103 +1120,114 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
               ))}
             </div>
 
-            {/* ALAMAT PENGIRIMAN KADO FISIK */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/40 border border-amber-200/80 space-y-3.5">
-              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                <Gift className="w-4 h-4 text-amber-600" />
-                <span>Alamat Pengiriman Kado Fisik</span>
-              </h4>
+            {/* ALAMAT PENGIRIMAN KADO FISIK (HANYA JIKA DIAKTIFKAN OLEH ADMIN) */}
+            {isPhysicalGiftEnabled && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/40 border border-amber-200/80 space-y-3.5">
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <Gift className="w-4 h-4 text-amber-600" />
+                  <span>Alamat Pengiriman Kado Fisik</span>
+                </h4>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Nama Penerima Kado
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.gift?.physicalGift?.recipientName || ''}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        gift: {
-                          ...prev.gift,
-                          physicalGift: {
-                            ...prev.gift?.physicalGift,
-                            recipientName: e.target.value,
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Nama Penerima Kado
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.gift?.physicalGift?.recipientName || ''}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          gift: {
+                            ...prev.gift,
+                            physicalGift: {
+                              ...prev.gift?.physicalGift,
+                              recipientName: e.target.value,
+                            },
                           },
-                        },
-                      }))
-                    }
-                    placeholder="Contoh: Destia & Raka"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs font-medium"
-                  />
-                </div>
+                        }))
+                      }
+                      placeholder="Contoh: Destia & Raka"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs font-medium"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Nomor Telepon / WhatsApp Penerima
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.gift?.physicalGift?.phone || ''}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        gift: {
-                          ...prev.gift,
-                          physicalGift: {
-                            ...prev.gift?.physicalGift,
-                            phone: e.target.value,
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Nomor Telepon / WhatsApp Penerima
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.gift?.physicalGift?.phone || ''}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          gift: {
+                            ...prev.gift,
+                            physicalGift: {
+                              ...prev.gift?.physicalGift,
+                              phone: e.target.value,
+                            },
                           },
-                        },
-                      }))
-                    }
-                    placeholder="Contoh: 0857-8217-6285"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs font-mono"
-                  />
-                </div>
+                        }))
+                      }
+                      placeholder="Contoh: 0857-8217-6285"
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs font-mono"
+                    />
+                  </div>
 
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Alamat Rumah Lengkap
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={formData.gift?.physicalGift?.address || ''}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        gift: {
-                          ...prev.gift,
-                          physicalGift: {
-                            ...prev.gift?.physicalGift,
-                            address: e.target.value,
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      Alamat Rumah Lengkap
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={formData.gift?.physicalGift?.address || ''}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          gift: {
+                            ...prev.gift,
+                            physicalGift: {
+                              ...prev.gift?.physicalGift,
+                              address: e.target.value,
+                            },
                           },
-                        },
-                      }))
-                    }
-                    placeholder="Tuliskan nama jalan, nomor rumah, RT/RW, kecamatan, kota, & kode pos..."
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs resize-none"
-                  />
+                        }))
+                      }
+                      placeholder="Tuliskan nama jalan, nomor rumah, RT/RW, kecamatan, kota, & kode pos..."
+                      className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs resize-none"
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
         {/* ============================================================== */}
-        {/* LANGKAH 4: GALERI FOTO & MUSIK */}
+        {/* LANGKAH: GALERI FOTO & MUSIK                                   */}
         {/* ============================================================== */}
-        {activeStep === 4 && (
+        {currentStepKey === 'media' && (
           <div className="space-y-6">
             <div className="border-b border-slate-100 pb-3">
               <h3 className="font-serif text-lg font-bold text-slate-800 flex items-center gap-2">
-                <Music className="w-5 h-5 text-amber-500" />
-                <span>Galeri Foto & Musik Latar</span>
+                {isGalleryEnabled ? (
+                  <Image className="w-5 h-5 text-amber-500" />
+                ) : (
+                  <Music className="w-5 h-5 text-amber-500" />
+                )}
+                <span>
+                  {isGalleryEnabled
+                    ? 'Galeri Foto & Musik Latar'
+                    : 'Musik Latar Undangan'}
+                </span>
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Tentukan lagu pengiring undangan pernikahan Anda serta tautan
-                galeri foto prewedding.
+                {isGalleryEnabled
+                  ? 'Tentukan lagu pengiring undangan pernikahan Anda serta unggah galeri foto prewedding.'
+                  : 'Tentukan lagu romantis pengiring undangan pernikahan Anda.'}
               </p>
             </div>
 
@@ -1217,162 +1315,294 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
               </div>
             </div>
 
-            {/* VIDEO TEASER PREWEDDING */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3.5">
-              <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                <Image className="w-4 h-4 text-slate-600" />
-                <span>Video Teaser Prewedding (YouTube / Drive)</span>
-              </h4>
+            {/* VIDEO TEASER PREWEDDING (HANYA JIKA DIAKTIFKAN OLEH ADMIN) */}
+            {isVideoEnabled && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3.5">
+                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <Image className="w-4 h-4 text-slate-600" />
+                  <span>Video Teaser Prewedding (YouTube / Drive)</span>
+                </h4>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Tautan Video YouTube
-                </label>
-                <input
-                  type="url"
-                  value={formData.gallery?.video?.url || ''}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      gallery: {
-                        ...prev.gallery,
-                        video: {
-                          ...prev.gallery?.video,
-                          url: e.target.value,
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Tautan Video YouTube
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.gallery?.video?.url || ''}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        gallery: {
+                          ...prev.gallery,
+                          video: {
+                            ...prev.gallery?.video,
+                            url: e.target.value,
+                          },
                         },
-                      },
-                    }))
-                  }
-                  placeholder="Contoh: https://www.youtube.com/watch?v=..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs font-mono"
-                />
-                <p className="text-[10px] text-slate-400 mt-1">
-                  Video akan otomatis disematkan (embed) pada bagian galeri
-                  undangan.
-                </p>
+                      }))
+                    }
+                    placeholder="Contoh: https://www.youtube.com/watch?v=..."
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs font-mono"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    Video akan otomatis disematkan (embed) pada bagian galeri
+                    undangan.
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* GALERI FOTO PREWEDDING */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
-                <div className="flex items-center gap-2">
-                  <span className="p-1.5 rounded-lg bg-amber-50 text-amber-600">
-                    <Image className="w-4 h-4" />
-                  </span>
+            {/* GALERI FOTO PREWEDDING (HANYA JIKA DIAKTIFKAN OLEH ADMIN) */}
+            {isGalleryEnabled && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <span className="p-1.5 rounded-lg bg-amber-50 text-amber-600">
+                      <Image className="w-4 h-4" />
+                    </span>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                        Galeri Foto Prewedding (
+                        {formData.gallery?.photos?.length || 0} Foto)
+                      </h4>
+                      <p className="text-[11px] text-slate-400">
+                        Foto akan tertata rapi dan bisa diklik oleh tamu
+                        undangan untuk diperbesar (lightbox).
+                      </p>
+                    </div>
+                  </div>
+
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                      Galeri Foto Prewedding (
-                      {formData.gallery?.photos?.length || 0} Foto)
-                    </h4>
-                    <p className="text-[11px] text-slate-400">
-                      Foto akan tertata rapi dan bisa diklik oleh tamu undangan
-                      untuk diperbesar (lightbox).
-                    </p>
+                    <input
+                      ref={galleryFileInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleGalleryUpload}
+                      className="hidden"
+                      id="client-gallery-photo-input"
+                      disabled={isUploadingGallery}
+                    />
+                    <label
+                      htmlFor="client-gallery-photo-input"
+                      className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer ${
+                        isUploadingGallery
+                          ? 'bg-amber-300 text-slate-700 cursor-not-allowed'
+                          : 'bg-amber-500 hover:bg-amber-400 text-slate-950'
+                      }`}
+                    >
+                      {isUploadingGallery ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>
+                            Mengunggah ({galleryUploadProgress.current}/
+                            {galleryUploadProgress.total})...
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <UploadCloud className="w-3.5 h-3.5" />
+                          <span>+ Upload Foto Prewedding (Bisa Banyak)</span>
+                        </>
+                      )}
+                    </label>
                   </div>
                 </div>
 
-                <div>
-                  <input
-                    ref={galleryFileInputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={handleGalleryUpload}
-                    className="hidden"
-                    id="client-gallery-photo-input"
-                    disabled={isUploadingGallery}
-                  />
-                  <label
-                    htmlFor="client-gallery-photo-input"
-                    className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer ${
-                      isUploadingGallery
-                        ? 'bg-amber-300 text-slate-700 cursor-not-allowed'
-                        : 'bg-amber-500 hover:bg-amber-400 text-slate-950'
-                    }`}
-                  >
-                    {isUploadingGallery ? (
-                      <>
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        <span>
-                          Mengunggah ({galleryUploadProgress.current}/
-                          {galleryUploadProgress.total})...
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <UploadCloud className="w-3.5 h-3.5" />
-                        <span>+ Upload Foto Prewedding (Bisa Banyak)</span>
-                      </>
-                    )}
-                  </label>
-                </div>
+                {galleryError && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-medium">
+                    {galleryError}
+                  </div>
+                )}
+
+                {!formData.gallery?.photos ||
+                formData.gallery.photos.length === 0 ? (
+                  <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
+                    <Image className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                    <p className="text-xs font-semibold text-slate-600">
+                      Belum ada foto galeri
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Klik tombol "+ Upload Foto Prewedding" di atas untuk
+                      memilih foto langsung dari galeri HP atau laptop Anda.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                    {formData.gallery.photos.map((photo, index) => (
+                      <div
+                        key={photo.id || index}
+                        className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 relative group"
+                      >
+                        <div className="w-full h-32 rounded-xl overflow-hidden bg-slate-200 relative">
+                          <img
+                            src={photo.url}
+                            alt="Galeri"
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteGalleryPhoto(index)}
+                            className="absolute top-1.5 right-1.5 p-1 rounded-lg bg-rose-600/90 hover:bg-rose-700 text-white shadow-sm transition-all cursor-pointer"
+                            title="Hapus foto ini"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          value={photo.caption || ''}
+                          onChange={(e) =>
+                            handleGalleryCaptionChange(index, e.target.value)
+                          }
+                          placeholder="Keterangan foto..."
+                          className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ============================================================== */}
+        {/* LANGKAH: KISAH CINTA (LOVE STORY TIMELINE)                     */}
+        {/* ============================================================== */}
+        {currentStepKey === 'stories' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-serif text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-amber-500" />
+                  <span>Kisah Cinta (Love Story Timeline)</span>
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Tuliskan perjalanan kisah cinta Anda mulai dari awal
+                  perjumpaan hingga hari lamaran pernikahan.
+                </p>
               </div>
 
-              {galleryError && (
-                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-medium">
-                  {galleryError}
-                </div>
-              )}
-
-              {!formData.gallery?.photos ||
-              formData.gallery.photos.length === 0 ? (
-                <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
-                  <Image className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                  <p className="text-xs font-semibold text-slate-600">
-                    Belum ada foto galeri
-                  </p>
-                  <p className="text-[11px] text-slate-400 mt-0.5">
-                    Klik tombol "+ Upload Foto Prewedding" di atas untuk memilih
-                    foto langsung dari galeri HP atau laptop Anda.
-                  </p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                  {formData.gallery.photos.map((photo, index) => (
-                    <div
-                      key={photo.id || index}
-                      className="p-2.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2 relative group"
-                    >
-                      <div className="w-full h-32 rounded-xl overflow-hidden bg-slate-200 relative">
-                        <img
-                          src={photo.url}
-                          alt="Galeri"
-                          className="w-full h-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteGalleryPhoto(index)}
-                          className="absolute top-1.5 right-1.5 p-1 rounded-lg bg-rose-600/90 hover:bg-rose-700 text-white shadow-sm transition-all cursor-pointer"
-                          title="Hapus foto ini"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        value={photo.caption || ''}
-                        onChange={(e) =>
-                          handleGalleryCaptionChange(index, e.target.value)
-                        }
-                        placeholder="Keterangan foto..."
-                        className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
+              <button
+                type="button"
+                onClick={handleAddStory}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-xs cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5 text-amber-400" />
+                <span>Tambah Momen</span>
+              </button>
             </div>
+
+            {!formData.stories || formData.stories.length === 0 ? (
+              <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200">
+                <BookOpen className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                <p className="text-xs font-semibold text-slate-600">
+                  Belum ada momen kisah cinta
+                </p>
+                <p className="text-[11px] text-slate-400 mt-0.5 mb-3">
+                  Klik tombol "+ Tambah Momen" untuk menambahkan babak cerita
+                  perjalanan cinta Anda.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleAddStory}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold cursor-pointer"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Tambah Momen Pertama</span>
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {formData.stories.map((story, idx) => (
+                  <div
+                    key={idx}
+                    className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-3.5 relative"
+                  >
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-200/80 pb-2">
+                      <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center text-[10px] font-bold">
+                          {idx + 1}
+                        </span>
+                        <span>{story.title || `Momen #${idx + 1}`}</span>
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveStory(idx)}
+                        className="text-xs text-rose-600 hover:text-rose-700 flex items-center gap-1 font-semibold cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>Hapus</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Tahun / Periode
+                        </label>
+                        <input
+                          type="text"
+                          value={story.year || ''}
+                          onChange={(e) =>
+                            handleStoryChange(idx, 'year', e.target.value)
+                          }
+                          placeholder="Contoh: 2021"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs font-mono font-bold"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-3">
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Judul Bab Cerita
+                        </label>
+                        <input
+                          type="text"
+                          value={story.title || ''}
+                          onChange={(e) =>
+                            handleStoryChange(idx, 'title', e.target.value)
+                          }
+                          placeholder="Contoh: Pertama Kali Bertemu di Kampus"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs font-semibold"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-4">
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Isi Cerita / Penggalan Kenangan
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={story.description || ''}
+                          onChange={(e) =>
+                            handleStoryChange(
+                              idx,
+                              'description',
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Ceritakan momen indah dan bermakna ini secara singkat dan romantis..."
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs resize-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* NAVIGASI STEP & TOMBOL SIMPAN */}
         <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
           <div>
-            {activeStep > 1 && (
+            {currentStepIndex > 1 && (
               <button
                 type="button"
-                onClick={() => setActiveStep((prev) => prev - 1)}
+                onClick={() => setActiveStep(currentStepIndex - 1)}
                 className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -1382,13 +1612,13 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
           </div>
 
           <div className="flex items-center gap-2.5">
-            {activeStep < 4 ? (
+            {currentStepIndex < dynamicSteps.length ? (
               <button
                 type="button"
-                onClick={() => setActiveStep((prev) => prev + 1)}
+                onClick={() => setActiveStep(currentStepIndex + 1)}
                 className="px-5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-xs"
               >
-                <span>Lanjut ke Langkah {activeStep + 1}</span>
+                <span>Lanjut ke Langkah {currentStepIndex + 1}</span>
                 <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
