@@ -17,15 +17,21 @@ import {
   Loader2,
   MapPin,
   Music,
+  Pause,
+  Play,
   Plus,
   Save,
   Sparkles,
   Trash2,
   UploadCloud,
+  VolumeX,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useWedding } from '../../context/WeddingContext';
-import { uploadWeddingPhoto } from '../../services/storageService';
+import {
+  uploadWeddingAudio,
+  uploadWeddingPhoto,
+} from '../../services/storageService';
 
 const BANK_OPTIONS = [
   'BCA',
@@ -222,6 +228,93 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
     });
   };
 
+  // State & Handlers Upload Musik & Audio Preview
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [audioUploadError, setAudioUploadError] = useState('');
+  const [audioUploadSuccess, setAudioUploadSuccess] = useState('');
+  const audioFileInputRef = useRef(null);
+
+  const previewAudioRef = useRef(null);
+  const [isPreviewAudioPlaying, setIsPreviewAudioPlaying] = useState(false);
+
+  useEffect(() => {
+    return () => {
+      if (previewAudioRef.current) {
+        previewAudioRef.current.pause();
+      }
+    };
+  }, []);
+
+  const handleToggleAudioPreview = (targetUrl) => {
+    if (!previewAudioRef.current) return;
+    const url =
+      targetUrl || formData.audio?.externalAudio || formData.audio?.url;
+    if (!url) return;
+
+    if (isPreviewAudioPlaying) {
+      previewAudioRef.current.pause();
+      setIsPreviewAudioPlaying(false);
+    } else {
+      previewAudioRef.current.src = url;
+      previewAudioRef.current
+        .play()
+        .then(() => setIsPreviewAudioPlaying(true))
+        .catch((err) => {
+          console.warn('Gagal memutar preview audio:', err);
+          setIsPreviewAudioPlaying(false);
+        });
+    }
+  };
+
+  const handleAudioUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingAudio(true);
+    setAudioUploadError('');
+    setAudioUploadSuccess('');
+
+    try {
+      const res = await uploadWeddingAudio(file);
+      if (res.success && res.url) {
+        const cleanTitle = file.name
+          .replace(/\.[^/.]+$/, '')
+          .replace(/[-_]/g, ' ')
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+
+        setFormData((prev) => ({
+          ...prev,
+          audio: {
+            ...prev.audio,
+            enabled: true,
+            title: cleanTitle,
+            artist: 'Upload Sendiri',
+            url: res.url,
+            externalAudio: res.url,
+          },
+        }));
+
+        setAudioUploadSuccess(`File musik "${file.name}" berhasil diunggah!`);
+        setTimeout(() => setAudioUploadSuccess(''), 5000);
+
+        if (previewAudioRef.current) {
+          previewAudioRef.current.src = res.url;
+          previewAudioRef.current
+            .play()
+            .then(() => setIsPreviewAudioPlaying(true))
+            .catch(() => {});
+        }
+      } else {
+        throw new Error(res.error || 'Gagal mengunggah file musik.');
+      }
+    } catch (err) {
+      setAudioUploadError(err.message || 'Gagal mengunggah file musik.');
+    } finally {
+      setIsUploadingAudio(false);
+      if (audioFileInputRef.current) audioFileInputRef.current.value = '';
+    }
+  };
+
   // Handler update field bersarang
   const handleNestedChange = (section, field, value) => {
     setFormData((prev) => ({
@@ -390,6 +483,7 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
     isGiftEnabled && config.gift?.physicalGift?.enabled !== false;
   const isGalleryEnabled = config.gallery?.enabled !== false;
   const isVideoEnabled = config.gallery?.video?.enabled !== false;
+  const isAudioFeatureEnabled = config.audio?.enabled !== false;
   const isStoriesEnabled = Boolean(config.storiesEnabled);
 
   // Bangun daftar langkah dinamis (Smart Wizard)
@@ -418,12 +512,26 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
           },
         ]
       : []),
-    {
-      key: 'media',
-      label: isGalleryEnabled ? 'Galeri & Musik' : 'Musik Pengiring',
-      icon: isGalleryEnabled ? Image : Music,
-      subtitle: isGalleryEnabled ? 'Foto & Lagu' : 'Lagu Latar',
-    },
+    ...(isGalleryEnabled || isAudioFeatureEnabled
+      ? [
+          {
+            key: 'media',
+            label:
+              isGalleryEnabled && isAudioFeatureEnabled
+                ? 'Galeri & Musik'
+                : isGalleryEnabled
+                  ? 'Galeri Foto'
+                  : 'Musik Pengiring',
+            icon: isGalleryEnabled ? Image : Music,
+            subtitle:
+              isGalleryEnabled && isAudioFeatureEnabled
+                ? 'Foto & Lagu'
+                : isGalleryEnabled
+                  ? 'Foto Prewedding'
+                  : 'Lagu Latar',
+          },
+        ]
+      : []),
     ...(isStoriesEnabled
       ? [
           {
@@ -1219,101 +1327,269 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
                   <Music className="w-5 h-5 text-amber-500" />
                 )}
                 <span>
-                  {isGalleryEnabled
+                  {isGalleryEnabled && isAudioFeatureEnabled
                     ? 'Galeri Foto & Musik Latar'
-                    : 'Musik Latar Undangan'}
+                    : isGalleryEnabled
+                      ? 'Galeri Foto Prewedding'
+                      : 'Musik Latar Undangan'}
                 </span>
               </h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                {isGalleryEnabled
+                {isGalleryEnabled && isAudioFeatureEnabled
                   ? 'Tentukan lagu pengiring undangan pernikahan Anda serta unggah galeri foto prewedding.'
-                  : 'Tentukan lagu romantis pengiring undangan pernikahan Anda.'}
+                  : isGalleryEnabled
+                    ? 'Unggah foto-foto terbaik Anda dan pasangan untuk ditampilkan di galeri undangan.'
+                    : 'Tentukan lagu romantis pengiring undangan pernikahan Anda.'}
               </p>
             </div>
 
-            {/* MUSIK PENGIRING */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/40 border border-amber-200/80 space-y-4">
-              <div className="flex items-center gap-2">
-                <Music className="w-4 h-4 text-amber-600" />
-                <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Pilihan Lagu Romantis
-                </h4>
-              </div>
-
-              {/* Preset Lagu */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                {PRESET_SONGS.map((song) => {
-                  const isSelected =
-                    formData.audio?.title?.toLowerCase() ===
-                    song.title.toLowerCase();
-
-                  return (
-                    <button
-                      key={song.title}
-                      type="button"
-                      onClick={() => {
-                        setFormData((prev) => ({
-                          ...prev,
-                          audio: {
-                            ...prev.audio,
-                            title: song.title,
-                            artist: song.artist,
-                            url: song.url,
-                            externalAudio: song.url,
-                          },
-                        }));
-                      }}
-                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                        isSelected
-                          ? 'bg-amber-500 text-slate-950 font-bold border-amber-500 shadow-xs'
-                          : 'bg-white border-slate-200 text-slate-700 hover:border-amber-300'
-                      }`}
-                    >
-                      <p className="text-xs font-bold truncate">{song.title}</p>
-                      <p
-                        className={`text-[10px] truncate ${
-                          isSelected ? 'text-slate-900' : 'text-slate-500'
-                        }`}
-                      >
-                        {song.artist}
+            {/* MUSIK PENGIRING (HANYA MUNCUL JIKA FITUR AUDIO DIAKTIFKAN ADMIN) */}
+            {isAudioFeatureEnabled && (
+              <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/40 border border-amber-200/80 space-y-4">
+                {/* Saklar On/Off Musik */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-amber-200/70">
+                  <div className="flex items-center gap-2">
+                    <Music className="w-4 h-4 text-amber-600" />
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
+                        Musik Pengiring Undangan
+                      </h4>
+                      <p className="text-[11px] text-slate-500">
+                        Putar lagu romantis secara otomatis saat tamu membuka
+                        undangan.
                       </p>
-                    </button>
-                  );
-                })}
-              </div>
+                    </div>
+                  </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Judul Lagu
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.audio?.title || ''}
-                    onChange={(e) =>
-                      handleNestedChange('audio', 'title', e.target.value)
-                    }
-                    placeholder="Contoh: A Thousand Years"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs font-medium"
-                  />
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xs font-bold text-slate-700">
+                      {formData.audio?.enabled !== false
+                        ? 'Musik Aktif'
+                        : 'Musik Mati'}
+                    </span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.audio?.enabled !== false}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            audio: {
+                              ...prev.audio,
+                              enabled: e.target.checked,
+                            },
+                          }))
+                        }
+                        className="sr-only peer"
+                      />
+                      <div className="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                    </label>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
-                    Penyanyi / Artis
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.audio?.artist || ''}
-                    onChange={(e) =>
-                      handleNestedChange('audio', 'artist', e.target.value)
-                    }
-                    placeholder="Contoh: Christina Perri"
-                    className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
-                  />
-                </div>
+                {formData.audio?.enabled === false ? (
+                  <div className="p-4 rounded-xl bg-white border border-amber-200 text-amber-900 text-xs flex items-center gap-2.5">
+                    <VolumeX className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>
+                      <strong>Musik Dinonaktifkan:</strong> Tamu akan membaca
+                      undangan Anda dalam suasana hening tanpa lagu otomatis,
+                      dan tombol floating musik tidak akan ditampilkan.
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    {/* Status Lagu Aktif & Mini Player Preview */}
+                    <div className="p-3.5 rounded-xl bg-white border border-amber-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleAudioPreview()}
+                          className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-all cursor-pointer shadow-xs ${
+                            isPreviewAudioPlaying
+                              ? 'bg-rose-500 text-white animate-pulse'
+                              : 'bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold'
+                          }`}
+                          title={
+                            isPreviewAudioPlaying
+                              ? 'Jeda Preview Lagu'
+                              : 'Putar / Dengarkan Lagu'
+                          }
+                        >
+                          {isPreviewAudioPlaying ? (
+                            <Pause className="w-4 h-4" />
+                          ) : (
+                            <Play className="w-4 h-4 ml-0.5" />
+                          )}
+                        </button>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 uppercase tracking-wider">
+                              Lagu Aktif
+                            </span>
+                            <span className="text-[10px] text-slate-400 truncate">
+                              {formData.audio?.artist || 'Artis'}
+                            </span>
+                          </div>
+                          <p className="text-xs font-bold text-slate-800 truncate mt-0.5">
+                            {formData.audio?.title || 'Belum ada lagu dipilih'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Tombol Upload File Lagu dari Komputer / HP */}
+                      <div className="shrink-0">
+                        <input
+                          ref={audioFileInputRef}
+                          type="file"
+                          accept="audio/*,.mp3,.m4a,.wav,.ogg"
+                          onChange={handleAudioUpload}
+                          className="hidden"
+                          id="client-audio-file-input"
+                          disabled={isUploadingAudio}
+                        />
+                        <label
+                          htmlFor="client-audio-file-input"
+                          className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold shadow-2xs transition-all cursor-pointer ${
+                            isUploadingAudio
+                              ? 'bg-amber-300 text-slate-700 cursor-not-allowed'
+                              : 'bg-slate-900 hover:bg-slate-800 text-white'
+                          }`}
+                        >
+                          {isUploadingAudio ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-400" />
+                              <span>Mengunggah File Lagu...</span>
+                            </>
+                          ) : (
+                            <>
+                              <UploadCloud className="w-3.5 h-3.5 text-amber-400" />
+                              <span>+ Upload File Lagu Sendiri (MP3)</span>
+                            </>
+                          )}
+                        </label>
+                      </div>
+                    </div>
+
+                    {audioUploadSuccess && (
+                      <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>{audioUploadSuccess}</span>
+                      </div>
+                    )}
+
+                    {audioUploadError && (
+                      <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                        <span>{audioUploadError}</span>
+                      </div>
+                    )}
+
+                    {/* Pilihan Cepat Preset Lagu Romantis */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">
+                        Atau Pilih Lagu Romantis Populer (1-Klik):
+                      </label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        {PRESET_SONGS.map((song) => {
+                          const isSelected =
+                            formData.audio?.title?.toLowerCase() ===
+                            song.title.toLowerCase();
+
+                          return (
+                            <button
+                              key={song.title}
+                              type="button"
+                              onClick={() => {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  audio: {
+                                    ...prev.audio,
+                                    enabled: true,
+                                    title: song.title,
+                                    artist: song.artist,
+                                    url: song.url,
+                                    externalAudio: song.url,
+                                  },
+                                }));
+                                if (previewAudioRef.current) {
+                                  previewAudioRef.current.src = song.url;
+                                  previewAudioRef.current
+                                    .play()
+                                    .then(() => setIsPreviewAudioPlaying(true))
+                                    .catch(() => {});
+                                }
+                              }}
+                              className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'bg-amber-500 text-slate-950 font-bold border-amber-500 shadow-xs ring-2 ring-amber-400/30'
+                                  : 'bg-white border-slate-200 text-slate-700 hover:border-amber-300'
+                              }`}
+                            >
+                              <p className="text-xs font-bold truncate">
+                                {song.title}
+                              </p>
+                              <p
+                                className={`text-[10px] truncate ${
+                                  isSelected
+                                    ? 'text-slate-900'
+                                    : 'text-slate-500'
+                                }`}
+                              >
+                                {song.artist}
+                              </p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Input Judul Lagu & Artis */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Judul Lagu
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.audio?.title || ''}
+                          onChange={(e) =>
+                            handleNestedChange('audio', 'title', e.target.value)
+                          }
+                          placeholder="Contoh: A Thousand Years"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs font-medium"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold text-slate-700 mb-1">
+                          Penyanyi / Artis
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.audio?.artist || ''}
+                          onChange={(e) =>
+                            handleNestedChange(
+                              'audio',
+                              'artist',
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Contoh: Christina Perri"
+                          className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Hidden Audio Element untuk Preview di Dalam Formulir */}
+                <audio
+                  ref={previewAudioRef}
+                  onEnded={() => setIsPreviewAudioPlaying(false)}
+                  className="hidden"
+                />
               </div>
-            </div>
+            )}
 
             {/* VIDEO TEASER PREWEDDING (HANYA JIKA DIAKTIFKAN OLEH ADMIN) */}
             {isVideoEnabled && (

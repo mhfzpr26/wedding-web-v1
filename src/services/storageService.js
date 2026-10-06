@@ -166,3 +166,117 @@ export async function uploadWeddingPhoto(file, folder = 'gallery') {
     };
   }
 }
+
+/**
+ * Unggah file audio lagu pernikahan ke Supabase Storage (atau fallback dev server)
+ * @param {File} file - Berkas audio (MP3, WAV, M4A, OGG)
+ * @returns {Promise<{success: boolean, url: string, source: string, fileName?: string, error?: string}>}
+ */
+export async function uploadWeddingAudio(file) {
+  try {
+    if (!file) throw new Error('Berkas audio tidak ditemukan.');
+
+    if (
+      !file.type.startsWith('audio/') &&
+      !/\.(mp3|ogg|wav|m4a)$/i.test(file.name)
+    ) {
+      throw new Error(
+        'Format berkas harus berupa audio (.mp3, .m4a, .wav, atau .ogg).',
+      );
+    }
+
+    if (file.size > 20 * 1024 * 1024) {
+      throw new Error(
+        'Ukuran file audio maksimal 20 MB agar undangan tetap ringan dibuka oleh tamu.',
+      );
+    }
+
+    const ext = file.name.split('.').pop()?.toLowerCase() || 'mp3';
+    const cleanBase = file.name
+      .replace(/\.[^/.]+$/, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9_.-]/g, '-')
+      .replace(/-+/g, '-');
+    const fileName = `${Date.now()}-${cleanBase}.${ext}`;
+    const filePath = `audio/${fileName}`;
+
+    // 1. Coba upload ke Supabase Storage (Bucket: wedding-photos atau wedding-audio)
+    let supabaseSuccess = false;
+    let publicUrl = '';
+
+    for (const bucket of ['wedding-photos', 'wedding-audio']) {
+      try {
+        const { data, error: sbError } = await supabase.storage
+          .from(bucket)
+          .upload(filePath, file, {
+            contentType: file.type || 'audio/mpeg',
+            upsert: true,
+          });
+
+        if (!sbError && data) {
+          const { data: urlData } = supabase.storage
+            .from(bucket)
+            .getPublicUrl(filePath);
+
+          if (urlData?.publicUrl) {
+            publicUrl = urlData.publicUrl;
+            supabaseSuccess = true;
+            return {
+              success: true,
+              url: publicUrl,
+              source: 'supabase',
+              fileName,
+            };
+          }
+        }
+      } catch (_err) {
+        // Coba bucket berikutnya
+      }
+      if (supabaseSuccess) break;
+    }
+
+    // 2. Fallback: Upload ke dev server lokal /api/upload-audio
+    if (!supabaseSuccess) {
+      try {
+        const base64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result.split(',')[1]);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        const res = await fetch('/api/upload-audio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            filename: fileName,
+            content: base64,
+          }),
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.url) {
+            return {
+              success: true,
+              url: json.url,
+              source: 'local',
+              fileName: json.filename,
+            };
+          }
+        }
+      } catch (localErr) {
+        console.warn('Local dev audio API upload error:', localErr);
+      }
+    }
+
+    throw new Error(
+      'Gagal mengunggah file audio. Pastikan format file sesuai atau gunakan lagu pilihan yang tersedia.',
+    );
+  } catch (err) {
+    return {
+      success: false,
+      error: err.message || 'Terjadi kesalahan saat mengunggah file audio.',
+    };
+  }
+}

@@ -17,6 +17,7 @@ import {
   Volume2,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { uploadWeddingAudio } from '../../../services/storageService';
 
 // DAFTAR PRESET LAGU PERNIKAHAN POPULER SIAP PAKAI
 const PRESET_PLAYLIST = [
@@ -191,66 +192,45 @@ export const AudioThemeTab = ({
   };
 
   // Handler Unggah File Audio dari Komputer
-  const handleFileUpload = (e) => {
+  const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (
-      !file.type.startsWith('audio/') &&
-      !/\.(mp3|ogg|wav|m4a)$/i.test(file.name)
-    ) {
-      alert('Silakan pilih file audio berformat .mp3, .ogg, .wav, atau .m4a.');
-      return;
-    }
 
     setIsUploading(true);
     setUploadFeedback(null);
     setPreviewError(null);
 
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const base64Content = reader.result.split(',')[1];
-        const res = await fetch('/api/upload-audio', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            filename: file.name,
-            content: base64Content,
-          }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          const cleanTitle = file.name
-            .replace(/\.[^/.]+$/, '')
-            .replace(/[-_]/g, ' ')
-            .replace(/\b\w/g, (c) => c.toUpperCase());
+    try {
+      const res = await uploadWeddingAudio(file);
+      if (res.success && res.url) {
+        const cleanTitle = file.name
+          .replace(/\.[^/.]+$/, '')
+          .replace(/[-_]/g, ' ')
+          .replace(/\b\w/g, (c) => c.toUpperCase());
 
-          const newSong = {
-            title: cleanTitle,
-            artist: 'Upload Sendiri',
-            url: data.url,
-            genre: 'File Unggahan',
-            savedAt: new Date().toLocaleDateString('id-ID'),
-          };
+        const newSong = {
+          title: cleanTitle,
+          artist: 'Upload Sendiri',
+          url: res.url,
+          genre: 'File Unggahan',
+          savedAt: new Date().toLocaleDateString('id-ID'),
+        };
 
-          handleSelectSong(newSong);
+        handleSelectSong(newSong);
 
-          setUploadFeedback(
-            `File "${data.filename}" berhasil diunggah dan langsung aktif!`,
-          );
-          setTimeout(() => setUploadFeedback(null), 5000);
-        } else {
-          throw new Error(data.error || 'Gagal menyimpan file audio.');
-        }
-      } catch (err) {
-        setPreviewError(`Upload gagal: ${err.message}`);
-      } finally {
-        setIsUploading(false);
-        if (fileInputRef.current) fileInputRef.current.value = '';
+        setUploadFeedback(
+          `File "${res.fileName || file.name}" berhasil diunggah dan langsung aktif!`,
+        );
+        setTimeout(() => setUploadFeedback(null), 5000);
+      } else {
+        throw new Error(res.error || 'Gagal menyimpan file audio.');
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      setPreviewError(`Upload gagal: ${err.message}`);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const colorPresets = [
@@ -336,7 +316,7 @@ export const AudioThemeTab = ({
 
       {/* 2. MUSIK LATAR BELAKANG */}
       <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs space-y-5">
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-100">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-100">
           <div>
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
               <Music className="w-4 h-4 text-amber-500" />
@@ -346,15 +326,46 @@ export const AudioThemeTab = ({
               Lagu yang otomatis diputar saat tamu membuka undangan pernikahan.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleResetToDefaultAudio}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-amber-600 transition-colors cursor-pointer"
-          >
-            <RotateCcw className="w-3 h-3" />
-            <span>Reset ke Canon in D</span>
-          </button>
+
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+              <span className="text-xs font-semibold text-slate-700">
+                {audio.enabled !== false ? 'Musik Aktif' : 'Musik Mati'}
+              </span>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={audio.enabled !== false}
+                  onChange={(e) =>
+                    handleAudioChange('enabled', e.target.checked)
+                  }
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+              </label>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleResetToDefaultAudio}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-500 hover:text-amber-600 transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Reset</span>
+            </button>
+          </div>
         </div>
+
+        {audio.enabled === false && (
+          <div className="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200/80 text-amber-900 text-xs flex items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>
+              <strong>Musik latar dinonaktifkan:</strong> Tamu akan membuka
+              undangan dalam suasana hening tanpa lagu otomatis, dan tombol
+              pemutar musik floating tidak akan muncul.
+            </span>
+          </div>
+        )}
 
         {/* STATUS LAGU AKTIF SAAT INI DENGAN MINI PLAYER */}
         <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-50 via-white to-amber-50/40 border border-amber-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

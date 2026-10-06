@@ -74,7 +74,14 @@ export const WeddingProvider = ({ children }) => {
             useCustomInitials: false,
           },
           audio: (() => {
-            const a = { ...weddingConfig.audio, ...(parsed.audio || {}) };
+            const a = {
+              ...weddingConfig.audio,
+              ...(parsed.audio || {}),
+              enabled:
+                parsed.audio?.enabled !== undefined
+                  ? parsed.audio.enabled
+                  : true,
+            };
             // Bersihkan URL lama yang sudah 404 dari cache
             if (
               a.externalAudio?.includes('freemusicarchive.org') ||
@@ -461,8 +468,8 @@ export const WeddingProvider = ({ children }) => {
   // Handler Buka Undangan & Autoplay Audio
   const openInvitation = () => {
     setIsOpened(true);
-    // Jalankan musik jika audio element tersedia
-    if (audioRef.current) {
+    // Jalankan musik jika audio element tersedia dan musik diaktifkan
+    if (weddingData.audio?.enabled !== false && audioRef.current) {
       audioRef.current
         .play()
         .then(() => setIsPlaying(true))
@@ -582,20 +589,22 @@ export const WeddingProvider = ({ children }) => {
       }}
     >
       {children}
-      {/* Hidden Global Audio Element (Hanya aktif di luar Admin & Portal Mode) */}
-      {!isAdminMode && !isClientPortalMode && (
-        <audio
-          ref={audioRef}
-          src={
-            weddingData.audio?.externalAudio ||
-            weddingData.audio?.url ||
-            weddingConfig.audio.externalAudio ||
-            '/audio/wedding-song.mp3'
-          }
-          preload="auto"
-          loop
-        />
-      )}
+      {/* Hidden Global Audio Element (Hanya aktif di luar Admin & Portal Mode jika musik diaktifkan) */}
+      {!isAdminMode &&
+        !isClientPortalMode &&
+        weddingData.audio?.enabled !== false && (
+          <audio
+            ref={audioRef}
+            src={
+              weddingData.audio?.externalAudio ||
+              weddingData.audio?.url ||
+              weddingConfig.audio.externalAudio ||
+              '/audio/wedding-song.mp3'
+            }
+            preload="auto"
+            loop
+          />
+        )}
     </WeddingContext.Provider>
   );
 };

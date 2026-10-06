@@ -2,10 +2,10 @@ import { Volume2, VolumeX } from 'lucide-react';
 import { useWedding } from '../../context/WeddingContext';
 
 export const FloatingMusic = () => {
-  const { isPlaying, toggleMusic, isOpened } = useWedding();
+  const { isPlaying, toggleMusic, isOpened, config } = useWedding();
 
-  // Hanya tampilkan jika undangan sudah dibuka
-  if (!isOpened) return null;
+  // Hanya tampilkan jika undangan sudah dibuka dan musik aktif
+  if (!isOpened || config?.audio?.enabled === false) return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-40 animate-in fade-in zoom-in-75 duration-700">

@@ -32,6 +32,7 @@ export const weddingConfig = {
     "showDate": false
   },
   "audio": {
+    "enabled": true,
     "url": "/audio/christina_perri_-_thousand_years_-mp3.pm-.mp3",
     "externalAudio": "/audio/christina_perri_-_thousand_years_-mp3.pm-.mp3",
     "title": "Christina Perri   Thousand Years (Mp3.Pm)",
