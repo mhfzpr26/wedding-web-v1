@@ -206,15 +206,24 @@ export const rsvpService = {
     }
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('wedding_wishes')
         .delete()
-        .eq('wedding_slug', slug);
+        .eq('wedding_slug', slug)
+        .select();
+
       if (error) {
-        console.warn('Gagal menghapus wishes Supabase:', error.message);
+        throw new Error(error.message);
       }
+      if (!data || data.length === 0) {
+        throw new Error(
+          'Database Supabase menolak penghapusan. Kebijakan DELETE (Row Level Security / RLS) belum diizinkan pada tabel wedding_wishes di dashboard Supabase.',
+        );
+      }
+      return { success: true };
     } catch (cloudErr) {
       console.warn('Gagal koneksi hapus Supabase:', cloudErr);
+      return { success: false, error: cloudErr.message };
     }
   },
 
@@ -238,14 +247,27 @@ export const rsvpService = {
 
     try {
       if (typeof wishId === 'number' || !Number.isNaN(Number(wishId))) {
-        await supabase
+        const { data, error } = await supabase
           .from('wedding_wishes')
           .delete()
           .eq('id', Number(wishId))
-          .eq('wedding_slug', slug);
+          .eq('wedding_slug', slug)
+          .select();
+
+        if (error) {
+          throw new Error(error.message);
+        }
+        if (!data || data.length === 0) {
+          throw new Error(
+            'Database Supabase menolak penghapusan. Kebijakan DELETE (Row Level Security / RLS) belum diizinkan pada tabel wedding_wishes di dashboard Supabase.',
+          );
+        }
+        return { success: true };
       }
+      return { success: true };
     } catch (cloudErr) {
       console.warn('Gagal hapus dari Supabase:', cloudErr);
+      return { success: false, error: cloudErr.message };
     }
   },
 

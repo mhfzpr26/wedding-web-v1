@@ -38,7 +38,14 @@ export const WishesTab = () => {
     if (window.confirm('Yakin ingin menghapus ucapan ini?')) {
       setIsDeleting(true);
       try {
-        await deleteWish(wishId);
+        const res = await deleteWish(wishId);
+        if (res && !res.success) {
+          alert(
+            `Gagal Menghapus Ucapan:\n\n${res.error}\n\nSolusi Cepat:\nBuka Supabase -> SQL Editor, lalu jalankan:\nCREATE POLICY "Enable delete for all users" ON public.wedding_wishes FOR DELETE TO public USING (true);`,
+          );
+        }
+      } catch (err) {
+        alert(`Gagal: ${err.message}`);
       } finally {
         setIsDeleting(false);
       }
@@ -48,8 +55,15 @@ export const WishesTab = () => {
   const handleClearAll = async () => {
     setIsDeleting(true);
     try {
-      await clearAllWishes();
+      const res = await clearAllWishes();
+      if (res && !res.success) {
+        alert(
+          `Gagal Membersihkan Ucapan:\n\n${res.error}\n\nSolusi Cepat:\nBuka Supabase -> SQL Editor, lalu jalankan:\nCREATE POLICY "Enable delete for all users" ON public.wedding_wishes FOR DELETE TO public USING (true);`,
+        );
+      }
       setShowClearConfirm(false);
+    } catch (err) {
+      alert(`Gagal: ${err.message}`);
     } finally {
       setIsDeleting(false);
     }

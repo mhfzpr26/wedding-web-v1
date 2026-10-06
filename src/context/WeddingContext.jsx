@@ -513,13 +513,15 @@ export const WeddingProvider = ({ children }) => {
   };
 
   const deleteWish = async (wishId) => {
-    await rsvpService.deleteWish(wishId);
+    const res = await rsvpService.deleteWish(wishId);
     await loadWishes();
+    return res;
   };
 
   const clearAllWishes = async () => {
-    await rsvpService.clearAllWishes();
+    const res = await rsvpService.clearAllWishes();
     await loadWishes();
+    return res;
   };
 
   // Bersihkan data dummy ucapan lawas di browser jika tersisa
