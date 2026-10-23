@@ -1,7 +1,7 @@
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { useWedding } from '../../../context/WeddingContext';
 import {
   CardBotanicalWatermark,
@@ -30,6 +30,7 @@ const InstagramIcon = ({ className = 'w-3.5 h-3.5' }) => (
 
 export const CharacterArch = () => {
   const { config, isOpened } = useWedding();
+  const [isPhotoZoomed, setIsPhotoZoomed] = useState(false);
   const archRef = useRef(null);
   const coupleGridRef = useRef(null);
 
@@ -317,12 +318,20 @@ export const CharacterArch = () => {
           {config.couple?.showPhoto !== false && config.couple?.photo ? (
             <div className="relative group mx-auto">
               {/* Bingkai Kubah Lengkung / Cathedral Arch Frame Mewah untuk Foto Pasangan Potret */}
-              <div className="w-64 h-[360px] sm:w-72 sm:h-[420px] md:w-80 md:h-[460px] rounded-t-full rounded-b-2xl overflow-hidden p-1.5 sm:p-2 bg-gradient-to-b from-amber-400/60 via-amber-200/40 to-amber-500/60 shadow-luxury border border-gold/50 relative">
+              <div
+                onClick={() => setIsPhotoZoomed((prev) => !prev)}
+                className="w-64 h-[360px] sm:w-72 sm:h-[420px] md:w-80 md:h-[460px] rounded-t-full rounded-b-2xl overflow-hidden p-1.5 sm:p-2 bg-gradient-to-b from-amber-400/60 via-amber-200/40 to-amber-500/60 shadow-luxury border border-gold/50 relative cursor-pointer select-none transition-all duration-500 active:scale-[0.98]"
+                title="Sentuh atau klik untuk memperbesar foto"
+              >
                 <div className="w-full h-full rounded-t-full rounded-b-xl overflow-hidden bg-slate-100 relative">
                   <img
                     src={config.couple.photo}
                     alt={`${config.bride?.shortName || 'Mempelai'} & ${config.groom?.shortName || 'Mempelai'}`}
-                    className="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
+                    className={`w-full h-full object-cover object-[center_55%] origin-[50%_60%] transition-transform duration-700 ease-out ${
+                      isPhotoZoomed
+                        ? 'scale-115'
+                        : 'scale-100 group-hover:scale-110 active:scale-110'
+                    }`}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none" />
                 </div>
