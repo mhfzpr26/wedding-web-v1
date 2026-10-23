@@ -113,6 +113,14 @@ export const WeddingProvider = ({ children }) => {
           gallery: {
             ...weddingConfig.gallery,
             ...(parsed.gallery || {}),
+            subtitle:
+              parsed.gallery?.subtitle === 'Momen Bahagia'
+                ? (weddingConfig.gallery?.subtitle || '')
+                : (parsed.gallery?.subtitle ?? weddingConfig.gallery?.subtitle ?? ''),
+            title:
+              !parsed.gallery?.title || parsed.gallery?.title === 'Galeri & Video Kami'
+                ? (weddingConfig.gallery?.title || 'Momen Bahagia Kami')
+                : parsed.gallery.title,
             video: {
               ...weddingConfig.gallery?.video,
               ...(parsed.gallery?.video || {}),

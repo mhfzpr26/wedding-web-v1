@@ -153,8 +153,8 @@ export const weddingConfig = {
   },
   "gallery": {
     "enabled": true,
-    "subtitle": "Momen Bahagia",
-    "title": "Galeri & Video Kami",
+    "subtitle": "",
+    "title": "Momen Bahagia Kami",
     "video": {
       "enabled": true,
       "title": "Prewedding Teaser Destia & Raka",

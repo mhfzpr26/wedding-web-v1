@@ -127,8 +127,12 @@ export const GallerySection = () => {
       <ScrollReveal animation="fade-up" duration={750} repeat={true}>
         <div className="text-center mb-6 sm:mb-8">
           <OrganicTitleBadge
-            subtitle={gallery.subtitle || 'Momen Bahagia'}
-            title={gallery.title || 'Galeri & Video Kami'}
+            subtitle={gallery.subtitle === 'Momen Bahagia' ? undefined : (gallery.subtitle || undefined)}
+            title={
+              !gallery.title || gallery.title === 'Galeri & Video Kami'
+                ? 'Momen Bahagia Kami'
+                : gallery.title
+            }
           />
         </div>
       </ScrollReveal>
