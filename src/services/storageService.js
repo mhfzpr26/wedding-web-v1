@@ -80,11 +80,20 @@ export async function uploadWeddingPhoto(file, folder = 'gallery') {
   try {
     if (!file) throw new Error('Berkas foto tidak ditemukan.');
 
-    // 1. Kompres gambar terlebih dahulu
-    const { blob, base64 } = await compressImage(file, 1600, 1600, 0.82);
+    // 1. Kompres gambar terlebih dahulu (fallback ke file asli jika kompresi canvas gagal pada browser tertentu)
+    let uploadBlob = file;
+    let base64 = '';
+    try {
+      const compressed = await compressImage(file, 1600, 1600, 0.82);
+      uploadBlob = compressed.blob;
+      base64 = compressed.base64;
+    } catch (compressErr) {
+      console.warn('Kompresi canvas dilewati, menggunakan berkas asli:', compressErr);
+      uploadBlob = file;
+    }
 
-    const ext = 'jpg';
-    const cleanBase = file.name
+    const ext = file.name?.split('.').pop()?.toLowerCase() || 'jpg';
+    const cleanBase = (file.name || 'photo')
       .replace(/\.[^/.]+$/, '')
       .toLowerCase()
       .replace(/[^a-z0-9_.-]/g, '-')
@@ -95,12 +104,13 @@ export async function uploadWeddingPhoto(file, folder = 'gallery') {
     // 2. Coba unggah ke Supabase Storage terlebih dahulu (Bucket: wedding-photos)
     let supabaseSuccess = false;
     let publicUrl = '';
+    let lastSbError = '';
 
     try {
       const { data, error: sbError } = await supabase.storage
         .from('wedding-photos')
-        .upload(filePath, blob, {
-          contentType: 'image/jpeg',
+        .upload(filePath, uploadBlob, {
+          contentType: file.type || 'image/jpeg',
           upsert: true,
         });
 
@@ -120,14 +130,16 @@ export async function uploadWeddingPhoto(file, folder = 'gallery') {
           };
         }
       } else if (sbError) {
+        lastSbError = sbError.message;
         console.warn('Supabase storage upload error:', sbError.message);
       }
     } catch (sbEx) {
+      lastSbError = sbEx.message || String(sbEx);
       console.warn('Supabase storage network/access warning:', sbEx);
     }
 
     // 3. Fallback: Unggah ke dev server lokal (/api/upload-photo) jika Supabase belum disiapkan
-    if (!supabaseSuccess) {
+    if (!supabaseSuccess && base64) {
       try {
         const res = await fetch('/api/upload-photo', {
           method: 'POST',
@@ -147,7 +159,7 @@ export async function uploadWeddingPhoto(file, folder = 'gallery') {
               source: 'local',
               fileName: json.filename,
               notice:
-                'Foto tersimpan di penyimpanan lokal. Untuk hosting permanen di Vercel, pastikan bucket "wedding-photos" (Public) sudah dibuat di Supabase.',
+                'Foto tersimpan di penyimpanan lokal dev server.',
             };
           }
         }
@@ -157,7 +169,9 @@ export async function uploadWeddingPhoto(file, folder = 'gallery') {
     }
 
     throw new Error(
-      'Gagal mengunggah foto. Pastikan Anda telah membuat bucket "wedding-photos" dengan akses Public di dashboard Supabase Storage.',
+      lastSbError
+        ? `Gagal mengunggah foto ke Supabase Storage: ${lastSbError}`
+        : 'Gagal mengunggah foto. Pastikan bucket "wedding-photos" (Public) sudah dibuat di Supabase Storage.',
     );
   } catch (err) {
     return {

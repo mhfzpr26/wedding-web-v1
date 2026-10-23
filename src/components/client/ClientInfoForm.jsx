@@ -168,6 +168,7 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
     setGalleryUploadProgress({ current: 0, total: files.length });
 
     const newPhotos = [];
+    let lastError = '';
     try {
       for (let i = 0; i < files.length; i++) {
         setGalleryUploadProgress({ current: i + 1, total: files.length });
@@ -178,6 +179,8 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
             url: res.url,
             caption: 'Momen Indah Bersama',
           });
+        } else {
+          lastError = res.error || 'Gagal mengunggah foto.';
         }
       }
 
@@ -190,6 +193,14 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
           },
         }));
       }
+
+      if (newPhotos.length === 0 && lastError) {
+        throw new Error(lastError);
+      } else if (newPhotos.length < files.length && lastError) {
+        setGalleryError(
+          `Hanya ${newPhotos.length} dari ${files.length} foto berhasil diunggah. (${lastError})`,
+        );
+      }
     } catch (err) {
       setGalleryError(err.message || 'Sebagian foto gagal diunggah.');
     } finally {
@@ -197,6 +208,37 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
       setGalleryUploadProgress({ current: 0, total: 0 });
       if (galleryFileInputRef.current) galleryFileInputRef.current.value = '';
     }
+  };
+
+  const handleAddGalleryPhoto = () => {
+    const newPhoto = {
+      id: `photo-${Date.now()}`,
+      url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=80',
+      caption: 'Momen Indah Bersama',
+    };
+    setFormData((prev) => ({
+      ...prev,
+      gallery: {
+        ...prev.gallery,
+        photos: [...(prev.gallery?.photos || []), newPhoto],
+      },
+    }));
+  };
+
+  const handleGalleryPhotoUrlChange = (index, url) => {
+    setFormData((prev) => {
+      const currentPhotos = [...(prev.gallery?.photos || [])];
+      if (currentPhotos[index]) {
+        currentPhotos[index] = { ...currentPhotos[index], url };
+      }
+      return {
+        ...prev,
+        gallery: {
+          ...prev.gallery,
+          photos: currentPhotos,
+        },
+      };
+    });
   };
 
   const handleDeleteGalleryPhoto = (index) => {
@@ -780,6 +822,29 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
                       dikompresi agar undangan dimuat super cepat oleh seluruh
                       tamu undangan.
                     </p>
+
+                    {/* Opsi Tautan URL Manual (Fleksibilitas sama seperti Admin) */}
+                    <div className="pt-2 border-t border-slate-100">
+                      <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                        Atau masukkan tautan URL foto langsung:
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.couple?.photo || ''}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            couple: {
+                              ...(prev.couple || {}),
+                              photo: e.target.value,
+                              showPhoto: true,
+                            },
+                          }))
+                        }
+                        placeholder="https://images.unsplash.com/... atau tautan gambar lainnya"
+                        className="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-mono text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs bg-white"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1649,7 +1714,16 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
                     </div>
                   </div>
 
-                  <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAddGalleryPhoto}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-2xs transition-all cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-amber-500" />
+                      <span>+ Tambah dari URL</span>
+                    </button>
+
                     <input
                       ref={galleryFileInputRef}
                       type="file"
@@ -1679,7 +1753,7 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
                       ) : (
                         <>
                           <UploadCloud className="w-3.5 h-3.5" />
-                          <span>+ Upload Foto Prewedding (Bisa Banyak)</span>
+                          <span>+ Upload Berkas Foto</span>
                         </>
                       )}
                     </label>
@@ -1700,8 +1774,7 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
                       Belum ada foto galeri
                     </p>
                     <p className="text-[11px] text-slate-400 mt-0.5">
-                      Klik tombol "+ Upload Foto Prewedding" di atas untuk
-                      memilih foto langsung dari galeri HP atau laptop Anda.
+                      Klik tombol "+ Upload Berkas Foto" atau "+ Tambah dari URL" di atas untuk menambahkan foto prewedding.
                     </p>
                   </div>
                 ) : (
@@ -1734,6 +1807,15 @@ export const ClientInfoForm = ({ slug = 'destia-raka' }) => {
                           }
                           placeholder="Keterangan foto..."
                           className="w-full px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
+                        />
+                        <input
+                          type="text"
+                          value={photo.url || ''}
+                          onChange={(e) =>
+                            handleGalleryPhotoUrlChange(index, e.target.value)
+                          }
+                          placeholder="https://... tautan URL foto"
+                          className="w-full px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-[11px] font-mono text-slate-500 focus:outline-none focus:border-amber-500 shadow-2xs"
                         />
                       </div>
                     ))}
