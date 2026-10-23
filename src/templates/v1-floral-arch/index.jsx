@@ -32,6 +32,9 @@ const TemplateV1FloralArch = () => {
           duration: 1.65,
           ease: 'power2.out',
           onComplete: () => {
+            if (mainRef.current) {
+              gsap.set(mainRef.current, { clearProps: 'transform' });
+            }
             // Segarkan posisi ScrollTrigger agar kalkulasi titik scroll akurat
             ScrollTrigger.refresh();
           },

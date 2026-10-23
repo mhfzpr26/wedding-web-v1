@@ -3,6 +3,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ChevronLeft, ChevronRight, Eye, Video, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ScrollReveal } from '../../../components/common/ScrollReveal';
 import { useWedding } from '../../../context/WeddingContext';
 import { CardBotanicalWatermark } from '../assets/VectorOrnaments';
@@ -94,9 +95,12 @@ export const GallerySection = () => {
     },
   );
 
-  // Keyboard navigation untuk lightbox
+  // Keyboard navigation & lock scroll latar belakang untuk lightbox
   useEffect(() => {
     if (activePhotoIdx === null) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
 
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') setActivePhotoIdx(null);
@@ -111,7 +115,10 @@ export const GallerySection = () => {
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [activePhotoIdx, photos.length]);
 
   if (!isGalleryEnabled) {
@@ -214,81 +221,86 @@ export const GallerySection = () => {
         </div>
       )}
 
-      {/* 3. LIGHTBOX MODAL FULLSCREEN */}
-      {activePhotoIdx !== null && photos[activePhotoIdx] && (
-        <div
-          onClick={() => setActivePhotoIdx(null)}
-          className="fixed inset-0 z-60 bg-black/92 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 animate-fadeIn"
-        >
-          {/* TOMBOL TUTUP */}
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setActivePhotoIdx(null);
-            }}
-            className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer z-30"
-            title="Tutup (Esc)"
-          >
-            <X className="w-6 h-6" />
-          </button>
-
-          {/* COUNTER FOTO */}
-          <div className="absolute top-5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-white text-xs font-bold border border-white/20 z-30">
-            {activePhotoIdx + 1} / {photos.length}
-          </div>
-
-          {/* TOMBOL SEBELUMNYA */}
-          {photos.length > 1 && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setActivePhotoIdx((prev) =>
-                  prev === 0 ? photos.length - 1 : prev - 1,
-                );
-              }}
-              className="absolute left-3 sm:left-6 p-2.5 rounded-full bg-white/10 hover:bg-white/25 text-white transition-all cursor-pointer z-30"
-              title="Foto Sebelumnya"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-          )}
-
-          {/* CONTAINER GAMBAR BESAR */}
+      {/* 3. LIGHTBOX MODAL FULLSCREEN (Dipindahkan langsung ke body via React Portal agar pas di tengah viewport) */}
+      {activePhotoIdx !== null &&
+        photos[activePhotoIdx] &&
+        typeof document !== 'undefined' &&
+        createPortal(
           <div
-            onClick={(e) => e.stopPropagation()}
-            className="relative max-w-3xl max-h-[85vh] flex flex-col items-center justify-center z-20"
+            onClick={() => setActivePhotoIdx(null)}
+            className="fixed inset-0 z-[9999] bg-black/92 backdrop-blur-md flex items-center justify-center p-4 sm:p-8 animate-fadeIn"
+            style={{ overscrollBehavior: 'contain' }}
           >
-            <img
-              src={photos[activePhotoIdx].url}
-              alt={photos[activePhotoIdx].caption || 'Foto Prewedding'}
-              className="max-w-full max-h-[75vh] object-contain rounded-2xl border-2 border-gold/40 shadow-2xl animate-scaleUp"
-            />
-
-            {photos[activePhotoIdx].caption && (
-              <p className="mt-3.5 text-center text-xs sm:text-sm text-slate-200 font-medium px-4 py-1.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 max-w-md">
-                {photos[activePhotoIdx].caption}
-              </p>
-            )}
-          </div>
-
-          {/* TOMBOL SELANJUTNYA */}
-          {photos.length > 1 && (
+            {/* TOMBOL TUTUP */}
             <button
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setActivePhotoIdx((prev) => (prev + 1) % photos.length);
+                setActivePhotoIdx(null);
               }}
-              className="absolute right-3 sm:right-6 p-2.5 rounded-full bg-white/10 hover:bg-white/25 text-white transition-all cursor-pointer z-30"
-              title="Foto Selanjutnya"
+              className="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all cursor-pointer z-30"
+              title="Tutup (Esc)"
             >
-              <ChevronRight className="w-6 h-6" />
+              <X className="w-6 h-6" />
             </button>
-          )}
-        </div>
-      )}
+
+            {/* COUNTER FOTO */}
+            <div className="absolute top-5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md text-white text-xs font-bold border border-white/20 z-30">
+              {activePhotoIdx + 1} / {photos.length}
+            </div>
+
+            {/* TOMBOL SEBELUMNYA */}
+            {photos.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActivePhotoIdx((prev) =>
+                    prev === 0 ? photos.length - 1 : prev - 1,
+                  );
+                }}
+                className="absolute left-3 sm:left-6 p-2.5 rounded-full bg-white/10 hover:bg-white/25 text-white transition-all cursor-pointer z-30"
+                title="Foto Sebelumnya"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+            )}
+
+            {/* CONTAINER GAMBAR BESAR */}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-3xl max-h-[85vh] flex flex-col items-center justify-center z-20"
+            >
+              <img
+                src={photos[activePhotoIdx].url}
+                alt={photos[activePhotoIdx].caption || 'Foto Prewedding'}
+                className="max-w-full max-h-[75vh] object-contain rounded-2xl border-2 border-gold/40 shadow-2xl animate-scaleUp"
+              />
+
+              {photos[activePhotoIdx].caption && (
+                <p className="mt-3.5 text-center text-xs sm:text-sm text-slate-200 font-medium px-4 py-1.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 max-w-md">
+                  {photos[activePhotoIdx].caption}
+                </p>
+              )}
+            </div>
+
+            {/* TOMBOL SELANJUTNYA */}
+            {photos.length > 1 && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActivePhotoIdx((prev) => (prev + 1) % photos.length);
+                }}
+                className="absolute right-3 sm:right-6 p-2.5 rounded-full bg-white/10 hover:bg-white/25 text-white transition-all cursor-pointer z-30"
+                title="Foto Selanjutnya"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            )}
+          </div>,
+          document.body,
+        )}
     </section>
   );
 };
