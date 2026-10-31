@@ -285,30 +285,61 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
         let name = trimmed;
         let phone = '';
         let category = 'Umum';
+        let explicitType = null; // 'perorangan' | 'rombongan' | null
 
         if (trimmed.includes(delimiter)) {
           const parts = trimmed.split(delimiter).map((p) => p.trim());
           name = parts[0] || '';
 
-          if (parts.length > 1) {
-            const p1Digits = parts[1].replace(/[^0-9+]/g, '');
+          // Cek apakah bagian terakhir adalah penanda tipe eksplisit (Perorangan / Rombongan)
+          let remainingParts = parts.slice(1);
+          const lastPart = (
+            remainingParts[remainingParts.length - 1] || ''
+          ).toLowerCase();
+          if (lastPart === 'perorangan' || lastPart === 'individual') {
+            explicitType = 'perorangan';
+            remainingParts = remainingParts.slice(0, -1);
+          } else if (
+            lastPart === 'rombongan' ||
+            lastPart === 'grup' ||
+            lastPart === 'group'
+          ) {
+            explicitType = 'rombongan';
+            remainingParts = remainingParts.slice(0, -1);
+          }
+
+          if (remainingParts.length > 0) {
+            const p1 = remainingParts[0];
+            const p1Digits = p1.replace(/[^0-9+]/g, '');
             if (p1Digits.length >= 7) {
-              phone = normalizePhone(parts[1]);
-              if (parts[2]) category = parts[2].trim() || 'Umum';
+              phone = normalizePhone(p1);
+              if (remainingParts[1]) category = remainingParts[1] || 'Umum';
             } else {
-              category = parts[1] || 'Umum';
-              if (parts[2]) phone = normalizePhone(parts[2]);
+              category = p1 || 'Umum';
+              if (remainingParts[1]) {
+                const p2Digits = remainingParts[1].replace(/[^0-9+]/g, '');
+                if (p2Digits.length >= 7) {
+                  phone = normalizePhone(remainingParts[1]);
+                }
+              }
             }
           }
         }
 
         if (!name) return null;
 
-        const isGroup =
-          isGroupGuest(name) ||
-          category.toLowerCase().includes('rombongan') ||
-          category.toLowerCase().includes('grup') ||
-          category.toLowerCase().includes('group');
+        let isGroup = false;
+        if (explicitType === 'perorangan') {
+          isGroup = false;
+        } else if (explicitType === 'rombongan') {
+          isGroup = true;
+        } else {
+          isGroup =
+            category.toLowerCase().includes('rombongan') ||
+            category.toLowerCase().includes('grup') ||
+            category.toLowerCase().includes('group') ||
+            isGroupGuest(name);
+        }
 
         const id = `guest-${idx}-${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
         return {
@@ -429,21 +460,15 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
     if (!trimmedName) return;
 
     const finalName = trimmedName;
-    let finalCategory =
+    const finalCategory =
       quickCategory.trim() || (quickIsGroup ? 'Keluarga' : 'Umum');
-
-    if (quickIsGroup && !isGroupGuest(finalName)) {
-      if (finalCategory === 'Umum') finalCategory = 'Rombongan';
-    }
+    const typeTag = quickIsGroup ? 'Rombongan' : 'Perorangan';
 
     let newLine = finalName;
     if (quickPhone.trim()) {
-      newLine += `, ${quickPhone.trim()}`;
-      if (finalCategory && finalCategory !== 'Umum') {
-        newLine += `, ${finalCategory}`;
-      }
-    } else if (finalCategory && finalCategory !== 'Umum') {
-      newLine += `, , ${finalCategory}`;
+      newLine += `, ${quickPhone.trim()}, ${finalCategory}, ${typeTag}`;
+    } else {
+      newLine += `, , ${finalCategory}, ${typeTag}`;
     }
 
     const updated = rawNames.trim()
@@ -468,7 +493,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
   };
 
   // State Edit Tamu Satuan Langsung dari Kartu
-  const [editingGuest, setEditingGuest] = useState(null); // { lineIndex, name, phone, category }
+  const [editingGuest, setEditingGuest] = useState(null); // { lineIndex, name, phone, category, isGroup }
 
   // Handler Buka Form Edit Tamu Satuan
   const handleStartEditGuest = (guest) => {
@@ -477,6 +502,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
       name: guest.name,
       phone: guest.phone || '',
       category: guest.category || 'Umum',
+      isGroup: Boolean(guest.isGroup),
     });
   };
 
@@ -486,14 +512,16 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
     if (!editingGuest?.name?.trim()) return;
 
     const lines = rawNames.split('\n');
-    let newLine = editingGuest.name.trim();
-    if (editingGuest.phone.trim()) {
-      newLine += `, ${editingGuest.phone.trim()}`;
-      if (editingGuest.category && editingGuest.category !== 'Umum') {
-        newLine += `, ${editingGuest.category.trim()}`;
-      }
-    } else if (editingGuest.category && editingGuest.category !== 'Umum') {
-      newLine += `, , ${editingGuest.category.trim()}`;
+    const name = editingGuest.name.trim();
+    const phone = editingGuest.phone.trim();
+    const category = editingGuest.category.trim() || 'Umum';
+    const typeTag = editingGuest.isGroup ? 'Rombongan' : 'Perorangan';
+
+    let newLine = name;
+    if (phone) {
+      newLine += `, ${phone}, ${category}, ${typeTag}`;
+    } else {
+      newLine += `, , ${category}, ${typeTag}`;
     }
 
     lines[editingGuest.lineIndex] = newLine;
@@ -730,14 +758,18 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
           if (!rawName) continue;
 
           const rawPhone = String(row[phoneColIdx] || '').trim();
-          const rawCategory = String(row[categoryColIdx] || '').trim();
+          const finalCategory =
+            String(row[categoryColIdx] || '').trim() || 'Umum';
+
+          // User request: Buat sistem baca data dari excel perorangan saja,
+          // sehingga untuk rombongan nanti bisa diubah melalui menu Edit
+          const typeTag = 'Perorangan';
 
           let lineStr = rawName;
           if (rawPhone) {
-            lineStr += `, ${rawPhone}`;
-            if (rawCategory) lineStr += `, ${rawCategory}`;
-          } else if (rawCategory) {
-            lineStr += `, ${rawCategory}`;
+            lineStr += `, ${rawPhone}, ${finalCategory}, ${typeTag}`;
+          } else {
+            lineStr += `, , ${finalCategory}, ${typeTag}`;
           }
 
           lines.push(lineStr);
@@ -752,7 +784,15 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
         reader.onload = async (event) => {
           const content = event.target?.result;
           if (typeof content !== 'string') return;
-          const textLines = content.split(/\r?\n/);
+          const textLines = content.split(/\r?\n/).map((line) => {
+            const trimmed = line.trim();
+            if (!trimmed) return '';
+            const lower = trimmed.toLowerCase();
+            if (!lower.endsWith('perorangan') && !lower.endsWith('rombongan')) {
+              return `${trimmed}, Perorangan`;
+            }
+            return trimmed;
+          });
           await processExtractedLines(textLines);
         };
         reader.readAsText(file);
@@ -771,7 +811,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
   };
 
   // Template pesan WhatsApp
-  const generateMessage = (guestName) => {
+  const generateMessage = (guestName, isGroup = false) => {
     const url = getGuestUrl(guestName);
     const coupleName = `${bride} & ${groom}`;
 
@@ -787,7 +827,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
       .replace(/{tanggal}/g, eventDate);
 
     // Jika undangan rombongan/keluarga besar & menggunakan template standar, sesuaikan sapaan agar natural untuk grup
-    if (isGroupGuest(guestName) && templateType !== 'custom') {
+    if (isGroup && templateType !== 'custom') {
       msg = msg.replace(
         /Bapak\/Ibu\/Saudara\/i/g,
         'Bapak/Ibu/Saudara/i serta seluruh keluarga besar/rekan',
@@ -812,7 +852,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
     if (!sentGuests.includes(guest.id)) {
       toggleSentStatus(guest.id);
     }
-    const text = encodeURIComponent(generateMessage(guest.name));
+    const text = encodeURIComponent(generateMessage(guest.name, guest.isGroup));
     if (guest.phone) {
       window.open(`https://wa.me/${guest.phone}?text=${text}`, '_blank');
     } else {
@@ -1846,7 +1886,10 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                 <div className="space-y-2.5">
                   {filteredGuests.map((guest, idx) => {
                     const isSent = sentGuests.includes(guest.id);
-                    const messageText = generateMessage(guest.name);
+                    const messageText = generateMessage(
+                      guest.name,
+                      guest.isGroup,
+                    );
                     const guestUrl = getGuestUrl(guest.name);
 
                     return (
@@ -2223,6 +2266,54 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
                     required
                   />
+                </div>
+
+                {/* PILIHAN TIPE UNDANGAN: PERORANGAN VS ROMBONGAN */}
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                    Tipe Undangan
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditingGuest((prev) => ({
+                          ...prev,
+                          isGroup: false,
+                        }))
+                      }
+                      className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        !editingGuest.isGroup
+                          ? 'bg-white text-slate-900 shadow-2xs font-bold'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      <User className="w-3.5 h-3.5 text-slate-500" />
+                      <span>👤 Perorangan</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditingGuest((prev) => ({
+                          ...prev,
+                          isGroup: true,
+                        }))
+                      }
+                      className={`py-2 px-3 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        editingGuest.isGroup
+                          ? 'bg-amber-500 text-white shadow-2xs font-bold'
+                          : 'text-slate-500 hover:text-slate-800'
+                      }`}
+                    >
+                      <Users className="w-3.5 h-3.5" />
+                      <span>👥 Rombongan</span>
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    {editingGuest.isGroup
+                      ? '👥 Rombongan: Tautan dapat dibagikan ke grup WhatsApp untuk konfirmasi kehadiran anggota keluarga/rekan.'
+                      : '👤 Perorangan: Tautan personal khusus untuk 1 tamu/pasangan.'}
+                  </p>
                 </div>
 
                 <div>
