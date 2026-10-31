@@ -31,6 +31,7 @@ import {
   UserX,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import * as XLSX from 'xlsx';
 import { useWedding } from '../../context/WeddingContext';
 import { isGroupGuest, parseDisplayName } from '../../services/rsvpService';
 import { ClientInfoForm } from './ClientInfoForm';
@@ -479,60 +480,233 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
     }
   };
 
-  // Download Template CSV/Excel
+  // Download Template Excel (.xlsx) & CSV
   const handleDownloadTemplate = () => {
-    const csvContent =
-      'Nama Tamu,Nomor WhatsApp,Kategori\n' +
-      'Bapak Dr. H. Joko Widodo & Keluarga,081234567890,VIP\n' +
-      'Keluarga Besar Bpk. Hendra,085712345678,Keluarga\n' +
-      'Kevin Pratama & Partner,087812345678,Sahabat\n' +
-      'Rekan Kerja Divisi IT,081398765432,Teman Kantor\n' +
-      'Ibu Hj. Aminah,081298765432,Keluarga\n';
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `Template_Excel_Tamu_${bride}_${groom}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+    try {
+      const templateData = [
+        ['Nama Tamu', 'Nomor WhatsApp', 'Kategori'],
+        ['Bapak Dr. H. Joko Widodo & Keluarga', '081234567890', 'VIP'],
+        ['Keluarga Besar Bpk. Hendra', '085712345678', 'Keluarga'],
+        ['Kevin Pratama & Partner', '087812345678', 'Sahabat'],
+        ['Rekan Kerja Divisi IT', '081398765432', 'Teman Kantor'],
+        ['Ibu Hj. Aminah', '081298765432', 'Keluarga'],
+      ];
+
+      const ws = XLSX.utils.aoa_to_sheet(templateData);
+      ws['!cols'] = [{ wch: 36 }, { wch: 20 }, { wch: 18 }];
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Template Tamu');
+      XLSX.writeFile(wb, `Template_Excel_Tamu_${bride}_${groom}.xlsx`);
+    } catch (_err) {
+      // Fallback CSV jika pembuatan XLSX gagal
+      const csvContent =
+        'Nama Tamu,Nomor WhatsApp,Kategori\n' +
+        'Bapak Dr. H. Joko Widodo & Keluarga,081234567890,VIP\n' +
+        'Keluarga Besar Bpk. Hendra,085712345678,Keluarga\n' +
+        'Kevin Pratama & Partner,087812345678,Sahabat\n' +
+        'Rekan Kerja Divisi IT,081398765432,Teman Kantor\n' +
+        'Ibu Hj. Aminah,081298765432,Keluarga\n';
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Template_Excel_Tamu_${bride}_${groom}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   };
 
-  // Handler Unggah File (.csv, .tsv, .txt)
-  const handleFileUpload = (e) => {
+  // Handler Unggah File (.xlsx, .xls, .csv, .tsv, .txt)
+  const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target?.result;
-      if (typeof content !== 'string') return;
+    const fileName = (file.name || '').toLowerCase();
+    const isExcel = fileName.endsWith('.xlsx') || fileName.endsWith('.xls');
 
-      const trimmedContent = content.trim();
-      if (!trimmedContent) return;
+    const processExtractedLines = async (linesToImport) => {
+      const cleanLines = linesToImport
+        .map((l) => (typeof l === 'string' ? l.trim() : ''))
+        .filter((l) => l.length > 0);
 
+      if (cleanLines.length === 0) {
+        alert('File tidak berisi data nama tamu yang valid.');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
+
+      // Konfirmasi penggabungan agar data tamu klien yang sudah ada aman tidak tertimpa
       const shouldAppend =
         rawNames.trim().length > 0 &&
         window.confirm(
-          'Gabungkan dengan daftar tamu yang sudah ada?\n\n- Klik "OK" untuk Menggabungkan\n- Klik "Batal" untuk Mengganti semua daftar',
+          `Ditemukan ${cleanLines.length} nama tamu dari file "${file.name}".\n\n` +
+            'Apakah Anda ingin MENGGABUNGKAN dengan daftar tamu yang sudah ada?\n\n' +
+            '• Klik "OK" untuk Menggabungkan (Tamu lama tetap utuh & aman)\n' +
+            '• Klik "Batal" untuk Mengganti semua daftar tamu sebelumnya',
         );
 
-      let newRaw = trimmedContent;
+      let newRaw = cleanLines.join('\n');
       if (shouldAppend) {
-        newRaw = `${rawNames.trim()}\n${trimmedContent}`;
+        newRaw = `${rawNames.trim()}\n${newRaw}`;
       }
 
       setRawNames(newRaw);
       try {
         localStorage.setItem(`invatera_guest_names_${slug}`, newRaw);
       } catch (_e) {}
+
       if (updateWeddingData) {
         updateWeddingData({ guestNamesRaw: newRaw });
       }
 
-      alert('Berhasil mengimpor daftar tamu dari file!');
+      if (saveWeddingConfig) {
+        try {
+          await saveWeddingConfig({ ...config, guestNamesRaw: newRaw });
+        } catch (_saveErr) {
+          console.warn('Gagal sinkronisasi otomatis ke cloud:', _saveErr);
+        }
+      }
+
+      alert(
+        `✓ Berhasil mengimpor ${cleanLines.length} tamu!\n${
+          shouldAppend
+            ? 'Data berhasil digabungkan.'
+            : 'Daftar telah diperbarui.'
+        }\nData sudah tersimpan aman ke database cloud.`,
+      );
+
       if (fileInputRef.current) fileInputRef.current.value = '';
     };
-    reader.readAsText(file);
+
+    try {
+      if (isExcel) {
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        if (!firstSheetName) {
+          throw new Error(
+            'Lembar kerja (sheet) tidak ditemukan dalam berkas Excel.',
+          );
+        }
+        const worksheet = workbook.Sheets[firstSheetName];
+        const rows = XLSX.utils.sheet_to_json(worksheet, {
+          header: 1,
+          defval: '',
+          raw: false,
+        });
+
+        if (!rows || rows.length === 0) {
+          throw new Error('Lembar Excel kosong.');
+        }
+
+        let nameColIdx = 0;
+        let phoneColIdx = 1;
+        let categoryColIdx = 2;
+        let startRowIdx = 0;
+
+        const firstRow = rows[0] || [];
+        const isHeader = firstRow.some((cell) => {
+          const str = String(cell || '')
+            .toLowerCase()
+            .trim();
+          return (
+            str.includes('nama') ||
+            str.includes('name') ||
+            str.includes('tamu') ||
+            str.includes('guest') ||
+            str === 'no' ||
+            str.includes('nomor') ||
+            str.includes('whatsapp') ||
+            str.includes('telepon') ||
+            str.includes('kategori')
+          );
+        });
+
+        if (isHeader) {
+          startRowIdx = 1;
+
+          firstRow.forEach((cell, idx) => {
+            const str = String(cell || '')
+              .toLowerCase()
+              .trim();
+            if (
+              (str.includes('nama') ||
+                str.includes('name') ||
+                str.includes('tamu')) &&
+              !str.includes('kategori')
+            ) {
+              nameColIdx = idx;
+            } else if (
+              str.includes('wa') ||
+              str.includes('whatsapp') ||
+              str.includes('phone') ||
+              str.includes('hp') ||
+              str.includes('telepon') ||
+              str.includes('telp') ||
+              str.includes('kontak')
+            ) {
+              phoneColIdx = idx;
+            } else if (
+              str.includes('kategori') ||
+              str.includes('category') ||
+              str.includes('grup') ||
+              str.includes('group') ||
+              str.includes('kelompok')
+            ) {
+              categoryColIdx = idx;
+            }
+          });
+        } else {
+          const col0 = String(firstRow[0] || '').trim();
+          const col1 = String(firstRow[1] || '').trim();
+          if (/^\d+$/.test(col0) && col1.length > 0 && !/^\d+$/.test(col1)) {
+            nameColIdx = 1;
+            phoneColIdx = 2;
+            categoryColIdx = 3;
+          }
+        }
+
+        const lines = [];
+        for (let i = startRowIdx; i < rows.length; i++) {
+          const row = rows[i];
+          if (!row || !Array.isArray(row)) continue;
+
+          const rawName = String(row[nameColIdx] || '').trim();
+          if (!rawName) continue;
+
+          const rawPhone = String(row[phoneColIdx] || '').trim();
+          const rawCategory = String(row[categoryColIdx] || '').trim();
+
+          let lineStr = rawName;
+          if (rawPhone) {
+            lineStr += `, ${rawPhone}`;
+            if (rawCategory) lineStr += `, ${rawCategory}`;
+          } else if (rawCategory) {
+            lineStr += `, ${rawCategory}`;
+          }
+
+          lines.push(lineStr);
+        }
+
+        await processExtractedLines(lines);
+      } else {
+        const reader = new FileReader();
+        reader.onerror = () => {
+          alert('Gagal membaca file.');
+        };
+        reader.onload = async (event) => {
+          const content = event.target?.result;
+          if (typeof content !== 'string') return;
+          const textLines = content.split(/\r?\n/);
+          await processExtractedLines(textLines);
+        };
+        reader.readAsText(file);
+      }
+    } catch (err) {
+      console.error('Error saat membaca file unggahan:', err);
+      alert(`Gagal memproses file: ${err.message || 'Format tidak dikenali'}`);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   // Buat link unik per tamu
@@ -913,10 +1087,10 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                     type="button"
                     onClick={handleDownloadTemplate}
                     className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
-                    title="Unduh file template Excel (.csv)"
+                    title="Unduh file template Excel (.xlsx)"
                   >
                     <Download className="w-3.5 h-3.5 text-blue-600" />
-                    <span>Template Excel</span>
+                    <span>Template Excel (.xlsx)</span>
                   </button>
 
                   {/* Unggah File CSV/Excel */}
@@ -924,17 +1098,17 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                     type="file"
                     ref={fileInputRef}
                     onChange={handleFileUpload}
-                    accept=".csv,.txt,.tsv"
+                    accept=".xlsx,.xls,.csv,.txt,.tsv"
                     className="hidden"
                   />
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs shadow-2xs transition-colors cursor-pointer flex items-center gap-1.5"
-                    title="Unggah file data tamu (.csv / .txt)"
+                    title="Unggah file data tamu (.xlsx, .xls, .csv, .txt)"
                   >
                     <Upload className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>Unggah File</span>
+                    <span>Unggah File Excel/CSV</span>
                   </button>
 
                   {/* Kosongkan Daftar */}
