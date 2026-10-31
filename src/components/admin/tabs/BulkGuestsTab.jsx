@@ -11,7 +11,7 @@ import {
   Share2,
   Trash2,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const DEFAULT_SAMPLE_GUESTS =
   'Bapak Dr. H. Joko Widodo & Keluarga\nIbu Hj. Aminah\nKevin Pratama & Partner\nKeluarga Besar Bpk. Hendra\nSahabat Kuliah Angkatan 2018';
@@ -46,12 +46,18 @@ export const BulkGuestsTab = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [copiedType, setCopiedType] = useState(null); // { index, type: 'link' | 'msg' }
 
+  const lastSyncedRef = useRef(config?.guestNamesRaw);
+
   // Sinkronisasi data jika config diperbarui dari cloud
   useEffect(() => {
-    if (config?.guestNamesRaw && config.guestNamesRaw !== rawNames) {
+    if (
+      config?.guestNamesRaw &&
+      config.guestNamesRaw !== lastSyncedRef.current
+    ) {
+      lastSyncedRef.current = config.guestNamesRaw;
       setRawNames(config.guestNamesRaw);
     }
-  }, [config?.guestNamesRaw, rawNames]);
+  }, [config?.guestNamesRaw]);
 
   const handleNamesChange = (val) => {
     setRawNames(val);

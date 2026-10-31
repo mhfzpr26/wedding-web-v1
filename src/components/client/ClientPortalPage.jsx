@@ -29,6 +29,7 @@ import {
   UserCheck,
   Users,
   UserX,
+  X,
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
@@ -189,17 +190,20 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
     return [];
   });
 
-  // Sinkronisasi data daftar tamu dari config cloud saat ada pembaruan dari device lain
+  const lastSyncedGuestsRef = useRef(config?.guestNamesRaw);
+
+  // Sinkronisasi data daftar tamu dari config cloud saat ada pembaruan dari server/device lain
   useEffect(() => {
     if (
       config?.guestNamesRaw !== undefined &&
-      config.guestNamesRaw !== rawNames
+      config.guestNamesRaw !== lastSyncedGuestsRef.current
     ) {
+      lastSyncedGuestsRef.current = config.guestNamesRaw;
       if (!config.guestNamesRaw.includes('Joko Widodo')) {
         setRawNames(config.guestNamesRaw);
       }
     }
-  }, [config?.guestNamesRaw, rawNames]);
+  }, [config?.guestNamesRaw]);
 
   // Sinkronisasi live status terkirim dari config cloud (misal saat pasangan kirim dari HP lain)
   useEffect(() => {
@@ -406,6 +410,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
         localStorage.setItem(`invatera_guest_names_${slug}`, rawNames);
       } catch (_e) {}
 
+      lastSyncedGuestsRef.current = rawNames;
       updateWeddingData({ guestNamesRaw: rawNames });
       await saveWeddingConfig({ ...config, guestNamesRaw: rawNames });
       setSaveSuccessFeedback(true);
@@ -445,6 +450,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
       ? `${rawNames.trim()}\n${newLine}`
       : newLine;
     setRawNames(updated);
+    lastSyncedGuestsRef.current = updated;
     try {
       localStorage.setItem(`invatera_guest_names_${slug}`, updated);
     } catch (_e) {}
@@ -461,6 +467,53 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
     setTimeout(() => setQuickFeedback(false), 2000);
   };
 
+  // State Edit Tamu Satuan Langsung dari Kartu
+  const [editingGuest, setEditingGuest] = useState(null); // { lineIndex, name, phone, category }
+
+  // Handler Buka Form Edit Tamu Satuan
+  const handleStartEditGuest = (guest) => {
+    setEditingGuest({
+      lineIndex: guest.lineIndex,
+      name: guest.name,
+      phone: guest.phone || '',
+      category: guest.category || 'Umum',
+    });
+  };
+
+  // Handler Simpan Perubahan Edit Tamu Satuan
+  const handleSaveEditGuest = (e) => {
+    e?.preventDefault();
+    if (!editingGuest?.name?.trim()) return;
+
+    const lines = rawNames.split('\n');
+    let newLine = editingGuest.name.trim();
+    if (editingGuest.phone.trim()) {
+      newLine += `, ${editingGuest.phone.trim()}`;
+      if (editingGuest.category && editingGuest.category !== 'Umum') {
+        newLine += `, ${editingGuest.category.trim()}`;
+      }
+    } else if (editingGuest.category && editingGuest.category !== 'Umum') {
+      newLine += `, , ${editingGuest.category.trim()}`;
+    }
+
+    lines[editingGuest.lineIndex] = newLine;
+    const updated = lines.join('\n');
+
+    setRawNames(updated);
+    lastSyncedGuestsRef.current = updated;
+    try {
+      localStorage.setItem(`invatera_guest_names_${slug}`, updated);
+    } catch (_e) {}
+    if (updateWeddingData) {
+      updateWeddingData({ guestNamesRaw: updated });
+    }
+    if (saveWeddingConfig) {
+      saveWeddingConfig({ ...config, guestNamesRaw: updated });
+    }
+
+    setEditingGuest(null);
+  };
+
   // Handler Hapus Tamu Satuan dari Daftar
   const handleDeleteGuest = (guest) => {
     if (window.confirm(`Hapus "${guest.name}" dari daftar tamu?`)) {
@@ -468,6 +521,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
       const filtered = lines.filter((_, idx) => idx !== guest.lineIndex);
       const updated = filtered.join('\n');
       setRawNames(updated);
+      lastSyncedGuestsRef.current = updated;
       try {
         localStorage.setItem(`invatera_guest_names_${slug}`, updated);
       } catch (_e) {}
@@ -551,6 +605,7 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
       }
 
       setRawNames(newRaw);
+      lastSyncedGuestsRef.current = newRaw;
       try {
         localStorage.setItem(`invatera_guest_names_${slug}`, newRaw);
       } catch (_e) {}
@@ -1926,6 +1981,16 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                             <span>Kirim WA</span>
                           </button>
 
+                          {/* Tombol Edit Tamu Satuan */}
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditGuest(guest)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors cursor-pointer"
+                            title="Edit nama, nomor HP, atau kategori tamu ini"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+
                           {/* Tombol Hapus Tamu Satuan */}
                           <button
                             type="button"
@@ -2119,6 +2184,104 @@ export const ClientPortalPage = ({ slug = 'destia-raka' }) => {
                   );
                 })
               )}
+            </div>
+          </div>
+        )}
+        {/* MODAL EDIT DATA TAMU SATUAN */}
+        {editingGuest && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-200 p-5 space-y-4">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                <h4 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                  <Edit3 className="w-4 h-4 text-amber-500" />
+                  <span>Edit Data Tamu</span>
+                </h4>
+                <button
+                  type="button"
+                  onClick={() => setEditingGuest(null)}
+                  className="text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer"
+                  title="Tutup"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveEditGuest} className="space-y-3">
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                    Nama Tamu
+                  </label>
+                  <input
+                    type="text"
+                    value={editingGuest.name}
+                    onChange={(e) =>
+                      setEditingGuest((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                    Nomor WhatsApp (Opsional)
+                  </label>
+                  <input
+                    type="text"
+                    value={editingGuest.phone}
+                    onChange={(e) =>
+                      setEditingGuest((prev) => ({
+                        ...prev,
+                        phone: e.target.value,
+                      }))
+                    }
+                    placeholder="0812..."
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs font-mono text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-bold text-slate-600 block mb-1">
+                    Kategori Tamu
+                  </label>
+                  <select
+                    value={editingGuest.category}
+                    onChange={(e) =>
+                      setEditingGuest((prev) => ({
+                        ...prev,
+                        category: e.target.value,
+                      }))
+                    }
+                    className="w-full px-2.5 py-2 rounded-xl border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-amber-500 shadow-2xs bg-white"
+                  >
+                    <option value="Umum">Umum</option>
+                    <option value="Keluarga">Keluarga</option>
+                    <option value="Teman Kantor">Teman Kantor</option>
+                    <option value="Sahabat">Sahabat</option>
+                    <option value="VIP">VIP</option>
+                    <option value="Rombongan">Rombongan</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={() => setEditingGuest(null)}
+                    className="px-3.5 py-1.5 rounded-xl text-slate-600 hover:bg-slate-100 text-xs font-semibold cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-xs cursor-pointer"
+                  >
+                    Simpan Perubahan
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}
